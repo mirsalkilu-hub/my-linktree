@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface BioProfile {
   id: string;
@@ -63,6 +65,11 @@ export default function BioManagementPage() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+
+  // Confirm Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
 
@@ -144,7 +151,7 @@ export default function BioManagementPage() {
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
     } catch (error: any) {
-      alert("Gagal mengunggah foto: " + error.message);
+      toast.error("Gagal mengunggah foto: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -171,9 +178,9 @@ export default function BioManagementPage() {
         })
         .eq("id", selectedPage.id);
 
-      if (error) alert("Gagal memperbarui halaman: " + error.message);
+      if (error) toast.error("Gagal memperbarui halaman: " + error.message);
       else {
-        alert("Halaman berhasil diperbarui!");
+        toast.success("Halaman berhasil diperbarui!");
         loadUserPages();
       }
     } else {
@@ -193,9 +200,9 @@ export default function BioManagementPage() {
         .single();
 
       if (error) {
-        alert("Gagal membuat halaman: " + error.message);
+        toast.error("Gagal membuat halaman: " + error.message);
       } else if (data) {
-        alert("Halaman baru berhasil dibuat!");
+        toast.success("Halaman baru berhasil dibuat!");
         await loadUserPages();
         handleSelectPage(data);
       }
@@ -204,19 +211,35 @@ export default function BioManagementPage() {
     setLoading(false);
   };
 
-  const handleDeletePage = async (pageId: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus halaman ini beserta seluruh link di dalamnya?")) return;
+  // Fungsi Pemicu Modal Hapus
+  const openDeleteModal = (pageId: string) => {
+    setPageToDelete(pageId);
+    setIsModalOpen(true);
+  };
 
-    await supabase.from("bio_profiles").delete().eq("id", pageId);
-    import toast from "react-hot-toast";
-    toast.success("Halaman berhasil dihapus!");
-    loadUserPages();
+  // Fungsi Eksekusi Hapus dari Modal
+  const handleConfirmDelete = async () => {
+    if (!pageToDelete) return;
+
+    setIsDeleting(true);
+    const { error } = await supabase.from("bio_profiles").delete().eq("id", pageToDelete);
+
+    if (error) {
+      toast.error("Gagal menghapus halaman: " + error.message);
+    } else {
+      toast.success("Halaman berhasil dihapus!");
+      await loadUserPages();
+    }
+
+    setIsDeleting(false);
+    setIsModalOpen(false);
+    setPageToDelete(null);
   };
 
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPage) {
-      alert("Simpan atau pilih halaman terlebih dahulu!");
+      toast.error("Simpan atau pilih halaman terlebih dahulu!");
       return;
     }
     if (!newLinkTitle || !newLinkUrl) return;
@@ -240,18 +263,20 @@ export default function BioManagementPage() {
       .single();
 
     if (error) {
-      alert("Gagal menambahkan link: " + error.message);
+      toast.error("Gagal menambahkan link: " + error.message);
     } else if (data) {
       setLinks([...links, data]);
       setNewLinkTitle("");
       setNewLinkUrl("");
       setNewIconType("link");
+      toast.success("Link berhasil ditambahkan!");
     }
   };
 
   const handleDeleteLink = async (id: string) => {
     await supabase.from("bio_links").delete().eq("id", id);
     setLinks(links.filter((l) => l.id !== id));
+    toast.success("Link berhasil dihapus!");
   };
 
   const bioPageUrl =
@@ -263,10 +288,10 @@ export default function BioManagementPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-     {/* Header */}
+      {/* Header */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-slate-800">
         <span className="text-2xl font-black tracking-wider text-white">
-            mr<span className="text-indigo-500">.id</span>
+          mr<span className="text-indigo-500">.id</span>
         </span>
 
         <div className="flex items-center space-x-6">
@@ -294,35 +319,6 @@ export default function BioManagementPage() {
           </button>
         </div>
       </header>
-      {/* Preview Link & Statistik Total Klik */}
-        {selectedPage && !isCreatingNew && username && (
-          <div className="mb-8 p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <span className="text-xs text-indigo-400 font-medium block">URL Publik:</span>
-              <strong className="text-sm text-indigo-200">{bioPageUrl}</strong>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Klik</span>
-                <span className="text-lg font-bold text-indigo-400">{totalPageClicks}</span>
-              </div>
-              <Link
-                href="/dashboard/analytics"
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
-              >
-                📊 Analytics Grafik
-              </Link>
-              <a
-                href={`/b/${username}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
-              >
-                Lihat Halaman ↗
-              </a>
-            </div>
-          </div>
-        )}
 
       <main className="max-w-5xl mx-auto px-6 py-10 w-full flex-1">
         <div className="flex items-center justify-between mb-8">
@@ -384,7 +380,7 @@ export default function BioManagementPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeletePage(page.id);
+                          openDeleteModal(page.id);
                         }}
                         className="text-red-400 hover:underline"
                       >
@@ -405,16 +401,22 @@ export default function BioManagementPage() {
               <span className="text-xs text-indigo-400 font-medium block">URL Publik:</span>
               <strong className="text-sm text-indigo-200">{bioPageUrl}</strong>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <div className="bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Klik Halaman</span>
                 <span className="text-lg font-bold text-indigo-400">{totalPageClicks}</span>
               </div>
+              <Link
+                href="/dashboard/analytics"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+              >
+                📊 Analytics Grafik
+              </Link>
               <a
                 href={`/b/${username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap"
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
               >
                 Lihat Halaman ↗
               </a>
@@ -610,9 +612,17 @@ export default function BioManagementPage() {
         )}
       </main>
 
+      {/* Modal Dialog Konfirmasi Hapus Modern */}
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        loading={isDeleting}
+      />
+
       <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
         © 2026 mr.id. All rights reserved.
-        </footer>
+      </footer>
     </div>
   );
 }
