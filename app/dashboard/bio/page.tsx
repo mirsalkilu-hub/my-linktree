@@ -208,7 +208,8 @@ export default function BioManagementPage() {
     if (!confirm("Apakah Anda yakin ingin menghapus halaman ini beserta seluruh link di dalamnya?")) return;
 
     await supabase.from("bio_profiles").delete().eq("id", pageId);
-    alert("Halaman berhasil dihapus.");
+    import toast from "react-hot-toast";
+    toast.success("Halaman berhasil dihapus!");
     loadUserPages();
   };
 
