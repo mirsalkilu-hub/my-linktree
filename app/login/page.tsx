@@ -44,7 +44,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-center items-center px-4">
       <div className="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl text-center">
         <h1 className="text-3xl font-black text-indigo-500 mb-2">
-          KILU<span className="text-white">LINK</span>
+          <span className="text-3xl font-black tracking-wider text-white">
+            mr<span className="text-indigo-500">.id</span>
+</span>
         </h1>
         <p className="text-slate-400 mb-8 text-sm">
           Masuk ke akun Anda untuk mengelola tautan
