@@ -18,14 +18,20 @@ export default function HomePage() {
     setErrorMessage("");
     setShortUrl("");
 
-    // Buat kode acak 5 karakter untuk link pendek
+    // 1. Cek user yang sedang login (jika ada)
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 2. Buat kode acak 5 karakter untuk link pendek
     const slug = Math.random().toString(36).substring(2, 7);
 
-    // Simpan ke Supabase
-    const { data, error } = await supabase
-      .from("links")
-      .insert([{ original_url: longUrl, slug: slug }])
-      .select();
+    // 3. Simpan ke Supabase (menggunakan nama variabel longUrl & slug)
+    const { data, error } = await supabase.from("links").insert([
+      {
+        original_url: longUrl.startsWith("http") ? longUrl : `https://${longUrl}`,
+        short_code: slug,
+        user_id: user ? user.id : null, // opsional untuk guest
+      },
+    ]).select();
 
     if (error) {
       console.error(error);
