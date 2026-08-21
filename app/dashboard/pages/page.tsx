@@ -328,9 +328,9 @@ export default function BioManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
       {/* Header Navigasi */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16 gap-2 sm:gap-4">
           <div className="flex items-center space-x-4 sm:space-x-8 h-full overflow-x-auto no-scrollbar py-2">
             <span className="text-lg sm:text-2xl font-black tracking-wider text-white shrink-0">
@@ -388,7 +388,7 @@ export default function BioManagementPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24 pb-6 sm:pb-10 w-full flex-1">
         {/* Header Judul Halaman */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
