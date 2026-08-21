@@ -328,88 +328,86 @@ export default function BioManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between overflow-x-hidden">
       {/* Header Navigasi */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
-  <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16 gap-2 sm:gap-4">
-    
-    {/* Side Kiri: Logo + Menu Scrollable */}
-    <div className="flex items-center space-x-4 sm:space-x-8 h-full overflow-x-auto no-scrollbar py-2">
-      <span className="text-lg sm:text-2xl font-black tracking-wider text-white shrink-0">
-        mr<span className="text-indigo-500">.id</span>
-      </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16 gap-2 sm:gap-4">
+          <div className="flex items-center space-x-4 sm:space-x-8 h-full overflow-x-auto no-scrollbar py-2">
+            <span className="text-lg sm:text-2xl font-black tracking-wider text-white shrink-0">
+              mr<span className="text-indigo-500">.id</span>
+            </span>
 
-      <nav className="flex items-center space-x-4 sm:space-x-8 h-full text-xs sm:text-sm font-semibold shrink-0">
-        <Link
-          href="/dashboard"
-          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
-            pathname === "/dashboard"
-              ? "border-indigo-500 text-indigo-400 font-bold"
-              : "border-transparent text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/pages"
-          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
-            pathname.startsWith("/dashboard/pages")
-              ? "border-indigo-500 text-indigo-400 font-bold"
-              : "border-transparent text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          Kelola Halaman
-        </Link>
-        <Link
-          href="/dashboard/analytics"
-          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
-            pathname.startsWith("/dashboard/analytics")
-              ? "border-indigo-500 text-indigo-400 font-bold"
-              : "border-transparent text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          Analytics
-        </Link>
-      </nav>
-    </div>
+            <nav className="flex items-center space-x-4 sm:space-x-8 h-full text-xs sm:text-sm font-semibold shrink-0">
+              <Link
+                href="/dashboard"
+                className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
+                  pathname === "/dashboard"
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/pages"
+                className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
+                  pathname.startsWith("/dashboard/pages")
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Kelola Halaman
+              </Link>
+              <Link
+                href="/dashboard/analytics"
+                className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
+                  pathname.startsWith("/dashboard/analytics")
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Analytics
+              </Link>
+            </nav>
+          </div>
 
-    {/* Side Kanan: Profile Ringkas + Logout */}
-    <div className="flex items-center space-x-2 shrink-0">
-      {user && (
-        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-          {user.email?.[0] || "M"}
+          <div className="flex items-center space-x-2 shrink-0">
+            {user && (
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+                {user.email?.[0] || "M"}
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-2.5 py-1.5 sm:px-4 rounded-full text-xs font-bold transition-all"
+            >
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Keluar</span>
+            </button>
+          </div>
         </div>
-      )}
-      <button
-        onClick={handleLogout}
-        className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-2.5 py-1.5 sm:px-4 rounded-full text-xs font-bold transition-all"
-      >
-        <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        <span className="hidden sm:inline">Keluar</span>
-      </button>
-    </div>
+      </header>
 
-  </div>
-</header>
-
-      <main className="max-w-5xl mx-auto px-6 py-10 w-full flex-1">
-        <div className="flex items-center justify-between mb-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
+        {/* Header Judul Halaman */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold">Kelola Halaman Bio Anda</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Kelola Halaman Bio Anda</h1>
             <p className="text-xs text-slate-400 mt-1">
               Buat dan kustomisasi halaman landing/bio lengkap dengan analisis klik.
             </p>
           </div>
           <button
             onClick={resetFormToNew}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all"
+            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-3 rounded-xl transition-all text-center shrink-0"
           >
             + Buat Halaman Baru
           </button>
         </div>
 
+        {/* List Halaman */}
         {pages.length > 0 && (
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
               Daftar Halaman Anda ({pages.length})
             </h3>
@@ -432,10 +430,10 @@ export default function BioManagementPage() {
                           <img
                             src={page.avatar_url}
                             alt={page.title}
-                            className="w-8 h-8 rounded-full object-cover"
+                            className="w-8 h-8 rounded-full object-cover shrink-0"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-xs">
+                          <div className="w-8 h-8 rounded-full bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-xs shrink-0">
                             {page.title[0]?.toUpperCase() || "P"}
                           </div>
                         )}
@@ -465,28 +463,30 @@ export default function BioManagementPage() {
           </div>
         )}
 
+        {/* Banner URL Publik & Quick Actions */}
         {selectedPage && !isCreatingNew && username && (
-          <div className="mb-8 p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-4">
-            <div>
+          <div className="mb-6 sm:mb-8 p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
               <span className="text-xs text-indigo-400 font-medium block">URL Publik:</span>
-              <strong className="text-sm text-indigo-200">{bioPageUrl}</strong>
+              <strong className="text-xs sm:text-sm text-indigo-200 block truncate">{bioPageUrl}</strong>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
+
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:space-x-3 w-full sm:w-auto">
+              <div className="col-span-2 sm:col-span-1 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Klik Halaman</span>
                 <span className="text-lg font-bold text-indigo-400">{totalPageClicks}</span>
               </div>
               <Link
                 href="/dashboard/analytics"
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+                className="flex items-center justify-center px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
               >
-                📊 Analytics Grafik
+                📊 Analytics
               </Link>
               <a
                 href={`/${username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+                className="flex items-center justify-center px-3 sm:px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
               >
                 Lihat Halaman ↗
               </a>
@@ -494,11 +494,12 @@ export default function BioManagementPage() {
           </div>
         )}
 
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl mb-8">
-          <h2 className="text-lg font-bold mb-4">
+        {/* Form Main Settings */}
+        <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg font-bold mb-4">
             {isCreatingNew ? "Buat Halaman Baru" : `Edit Halaman: ${selectedPage?.title}`}
           </h2>
-          <form onSubmit={handleSavePage} className="space-y-5">
+          <form onSubmit={handleSavePage} className="space-y-4 sm:space-y-5">
             <div>
               <label className="block text-xs text-slate-400 mb-1">Username / Slug URL (Unik)</label>
               <input
@@ -536,7 +537,7 @@ export default function BioManagementPage() {
 
             <div>
               <label className="block text-xs text-slate-400 mb-2">Pilih Tema Warna Halaman</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
                 {THEME_OPTIONS.map((theme) => {
                   const active = themeColor === theme.id;
                   return (
@@ -544,12 +545,12 @@ export default function BioManagementPage() {
                       key={theme.id}
                       type="button"
                       onClick={() => setThemeColor(theme.id)}
-                      className={`p-3 rounded-xl border flex flex-col items-center justify-center space-y-2 transition-all ${
+                      className={`p-2.5 rounded-xl border flex flex-col items-center justify-center space-y-1.5 transition-all ${
                         active ? `${theme.borderClass} bg-slate-800` : "border-slate-800 bg-slate-950 hover:border-slate-700"
                       }`}
                     >
-                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: theme.color }} />
-                      <span className="text-[11px] font-medium text-slate-300">{theme.name}</span>
+                      <div className="w-5 h-5 rounded-full" style={{ backgroundColor: theme.color }} />
+                      <span className="text-[10px] sm:text-[11px] font-medium text-slate-300">{theme.name}</span>
                     </button>
                   );
                 })}
@@ -558,12 +559,12 @@ export default function BioManagementPage() {
 
             <div>
               <label className="block text-xs text-slate-400 mb-1">Foto Profil / Logo Halaman</label>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 {avatarUrl && (
                   <img
                     src={avatarUrl}
                     alt="Preview Avatar"
-                    className="w-14 h-14 rounded-full object-cover border border-slate-700"
+                    className="w-12 h-12 rounded-full object-cover border border-slate-700 shrink-0"
                   />
                 )}
                 <input
@@ -571,7 +572,7 @@ export default function BioManagementPage() {
                   accept="image/png, image/jpeg, image/jpg, image/webp"
                   onChange={handleFileUpload}
                   disabled={uploading}
-                  className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 file:cursor-pointer disabled:opacity-50"
+                  className="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 file:cursor-pointer disabled:opacity-50"
                 />
               </div>
             </div>
@@ -579,16 +580,17 @@ export default function BioManagementPage() {
             <button
               type="submit"
               disabled={loading || uploading}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
             >
               {loading ? "Menyimpan..." : isCreatingNew ? "Buat Halaman" : "Simpan Perubahan"}
             </button>
           </form>
         </div>
 
+        {/* Tambah Tombol Link & Daftar Link */}
         {selectedPage && !isCreatingNew && (
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl mb-8">
-            <h2 className="text-lg font-bold mb-4">Tambah Tombol Link</h2>
+          <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8">
+            <h2 className="text-base sm:text-lg font-bold mb-4">Tambah Tombol Link</h2>
             <form onSubmit={handleAddLink} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -623,7 +625,7 @@ export default function BioManagementPage() {
 
               <button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all"
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all"
               >
                 + Tambahkan Tombol
               </button>
@@ -636,20 +638,20 @@ export default function BioManagementPage() {
               {links.map((link) => (
                 <div
                   key={link.id}
-                  className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between gap-4"
+                  className="bg-slate-950 border border-slate-800 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  <div className="flex items-center space-x-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                      <LinkIcon type={link.icon_type} className="w-5 h-5" />
+                  <div className="flex items-center space-x-3 overflow-hidden min-w-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                      <LinkIcon type={link.icon_type} className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="truncate">
-                      <h5 className="font-semibold text-sm text-white truncate">{link.title}</h5>
-                      <p className="text-xs text-slate-500 truncate">{link.url}</p>
+                    <div className="min-w-0 flex-1">
+                      <h5 className="font-semibold text-xs sm:text-sm text-white truncate">{link.title}</h5>
+                      <p className="text-[11px] sm:text-xs text-slate-500 truncate">{link.url}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4 shrink-0">
-                    <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700">
+                  <div className="flex items-center justify-between sm:justify-end space-x-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-900">
+                    <span className="text-[11px] sm:text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">
                       👆 {link.clicks || 0} Klik
                     </span>
                     <button
