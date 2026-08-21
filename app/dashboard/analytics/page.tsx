@@ -355,8 +355,8 @@ export default function AnalyticsPage() {
         )}
       </main>
 
-      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-sm">
-        © 2026 KiluLink. All rights reserved.
+            <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
+        © 2026 mr.id. All rights reserved.
       </footer>
     </div>
   );
