@@ -6,6 +6,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ConfirmModal";
+import LinkIcon from "@/components/LinkIcon";
+import IconSelect from "@/components/IconSelect";
 
 interface BioProfile {
   id: string;
@@ -32,17 +34,6 @@ const THEME_OPTIONS = [
   { id: "rose", name: "Rose Pink", bgClass: "bg-rose-600", borderClass: "border-rose-500" },
   { id: "amber", name: "Warm Amber", bgClass: "bg-amber-600", borderClass: "border-amber-500" },
   { id: "dark", name: "Dark Minimalist", bgClass: "bg-slate-800", borderClass: "border-slate-600" },
-];
-
-const ICON_OPTIONS = [
-  { id: "link", label: "🔗 Link Default" },
-  { id: "whatsapp", label: "💬 WhatsApp" },
-  { id: "instagram", label: "📷 Instagram" },
-  { id: "youtube", label: "▶️ YouTube" },
-  { id: "drive", label: "📁 Google Drive / File" },
-  { id: "globe", label: "🌐 Website / Blog" },
-  { id: "email", label: "✉️ Email" },
-  { id: "tiktok", label: "🎵 TikTok" },
 ];
 
 export default function BioManagementPage() {
@@ -211,13 +202,11 @@ export default function BioManagementPage() {
     setLoading(false);
   };
 
-  // Fungsi Pemicu Modal Hapus
   const openDeleteModal = (pageId: string) => {
     setPageToDelete(pageId);
     setIsModalOpen(true);
   };
 
-  // Fungsi Eksekusi Hapus dari Modal
   const handleConfirmDelete = async () => {
     if (!pageToDelete) return;
 
@@ -280,9 +269,9 @@ export default function BioManagementPage() {
   };
 
   const bioPageUrl =
-    typeof window !== "undefined" && username
-      ? `${window.location.origin}/b/${username}`
-      : "";
+  typeof window !== "undefined" && username
+    ? `${window.location.origin}/${username}`
+    : "";
 
   const totalPageClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
 
@@ -370,7 +359,7 @@ export default function BioManagementPage() {
                         )}
                         <h4 className="font-bold text-sm truncate">{page.title}</h4>
                       </div>
-                      <p className="text-xs text-indigo-400 truncate">/b/{page.username}</p>
+                      <p className="text-xs text-indigo-400 truncate">/{page.username}</p>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-800/80 flex justify-between items-center text-xs">
@@ -413,13 +402,13 @@ export default function BioManagementPage() {
                 📊 Analytics Grafik
               </Link>
               <a
-                href={`/b/${username}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
-              >
-                Lihat Halaman ↗
-              </a>
+  href={`/${username}`}
+  target="_blank"
+  rel="noreferrer"
+  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+>
+  Lihat Halaman ↗
+</a>
             </div>
           </div>
         )}
@@ -527,17 +516,10 @@ export default function BioManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Ikon Tombol</label>
-                  <select
+                  <IconSelect
                     value={newIconType}
-                    onChange={(e) => setNewIconType(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-                  >
-                    {ICON_OPTIONS.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setNewIconType(val)}
+                  />
                 </div>
 
                 <div className="md:col-span-2">
@@ -578,35 +560,34 @@ export default function BioManagementPage() {
               <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Daftar Tombol Aktif ({links.length})
               </h4>
-              {links.map((link) => {
-                const iconLabel = ICON_OPTIONS.find((i) => i.id === link.icon_type)?.label.split(" ")[0] || "🔗";
-                return (
-                  <div
-                    key={link.id}
-                    className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between"
-                  >
-                    <div className="flex items-center space-x-3 truncate">
-                      <span className="text-lg">{iconLabel}</span>
-                      <div className="truncate">
-                        <h4 className="font-bold text-sm truncate">{link.title}</h4>
-                        <p className="text-xs text-slate-500 truncate max-w-xs">{link.url}</p>
-                      </div>
+              {links.map((link) => (
+                <div
+                  key={link.id}
+                  className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center space-x-3 overflow-hidden">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                      <LinkIcon type={link.icon_type} className="w-5 h-5" />
                     </div>
-
-                    <div className="flex items-center space-x-4">
-                      <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700">
-                        👆 {link.clicks || 0} Klik
-                      </span>
-                      <button
-                        onClick={() => handleDeleteLink(link.id)}
-                        className="text-xs text-red-400 hover:underline"
-                      >
-                        Hapus
-                      </button>
+                    <div className="truncate">
+                      <h5 className="font-semibold text-sm text-white truncate">{link.title}</h5>
+                      <p className="text-xs text-slate-500 truncate">{link.url}</p>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="flex items-center space-x-4 shrink-0">
+                    <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700">
+                      👆 {link.clicks || 0} Klik
+                    </span>
+                    <button
+                      onClick={() => handleDeleteLink(link.id)}
+                      className="text-xs text-red-400 hover:underline"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
