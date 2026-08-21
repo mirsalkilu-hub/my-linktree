@@ -28,12 +28,12 @@ interface BioLinkItem {
 }
 
 const THEME_OPTIONS = [
-  { id: "indigo", name: "Indigo Modern", bgClass: "bg-indigo-600", borderClass: "border-indigo-500" },
-  { id: "blue", name: "Ocean Blue", bgClass: "bg-blue-600", borderClass: "border-blue-500" },
-  { id: "emerald", name: "Emerald Green", bgClass: "bg-emerald-600", borderClass: "border-emerald-500" },
-  { id: "rose", name: "Rose Pink", bgClass: "bg-rose-600", borderClass: "border-rose-500" },
-  { id: "amber", name: "Warm Amber", bgClass: "bg-amber-600", borderClass: "border-amber-500" },
-  { id: "dark", name: "Dark Minimalist", bgClass: "bg-slate-800", borderClass: "border-slate-600" },
+  { id: "indigo", name: "Indigo Modern", color: "#6366f1", borderClass: "border-indigo-500" },
+  { id: "blue", name: "Ocean Blue", color: "#3b82f6", borderClass: "border-blue-500" },
+  { id: "emerald", name: "Emerald Green", color: "#10b981", borderClass: "border-emerald-500" },
+  { id: "rose", name: "Rose Pink", color: "#f43f5e", borderClass: "border-rose-500" },
+  { id: "amber", name: "Warm Amber", color: "#f59e0b", borderClass: "border-amber-500" },
+  { id: "dark", name: "Dark Minimalist", color: "#334155", borderClass: "border-slate-500" },
 ];
 
 export default function BioManagementPage() {
@@ -55,7 +55,9 @@ export default function BioManagementPage() {
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   // Confirm Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,10 +67,12 @@ export default function BioManagementPage() {
   const router = useRouter();
 
   useEffect(() => {
+    setOrigin(window.location.origin);
     loadUserPages();
   }, []);
 
   const loadUserPages = async () => {
+    setPageLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push("/login");
@@ -83,11 +87,12 @@ export default function BioManagementPage() {
 
     if (profiles && profiles.length > 0) {
       setPages(profiles);
-      handleSelectPage(profiles[0]);
+      await handleSelectPage(profiles[0]);
     } else {
       setPages([]);
       resetFormToNew();
     }
+    setPageLoading(false);
   };
 
   const handleSelectPage = async (page: BioProfile) => {
@@ -233,7 +238,7 @@ export default function BioManagementPage() {
     }
     if (!newLinkTitle || !newLinkUrl) return;
 
-    const formattedUrl = newLinkUrl.startsWith("http")
+    const formattedUrl = newLinkUrl.startsWith("http://") || newLinkUrl.startsWith("https://")
       ? newLinkUrl
       : `https://${newLinkUrl}`;
 
@@ -268,46 +273,67 @@ export default function BioManagementPage() {
     toast.success("Link berhasil dihapus!");
   };
 
-  const bioPageUrl =
-  typeof window !== "undefined" && username
-    ? `${window.location.origin}/${username}`
-    : "";
-
+  const bioPageUrl = username && origin ? `${origin}/${username}` : "";
   const totalPageClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-      {/* Header */}
+      {/* Header dengan Tombol Keluar Berwarna Merah */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-slate-800">
-        <span className="text-2xl font-black tracking-wider text-white">
-          mr<span className="text-indigo-500">.id</span>
-        </span>
+  <span className="text-2xl font-black tracking-wider text-white">
+    mr<span className="text-indigo-500">.id</span>
+  </span>
 
-        <div className="flex items-center space-x-6">
-          <div className="flex space-x-4 text-sm font-semibold">
-            <Link
-              href="/dashboard"
-              className="text-slate-400 hover:text-white transition-all"
-            >
-              Dashboard Link
-            </Link>
-            <span className="text-indigo-400">Kelola Halaman</span>
-            <Link
-              href="/dashboard/analytics"
-              className="text-slate-400 hover:text-white transition-all"
-            >
-              Analytics Grafik
-            </Link>
-          </div>
+  <div className="flex items-center space-x-6 text-sm font-bold">
+    <Link
+      href="/dashboard"
+      className="text-indigo-400 hover:text-indigo-300 transition-all"
+    >
+      Dashboard
+    </Link>
+    <Link
+      href="/dashboard/bio"
+      className="text-indigo-400 hover:text-indigo-300 transition-all"
+    >
+      Kelola Halaman
+    </Link>
+    <Link
+      href="/dashboard/analytics"
+      className="text-indigo-400 hover:text-indigo-300 transition-all"
+    >
+      Analytics Grafik
+    </Link>
 
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700"
-          >
-            Keluar
-          </button>
-        </div>
-      </header>
+    {/* Tombol Keluar dengan Outlined Red Style & Ikon Logout */}
+    <button
+      onClick={handleLogout}
+      className="flex items-center space-x-2 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-4 py-2 rounded-full text-xs font-bold transition-all"
+    >
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+        />
+      </svg>
+      <span>Keluar</span>
+    </button>
+  </div>
+</header>
 
       <main className="max-w-5xl mx-auto px-6 py-10 w-full flex-1">
         <div className="flex items-center justify-between mb-8">
@@ -402,13 +428,13 @@ export default function BioManagementPage() {
                 📊 Analytics Grafik
               </Link>
               <a
-  href={`/${username}`}
-  target="_blank"
-  rel="noreferrer"
-  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
->
-  Lihat Halaman ↗
-</a>
+                href={`/${username}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+              >
+                Lihat Halaman ↗
+              </a>
             </div>
           </div>
         )}
@@ -426,7 +452,10 @@ export default function BioManagementPage() {
                 required
                 placeholder="contoh: webinar-2026 atau materi-teknis"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                  setUsername(sanitized);
+                }}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -469,7 +498,10 @@ export default function BioManagementPage() {
                         active ? `${theme.borderClass} bg-slate-800` : "border-slate-800 bg-slate-950 hover:border-slate-700"
                       }`}
                     >
-                      <div className={`w-6 h-6 rounded-full ${theme.bgClass}`} />
+                      <div 
+                        className="w-6 h-6 rounded-full" 
+                        style={{ backgroundColor: theme.color }} 
+                      />
                       <span className="text-[11px] font-medium text-slate-300">{theme.name}</span>
                     </button>
                   );
@@ -501,7 +533,7 @@ export default function BioManagementPage() {
             <button
               type="submit"
               disabled={loading || uploading}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
             >
               {loading ? "Menyimpan..." : isCreatingNew ? "Buat Halaman" : "Simpan Perubahan"}
             </button>
@@ -538,9 +570,9 @@ export default function BioManagementPage() {
               <div>
                 <label className="block text-xs text-slate-400 mb-1">URL Tujuan</label>
                 <input
-                  type="url"
+                  type="text"
                   required
-                  placeholder="https://..."
+                  placeholder="https://... atau instagram.com/..."
                   value={newLinkUrl}
                   onChange={(e) => setNewLinkUrl(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"

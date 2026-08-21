@@ -1,271 +1,352 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, notFound } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
+import { notFound, useRouter } from "next/navigation";
 import LinkIcon from "@/components/LinkIcon";
-import { ExternalLink, Share2, Copy, Check, Sparkles, X, ArrowLeft } from "lucide-react";
 
-interface BioProfile {
-  id: string;
-  username: string;
-  title: string;
-  bio_description?: string;
-  avatar_url?: string;
-}
+// Dynamic Theme Presets
+const THEME_PRESETS: Record<
+  string,
+  {
+    avatarGlow: string;
+    avatarBorder: string;
+    badgeBg: string;
+    badgeText: string;
+    cardBorder: string;
+    buttonBorder: string;
+    buttonHover: string;
+  }
+> = {
+  indigo: {
+    avatarGlow: "shadow-[0_0_35px_rgba(99,102,241,0.6)]",
+    avatarBorder: "border-indigo-500",
+    badgeBg: "bg-indigo-950/70 border-indigo-500/40",
+    badgeText: "text-indigo-300",
+    cardBorder: "border-indigo-500/20",
+    buttonBorder: "border-indigo-500/20 hover:border-indigo-500/60",
+    buttonHover: "hover:bg-indigo-950/30",
+  },
+  blue: {
+    avatarGlow: "shadow-[0_0_35px_rgba(59,130,246,0.6)]",
+    avatarBorder: "border-blue-500",
+    badgeBg: "bg-blue-950/70 border-blue-500/40",
+    badgeText: "text-blue-300",
+    cardBorder: "border-blue-500/20",
+    buttonBorder: "border-blue-500/20 hover:border-blue-500/60",
+    buttonHover: "hover:bg-blue-950/30",
+  },
+  emerald: {
+    avatarGlow: "shadow-[0_0_35px_rgba(16,185,129,0.6)]",
+    avatarBorder: "border-emerald-500",
+    badgeBg: "bg-emerald-950/70 border-emerald-500/40",
+    badgeText: "text-emerald-300",
+    cardBorder: "border-emerald-500/20",
+    buttonBorder: "border-emerald-500/20 hover:border-emerald-500/60",
+    buttonHover: "hover:bg-emerald-950/30",
+  },
+  rose: {
+    avatarGlow: "shadow-[0_0_35px_rgba(244,63,94,0.6)]",
+    avatarBorder: "border-rose-500",
+    badgeBg: "bg-rose-950/70 border-rose-500/40",
+    badgeText: "text-rose-300",
+    cardBorder: "border-rose-500/20",
+    buttonBorder: "border-rose-500/20 hover:border-rose-500/60",
+    buttonHover: "hover:bg-rose-950/30",
+  },
+  amber: {
+    avatarGlow: "shadow-[0_0_35px_rgba(245,158,11,0.6)]",
+    avatarBorder: "border-amber-500",
+    badgeBg: "bg-amber-950/70 border-amber-500/40",
+    badgeText: "text-amber-300",
+    cardBorder: "border-amber-500/20",
+    buttonBorder: "border-amber-500/20 hover:border-amber-500/60",
+    buttonHover: "hover:bg-amber-950/30",
+  },
+  dark: {
+    avatarGlow: "shadow-[0_0_35px_rgba(148,163,184,0.3)]",
+    avatarBorder: "border-slate-500",
+    badgeBg: "bg-slate-900 border-slate-700",
+    badgeText: "text-slate-300",
+    cardBorder: "border-slate-800",
+    buttonBorder: "border-slate-800 hover:border-slate-600",
+    buttonHover: "hover:bg-slate-900",
+  },
+};
 
-interface BioLinkItem {
-  id: string;
-  title: string;
-  url: string;
-  icon_type?: string;
-  clicks?: number;
-}
+export default function PublicBioPage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = use(params);
+  const router = useRouter();
 
-export default function PublicBioPage() {
-  const params = useParams();
-  const username = params?.username as string;
-
-  const [profile, setProfile] = useState<BioProfile | null>(null);
-  const [links, setLinks] = useState<BioLinkItem[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [links, setLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (username) {
-      loadBioData();
-    }
-  }, [username]);
-
-  const loadBioData = async () => {
-    try {
-      const { data: profileData, error: profileError } = await supabase
+    async function fetchData() {
+      // Fetch Profile
+      const { data: profData } = await supabase
         .from("bio_profiles")
         .select("*")
         .eq("username", username)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profileData) {
+      if (!profData) {
         setLoading(false);
         return;
       }
 
-      setProfile(profileData);
+      setProfile(profData);
 
+      // Fetch Links
       const { data: linkData } = await supabase
         .from("bio_links")
         .select("*")
-        .eq("bio_id", profileData.id)
+        .eq("bio_id", profData.id)
         .order("created_at", { ascending: true });
 
       setLinks(linkData || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
       setLoading(false);
     }
-  };
 
-  const handleLinkClick = async (linkId: string, currentClicks: number, url: string) => {
-    await supabase
-      .from("bio_links")
-      .update({ clicks: (currentClicks || 0) + 1 })
-      .eq("id", linkId);
-
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: profile?.title || "Bio Link",
-          text: profile?.bio_description || "Kunjungi link bio saya",
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.error("Error sharing:", err);
-      }
-    } else {
-      setShowShareModal(true);
-    }
-  };
+    fetchData();
+  }, [username]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060813] flex items-center justify-center text-slate-500 text-sm">
-        Memuat...
+      <div className="min-h-screen bg-[#060913] text-white flex items-center justify-center p-4">
+        <div className="animate-pulse text-sm text-slate-400">Loading...</div>
       </div>
     );
   }
 
   if (!profile) {
-    return notFound();
+    notFound();
   }
 
+  const theme = THEME_PRESETS[profile.theme_color || "indigo"] || THEME_PRESETS.indigo;
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
-  return (
-    <div className="min-h-screen bg-[#04060c] text-white flex items-center justify-center p-4 sm:p-6 select-none">
-      {/* Card Utama */}
-      <div className="relative max-w-md w-full bg-[#080d1a] border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center my-auto">
-        
-        {/* Tombol Kembali ke Halaman Utama (Kiri Atas) */}
-        <Link
-          href="/"
-          className="absolute top-5 left-5 w-10 h-10 rounded-full bg-[#111728] border border-slate-800 hover:border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md active:scale-95"
-          title="Kembali ke Utama"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
+  const handleShareClick = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: profile.title,
+          text: `Cek bio link dari @${profile.username}`,
+          url: currentUrl,
+        });
+        return;
+      } catch (err) {
+        // user membatalkan share
+      }
+    }
+    setIsShareOpen(true);
+  };
 
-        {/* Tombol Bagikan (Kanan Atas) */}
+  const handleCopy = () => {
+    navigator.clipboard.writeText(currentUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareItems = [
+    {
+      name: "WhatsApp",
+      color: "bg-emerald-600 hover:bg-emerald-500",
+      url: `https://api.whatsapp.com/send?text=${encodeURIComponent(`Cek bio link @${profile.username}: ${currentUrl}`)}`,
+      icon: "💬",
+    },
+    {
+      name: "Telegram",
+      color: "bg-sky-500 hover:bg-sky-400",
+      url: `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(profile.title)}`,
+      icon: "✈️",
+    },
+    {
+      name: "X / Twitter",
+      color: "bg-zinc-800 hover:bg-zinc-700",
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(`Cek bio link @${profile.username}`)}`,
+      icon: "𝕏",
+    },
+    {
+      name: "Facebook",
+      color: "bg-blue-600 hover:bg-blue-500",
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`,
+      icon: "📘",
+    },
+  ];
+
+  // Penyesuaian fleksibel ukuran font berdasarkan panjang teks judul
+  const titleLength = profile.title?.length || 0;
+  const titleSizeClass =
+    titleLength > 35
+      ? "text-base sm:text-lg"
+      : titleLength > 20
+      ? "text-lg sm:text-xl"
+      : "text-xl sm:text-2xl";
+
+  return (
+    <div className="min-h-screen bg-[#060913] text-white flex items-center justify-center p-4 font-sans">
+      
+      {/* Container Kartu Utama */}
+      <div className={`w-full max-w-md bg-[#0b0f19] border ${theme.cardBorder} rounded-[32px] p-8 relative flex flex-col items-center text-center shadow-2xl`}>
+        
+        {/* Tombol Home di Pojok Kiri Atas */}
         <button
-          onClick={handleNativeShare}
-          className="absolute top-5 right-5 w-10 h-10 rounded-full bg-[#111728] border border-slate-800 hover:border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md active:scale-95"
-          title="Bagikan Halaman"
+          onClick={() => router.push("/")}
+          className="absolute top-6 left-6 w-10 h-10 rounded-full bg-[#131927] hover:bg-[#1a2336] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200"
+          title="Kembali ke Beranda"
         >
-          <Share2 className="w-4 h-4" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
         </button>
 
-        {/* Header Profil & Avatar */}
-        <div className="flex flex-col items-center w-full mt-2">
-          {/* Avatar dengan Glow Purple */}
-          <div className="relative mb-4 group">
-            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 opacity-70 blur-md"></div>
-            {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.title}
-                className="relative w-24 h-24 rounded-full object-cover border-2 border-purple-400/50"
-              />
-            ) : (
-              <div className="relative w-24 h-24 rounded-full bg-indigo-900 border-2 border-purple-400/50 flex items-center justify-center text-white font-bold text-2xl">
-                {profile.title?.[0]?.toUpperCase()}
-              </div>
-            )}
-          </div>
+        {/* Tombol Share di Pojok Kanan Atas */}
+        <button
+          onClick={handleShareClick}
+          className="absolute top-6 right-6 w-10 h-10 rounded-full bg-[#131927] hover:bg-[#1a2336] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200"
+          title="Bagikan Halaman"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684" />
+          </svg>
+        </button>
 
-          {/* Badge @username */}
-          <div className="flex items-center gap-1.5 bg-[#0f152a] border border-slate-800 text-indigo-300 px-3 py-1 rounded-full text-xs font-medium mb-3 shadow-inner">
-            <Sparkles className="w-3 h-3 text-indigo-400" />
-            <span>@{profile.username}</span>
-          </div>
-
-          {/* Judul Halaman Responsive */}
-          <h1 className="text-lg sm:text-xl font-extrabold text-center text-white tracking-wide uppercase px-2 leading-snug break-words w-full">
-            {profile.title}
-          </h1>
-
-          {/* Deskripsi */}
-          {profile.bio_description && (
-            <p className="text-xs text-slate-400 text-center mt-2 font-normal max-w-xs leading-relaxed break-words">
-              {profile.bio_description}
-            </p>
+        {/* Foto Profil dengan Glow */}
+        <div className="mt-2 mb-4 relative">
+          {profile.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={profile.title}
+              className={`w-28 h-28 rounded-full object-cover border-2 ${theme.avatarBorder} ${theme.avatarGlow} transition-all duration-300`}
+            />
+          ) : (
+            <div className={`w-28 h-28 rounded-full bg-slate-900 border-2 ${theme.avatarBorder} ${theme.avatarGlow} flex items-center justify-center text-3xl font-black`}>
+              {profile.title[0]?.toUpperCase()}
+            </div>
           )}
         </div>
 
-        {/* Daftar Tombol Link */}
-        <div className="w-full mt-8 space-y-3.5">
-          {links.length > 0 ? (
+        {/* Badge @Username */}
+        <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${theme.badgeBg} ${theme.badgeText} mb-4`}>
+          <span>✨</span>
+          <span>@{profile.username}</span>
+        </div>
+
+        {/* Judul dengan Penyesuaian Otomatis */}
+        <h1
+          className={`${titleSizeClass} font-black uppercase tracking-wider text-white mb-1 leading-snug break-words max-w-xs sm:max-w-sm`}
+        >
+          {profile.title}
+        </h1>
+
+        {profile.bio_description && (
+          <p className="text-xs text-slate-400 mb-8 font-medium max-w-xs leading-relaxed">
+            {profile.bio_description}
+          </p>
+        )}
+
+        {/* List Tombol Link */}
+        <div className="w-full space-y-3.5 mb-8">
+          {links && links.length > 0 ? (
             links.map((link) => (
-              <button
+              <a
                 key={link.id}
-                onClick={() => handleLinkClick(link.id, link.clicks || 0, link.url)}
-                className="relative w-full bg-[#111728]/90 hover:bg-[#161f36] border border-slate-800/80 hover:border-slate-700/80 px-4 py-4 rounded-2xl flex items-center justify-between transition-all duration-200 group shadow-md gap-3"
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full h-14 bg-[#111726]/80 hover:bg-[#161e31] border ${theme.buttonBorder} ${theme.buttonHover} rounded-2xl px-5 flex items-center justify-between transition-all duration-200 group`}
               >
                 {/* Ikon Kiri */}
-                <div className="w-6 flex justify-start text-slate-300 group-hover:text-white transition-colors shrink-0">
+                <div className="w-6 h-6 flex items-center justify-center shrink-0">
                   <LinkIcon type={link.icon_type} className="w-5 h-5" />
                 </div>
 
-                {/* Judul Link */}
-                <span className="font-bold text-xs uppercase tracking-wider text-slate-100 group-hover:text-white text-center flex-1 leading-normal break-words">
+                {/* Judul Tombol Tengah */}
+                <span className="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-white truncate mx-2">
                   {link.title}
                 </span>
 
-                {/* Ikon Panah Eksternal */}
-                <div className="w-6 flex justify-end text-slate-500 group-hover:text-slate-300 transition-colors shrink-0">
-                  <ExternalLink className="w-4 h-4" />
+                {/* Ikon External Link Kanan */}
+                <div className="w-6 h-6 flex items-center justify-center shrink-0 text-slate-500 group-hover:text-slate-300">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
                 </div>
-              </button>
+              </a>
             ))
           ) : (
-            <p className="text-center text-slate-600 text-xs py-4">
-              Belum ada link yang ditambahkan.
-            </p>
+            <div className="p-4 bg-[#111726] border border-slate-800 rounded-xl text-xs text-slate-500">
+              Belum ada link
+            </div>
           )}
         </div>
 
-        {/* Footer Pill */}
-        <div className="mt-8 pt-4 border-t border-slate-800/60 w-full flex justify-center">
-          <div className="bg-[#0b0f1d] border border-slate-800/80 text-slate-400 text-[10px] font-bold px-4 py-1.5 rounded-full tracking-widest uppercase">
-            POWERED BY <span className="text-indigo-400">mr.id</span>
+        {/* Separator Line & Footer */}
+        <div className="w-full border-t border-slate-800/60 pt-6 flex justify-center">
+          <div className="inline-block bg-[#111726] border border-slate-800 px-5 py-2 rounded-full text-[10px] font-bold tracking-widest text-slate-400">
+            POWERED BY <span className="text-indigo-400">MR.ID</span>
           </div>
         </div>
+
       </div>
 
-      {/* Modal Share */}
-      {showShareModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111728] border border-slate-800 rounded-2xl p-6 max-w-sm w-full relative shadow-2xl animate-in fade-in zoom-in-95">
+      {/* Modal Popup Share Ke Sosmed */}
+      {isShareOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0b0f19] border border-slate-800 rounded-3xl p-6 w-full max-w-sm text-center relative shadow-2xl">
             <button
-              onClick={() => setShowShareModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              onClick={() => setIsShareOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-base p-1"
             >
-              <X className="w-5 h-5" />
+              ✕
             </button>
 
-            <h3 className="text-base font-bold text-white mb-1">Bagikan Halaman</h3>
-            <p className="text-xs text-slate-400 mb-5">
-              Salin link atau bagikan langsung ke media sosial.
-            </p>
+            <h3 className="text-lg font-extrabold text-white mb-1">Bagikan Profil</h3>
+            <p className="text-xs text-slate-400 mb-6">Pilih media sosial untuk membagikan halaman ini</p>
 
-            <div className="flex items-center gap-2 bg-[#080d1a] border border-slate-800 rounded-xl p-2 mb-5">
+            {/* Grid Tombol Sosmed */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {shareItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`p-3 rounded-2xl text-white font-bold text-xs flex items-center justify-center space-x-2 transition-all ${item.color}`}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.name}</span>
+                </a>
+              ))}
+            </div>
+
+            {/* Copy Link Input */}
+            <div className="flex items-center bg-[#111726] border border-slate-800 rounded-2xl p-2">
               <input
                 type="text"
                 readOnly
                 value={currentUrl}
-                className="bg-transparent text-xs text-slate-300 px-2 flex-1 outline-none truncate"
+                className="bg-transparent text-xs text-slate-300 px-2 w-full focus:outline-none truncate"
               />
               <button
-                onClick={handleCopyLink}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0 transition-colors"
+                onClick={handleCopy}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all shrink-0"
               >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? "Tersalin" : "Salin"}</span>
+                {copied ? "Tersalin!" : "Salin"}
               </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-[#25D366] py-2.5 rounded-xl font-medium text-center transition-colors"
-              >
-                WhatsApp
-              </a>
-              <a
-                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] py-2.5 rounded-xl font-medium text-center transition-colors"
-              >
-                X / Twitter
-              </a>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

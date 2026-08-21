@@ -16,7 +16,7 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { TrendingUp, MousePointer, Layers, ArrowLeft } from "lucide-react";
+import { TrendingUp, MousePointer, Layers, ArrowLeft, LogOut } from "lucide-react";
 
 interface BioProfile {
   id: string;
@@ -45,6 +45,12 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState<boolean>(true);
 
   const router = useRouter();
+
+  // Fungsi Logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   useEffect(() => {
     loadPages();
@@ -148,11 +154,12 @@ export default function AnalyticsPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <span className="text-2xl font-black tracking-wider text-white">
-  mr<span className="text-indigo-500">.id</span>
-</span>
+            mr<span className="text-indigo-500">.id</span>
+          </span>
         </div>
 
-        <div className="flex space-x-4 text-sm font-semibold">
+        {/* Navigation Links & Logout */}
+        <div className="flex items-center space-x-6 text-sm font-semibold">
           <Link href="/dashboard" className="text-slate-400 hover:text-white transition-all">
             Dashboard
           </Link>
@@ -160,6 +167,15 @@ export default function AnalyticsPage() {
             Kelola Halaman
           </Link>
           <span className="text-indigo-400">Analytics Grafik</span>
+
+          {/* Tombol Keluar */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-xs font-semibold text-red-400 hover:text-red-300 transition-all duration-200"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar</span>
+          </button>
         </div>
       </header>
 

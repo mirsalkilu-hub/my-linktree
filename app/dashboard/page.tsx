@@ -1,10 +1,10 @@
-
 "use client";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // <-- Tambahkan baris ini jika belum ada!
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { LogOut } from "lucide-react"; // <-- Import ikon LogOut
 
 interface LinkItem {
   id: string;
@@ -127,24 +127,24 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-     {/* Header */}
+      {/* Header */}
       <header className="flex items-center justify-between px-8 py-5 border-b border-slate-800">
         <div className="flex items-center space-x-6">
           <span className="text-2xl font-black tracking-wider text-indigo-500">
             mr.<span className="text-white">id</span>
           </span>
 
-          {/* Menu Navigasi tambahkan di sini */}
+          {/* Menu Navigasi */}
           <nav className="flex space-x-4 text-sm font-semibold ml-4">
             <span className="text-indigo-400 border-b-2 border-indigo-500 pb-1 cursor-default">
               Dashboard Link
             </span>
-          <Link
-  href="/dashboard/bio"
-  className="text-slate-400 hover:text-white transition-all pb-1"
->
-  Kelola Halaman
-</Link>
+            <Link
+              href="/dashboard/bio"
+              className="text-slate-400 hover:text-white transition-all pb-1"
+            >
+              Kelola Halaman
+            </Link>
           </nav>
         </div>
 
@@ -157,11 +157,14 @@ export default function DashboardPage() {
               {user?.user_metadata?.full_name || user?.email}
             </span>
           </div>
+
+          {/* Tombol Keluar Diperbarui */}
           <button
             onClick={handleLogout}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-xs font-semibold text-red-400 hover:text-red-300 transition-all duration-200"
           >
-            Keluar
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar</span>
           </button>
         </div>
       </header>
@@ -304,8 +307,8 @@ export default function DashboardPage() {
 
       {/* Footer */}
       <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
-  © 2026 mr.id. All rights reserved.
-</footer>
+        © 2026 mr.id. All rights reserved.
+      </footer>
     </div>
   );
 }
