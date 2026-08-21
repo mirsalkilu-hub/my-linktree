@@ -292,7 +292,7 @@ export default function PublicBioPage({
         {/* Separator Line & Footer */}
         <div className="w-full border-t border-slate-800/60 pt-6 flex justify-center">
           <div className="inline-block bg-[#111726] border border-slate-800 px-5 py-2 rounded-full text-[10px] font-bold tracking-widest text-slate-400">
-            POWERED BY <span className="text-indigo-400">MR.ID</span>
+            Powered By <span className="text-indigo-400">mr.id</span>
           </div>
         </div>
 
