@@ -96,27 +96,29 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070913] text-white font-sans flex flex-col justify-between relative overflow-hidden">
+    <div className="min-h-screen bg-[#070913] text-white font-sans flex flex-col justify-between relative overflow-x-clip">
       {/* Ambient Glow Background Effect */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-1/2 left-1/3 w-[300px] h-[200px] bg-purple-600/10 blur-[100px] rounded-full pointer-events-none" />
 
-      {/* Header / Navbar */}
-      <header className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto w-full">
-        <span className="text-2xl font-black tracking-wider text-white">
-          mr<span className="text-indigo-500">.id</span>
-        </span>
+      {/* Header Sticky & Garis Bawah */}
+      <header className="sticky top-0 z-50 w-full bg-[#070913]/80 backdrop-blur-md border-b border-slate-800">
+        <div className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
+          <span className="text-2xl font-black tracking-wider text-white">
+            mr<span className="text-indigo-500">.id</span>
+          </span>
 
-        <Link
-          href="/login"
-          className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-        >
-          Masuk / Daftar
-        </Link>
+          <Link
+            href="/login"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+          >
+            Masuk / Daftar
+          </Link>
+        </div>
       </header>
 
       {/* Main Hero Section */}
-      <main className="relative z-10 max-w-4xl mx-auto px-6 py-12 text-center flex-1 flex flex-col items-center justify-center">
+      <main className="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center flex-1 flex flex-col items-center justify-center">
         {/* Badge Indicator */}
         <div className="inline-flex items-center space-x-2 bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-xs font-medium mb-6 backdrop-blur-md">
           <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
