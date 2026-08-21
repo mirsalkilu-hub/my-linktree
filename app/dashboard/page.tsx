@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { LogOut } from "lucide-react";
 
+
 interface LinkItem {
   id: string;
   original_url: string;
@@ -128,61 +129,66 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
       {/* Header Sticky / Melayang */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
-        <div className="max-w-7xl mx-auto px-8 flex items-center justify-between h-16">
-          {/* Container Kiri: Logo + Navigasi */}
-          <div className="flex items-center space-x-10 h-full">
-            <span className="text-2xl font-black tracking-wider text-white">
-              mr<span className="text-indigo-500">.id</span>
-            </span>
+  <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16 gap-2 sm:gap-4">
+    
+    {/* Side Kiri: Logo + Menu Scrollable */}
+    <div className="flex items-center space-x-4 sm:space-x-8 h-full overflow-x-auto no-scrollbar py-2">
+      <span className="text-lg sm:text-2xl font-black tracking-wider text-white shrink-0">
+        mr<span className="text-indigo-500">.id</span>
+      </span>
 
-            <nav className="flex items-center space-x-8 h-full text-sm font-semibold">
-              <Link
-                href="/dashboard"
-                className={`flex items-center h-full border-b-2 transition-all ${
-                  pathname === "/dashboard"
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                Dashboard Link
-              </Link>
-              <Link
-                href="/dashboard/pages"
-                className={`flex items-center h-full border-b-2 transition-all ${
-                  pathname.startsWith("/dashboard/bio") || pathname === "/dashboard/pages"
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                Kelola Halaman
-              </Link>
-            </nav>
-          </div>
+      <nav className="flex items-center space-x-4 sm:space-x-8 h-full text-xs sm:text-sm font-semibold shrink-0">
+        <Link
+          href="/dashboard"
+          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
+            pathname === "/dashboard"
+              ? "border-indigo-500 text-indigo-400 font-bold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          Dashboard
+        </Link>
+        <Link
+          href="/dashboard/pages"
+          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
+            pathname.startsWith("/dashboard/pages")
+              ? "border-indigo-500 text-indigo-400 font-bold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          Kelola Halaman
+        </Link>
+        <Link
+          href="/dashboard/analytics"
+          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
+            pathname.startsWith("/dashboard/analytics")
+              ? "border-indigo-500 text-indigo-400 font-bold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          Analytics
+        </Link>
+      </nav>
+    </div>
 
-          {/* Container Kanan: User Info + Tombol Keluar */}
-          <div className="flex items-center space-x-4">
-            {user && (
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase">
-                  {user.email?.[0] || "M"}
-                </div>
-                <span className="text-sm font-medium text-slate-300 hidden sm:inline">
-                  {user.user_metadata?.full_name || user.email?.split("@")[0]}
-                </span>
-              </div>
-            )}
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span>Keluar</span>
-            </button>
-          </div>
+    {/* Side Kanan: Profile Ringkas + Logout */}
+    <div className="flex items-center space-x-2 shrink-0">
+      {user && (
+        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+          {user.email?.[0] || "M"}
         </div>
-      </header>
+      )}
+      <button
+        onClick={handleLogout}
+        className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-2.5 py-1.5 sm:px-4 rounded-full text-xs font-bold transition-all"
+      >
+        <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <span className="hidden sm:inline">Keluar</span>
+      </button>
+    </div>
+
+  </div>
+</header>
 
       {/* Konten Utama */}
       <main className="max-w-4xl mx-auto px-6 py-10 w-full flex-1">
