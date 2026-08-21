@@ -8,7 +8,7 @@ import Link from "next/link";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
@@ -24,113 +24,127 @@ export default function LoginPage() {
   };
 
   // Auth Email & Password
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
-    if (isSignUp) {
-      // Fitur Daftar
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      if (error) {
-        setErrorMsg(error.message);
-      } else {
-        alert("Pendaftaran berhasil! Silakan masuk dengan akun Anda.");
-        setIsSignUp(false);
-      }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMsg(error.message);
     } else {
-      // Fitur Masuk
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setErrorMsg(error.message);
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl">
+    <div className="min-h-screen bg-[#0b0f19] text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#0f172a]/60 border border-slate-800 p-8 rounded-2xl backdrop-blur-xl shadow-2xl">
+        
         {/* Header Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-black tracking-wider text-white">
             mr<span className="text-indigo-500">.id</span>
           </Link>
-          <p className="text-xs text-slate-400 mt-2">
-            {isSignUp ? "Buat akun mr.id baru" : "Masuk ke akun mr.id Anda"}
-          </p>
+          <h2 className="text-xl font-bold mt-4 text-slate-100">Masuk ke Akun Anda</h2>
         </div>
 
+        {/* Error Message */}
         {errorMsg && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-xl">
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium text-center rounded-xl">
             {errorMsg}
           </div>
         )}
 
-        {/* Form Email */}
-        <form onSubmit={handleEmailAuth} className="space-y-4">
+        {/* Form Login */}
+        <form onSubmit={handleLogin} className="space-y-5">
+          
+          {/* Email Field */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Alamat Email
+            <label className="block text-xs font-semibold text-slate-300 mb-2">
+              Email <span className="text-red-500">*</span>
             </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@email.com"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
-            />
+            <div className="relative flex items-center">
+              <span className="absolute left-4 text-slate-400 pointer-events-none text-base font-medium">
+                @
+              </span>
+              <input
+                type="email"
+                required
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+              />
+            </div>
           </div>
 
+          {/* Password Field */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Kata Sandi
-            </label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500"
-            />
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-slate-300">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <Link href="/forgot-password" className="text-xs text-indigo-400 hover:underline">
+                Lupa password?
+              </Link>
+            </div>
+            <div className="relative flex items-center">
+              <span className="absolute left-4 text-slate-400 pointer-events-none">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </span>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Masukkan kata sandi"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold text-white text-sm transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50"
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/30 active:scale-95 disabled:opacity-50 text-sm mt-2"
           >
-            {loading ? "Memproses..." : isSignUp ? "Daftar Akun" : "Masuk"}
+            {loading ? "Memproses..." : "Masuk"}
           </button>
         </form>
 
+        {/* Divider */}
         <div className="relative my-6 text-center">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800"></div>
           </div>
-          <span className="relative px-3 bg-slate-900 text-slate-500 text-xs">
+          <span className="relative px-3 bg-[#0f172a] text-slate-500 text-xs">
             atau
           </span>
         </div>
 
-        {/* Tombol Login Google */}
+        {/* Tombol OAuth Google */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-medium text-sm transition-all"
+          className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-slate-200 font-medium text-sm transition-all"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -153,30 +167,14 @@ export default function LoginPage() {
           <span>Lanjutkan dengan Google</span>
         </button>
 
-        {/* Toggle Masuk / Daftar */}
-        <div className="mt-6 text-center text-xs text-slate-400">
-          {isSignUp ? (
-            <p>
-              Sudah punya akun?{" "}
-              <button
-                onClick={() => setIsSignUp(false)}
-                className="text-indigo-400 font-semibold hover:underline"
-              >
-                Masuk
-              </button>
-            </p>
-          ) : (
-            <p>
-              Belum punya akun?{" "}
-              <button
-                onClick={() => setIsSignUp(true)}
-                className="text-indigo-400 font-semibold hover:underline"
-              >
-                Daftar sekarang
-              </button>
-            </p>
-          )}
-        </div>
+        {/* Link ke Pendaftaran */}
+        <p className="text-center text-xs text-slate-400 mt-6">
+          Belum punya akun?{" "}
+          <Link href="/register" className="text-indigo-400 font-semibold hover:underline">
+            Daftar sekarang
+          </Link>
+        </p>
+
       </div>
     </div>
   );
