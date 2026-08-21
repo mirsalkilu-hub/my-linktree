@@ -90,9 +90,12 @@ export default function LoginPage() {
               <label className="text-xs font-semibold text-slate-300">
                 Password <span className="text-red-500">*</span>
               </label>
-              <Link href="/forgot-password" className="text-xs text-indigo-400 hover:underline">
-                Lupa password?
-              </Link>
+              <Link
+  href="/forgot-password"
+  className="text-xs text-indigo-400 hover:underline hover:text-indigo-300"
+>
+  Lupa password?
+</Link>
             </div>
             <div className="relative flex items-center">
               <span className="absolute left-4 text-slate-400 pointer-events-none">
