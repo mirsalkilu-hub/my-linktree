@@ -1,10 +1,10 @@
 "use client";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { LogOut } from "lucide-react"; // <-- Import ikon LogOut
+import { LogOut } from "lucide-react";
 
 interface LinkItem {
   id: string;
@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
+  const pathname = usePathname(); // <--- Ditambahkan di sini
 
   useEffect(() => {
     fetchUserAndLinks();
@@ -84,7 +85,6 @@ export default function DashboardPage() {
     alert("Link berhasil disalin!");
   };
 
-  // Fungsi untuk mengunduh QR Code sebagai file PNG
   const downloadQRCode = (id: string, shortCode: string) => {
     const svgElement = document.getElementById(`qr-${id}`) as SVGSVGElement | null;
     if (!svgElement) return;
@@ -122,50 +122,65 @@ export default function DashboardPage() {
     router.push("/");
   };
 
-  // Total statistik seluruh klik
   const totalClicks = links.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-slate-800">
-        <div className="flex items-center space-x-6">
-          <span className="text-2xl font-black tracking-wider text-indigo-500">
-            mr.<span className="text-white">id</span>
-          </span>
-
-          {/* Menu Navigasi */}
-          <nav className="flex space-x-4 text-sm font-semibold ml-4">
-            <span className="text-indigo-400 border-b-2 border-indigo-500 pb-1 cursor-default">
-              Dashboard Link
+      {/* Header Sticky / Melayang */}
+      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+        <div className="max-w-7xl mx-auto px-8 flex items-center justify-between h-16">
+          {/* Container Kiri: Logo + Navigasi */}
+          <div className="flex items-center space-x-10 h-full">
+            <span className="text-2xl font-black tracking-wider text-white">
+              mr<span className="text-indigo-500">.id</span>
             </span>
-            <Link
-              href="/dashboard/bio"
-              className="text-slate-400 hover:text-white transition-all pb-1"
-            >
-              Kelola Halaman
-            </Link>
-          </nav>
-        </div>
 
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm">
-              {user?.email?.[0].toUpperCase() || "U"}
-            </div>
-            <span className="text-sm font-medium text-slate-300">
-              {user?.user_metadata?.full_name || user?.email}
-            </span>
+            <nav className="flex items-center space-x-8 h-full text-sm font-semibold">
+              <Link
+                href="/dashboard"
+                className={`flex items-center h-full border-b-2 transition-all ${
+                  pathname === "/dashboard"
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Dashboard Link
+              </Link>
+              <Link
+                href="/dashboard/pages"
+                className={`flex items-center h-full border-b-2 transition-all ${
+                  pathname.startsWith("/dashboard/bio") || pathname === "/dashboard/pages"
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Kelola Halaman
+              </Link>
+            </nav>
           </div>
 
-          {/* Tombol Keluar Diperbarui */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-xs font-semibold text-red-400 hover:text-red-300 transition-all duration-200"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar</span>
-          </button>
+          {/* Container Kanan: User Info + Tombol Keluar */}
+          <div className="flex items-center space-x-4">
+            {user && (
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase">
+                  {user.email?.[0] || "M"}
+                </div>
+                <span className="text-sm font-medium text-slate-300 hidden sm:inline">
+                  {user.user_metadata?.full_name || user.email?.split("@")[0]}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Keluar</span>
+            </button>
+          </div>
         </div>
       </header>
 

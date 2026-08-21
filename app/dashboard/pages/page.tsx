@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -65,55 +65,9 @@ export default function BioManagementPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
+  const pathname = usePathname();
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-    loadUserPages();
-  }, []);
-
-  const loadUserPages = async () => {
-    setPageLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    const { data: profiles } = await supabase
-      .from("bio_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (profiles && profiles.length > 0) {
-      setPages(profiles);
-      await handleSelectPage(profiles[0]);
-    } else {
-      setPages([]);
-      resetFormToNew();
-    }
-    setPageLoading(false);
-  };
-
-  const handleSelectPage = async (page: BioProfile) => {
-    setSelectedPage(page);
-    setIsCreatingNew(false);
-    setUsername(page.username || "");
-    setTitle(page.title || "");
-    setDescription(page.bio_description || "");
-    setAvatarUrl(page.avatar_url || "");
-    setThemeColor(page.theme_color || "indigo");
-
-    const { data: linkData } = await supabase
-      .from("bio_links")
-      .select("*")
-      .eq("bio_id", page.id)
-      .order("created_at", { ascending: true });
-
-    setLinks(linkData || []);
-  };
-
-  const resetFormToNew = () => {
+  const resetFormToNew = useCallback(() => {
     setSelectedPage(null);
     setIsCreatingNew(true);
     setUsername("");
@@ -122,7 +76,64 @@ export default function BioManagementPage() {
     setAvatarUrl("");
     setThemeColor("indigo");
     setLinks([]);
-  };
+  }, []);
+
+  const handleSelectPage = useCallback(async (page: BioProfile) => {
+    setSelectedPage(page);
+    setIsCreatingNew(false);
+    setUsername(page.username || "");
+    setTitle(page.title || "");
+    setDescription(page.bio_description || "");
+    setAvatarUrl(page.avatar_url || "");
+    setThemeColor(page.theme_color || "indigo");
+
+    const { data: linkData, error } = await supabase
+      .from("bio_links")
+      .select("*")
+      .eq("bio_id", page.id)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      toast.error("Gagal memuat link: " + error.message);
+    } else {
+      setLinks(linkData || []);
+    }
+  }, []);
+
+  const loadUserPages = useCallback(async () => {
+    setPageLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const { data: profiles, error } = await supabase
+      .from("bio_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Gagal memuat daftar halaman.");
+    } else if (profiles && profiles.length > 0) {
+      setPages(profiles);
+      if (!selectedPage || !profiles.some((p) => p.id === selectedPage.id)) {
+        await handleSelectPage(profiles[0]);
+      }
+    } else {
+      setPages([]);
+      resetFormToNew();
+    }
+    setPageLoading(false);
+  }, [router, selectedPage, handleSelectPage, resetFormToNew]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+    loadUserPages();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -135,17 +146,29 @@ export default function BioManagementPage() {
       if (!event.target.files || event.target.files.length === 0) return;
 
       const file = event.target.files[0];
+      const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        toast.error("Format file harus berupa PNG, JPG, JPEG, atau WEBP");
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal adalah 2MB");
+        return;
+      }
+
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file);
+        .upload(fileName, file, { cacheControl: "3600", upsert: false });
 
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
+      toast.success("Foto berhasil diunggah!");
     } catch (error: any) {
       toast.error("Gagal mengunggah foto: " + error.message);
     } finally {
@@ -158,40 +181,43 @@ export default function BioManagementPage() {
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const cleanUsername = username.toLowerCase().trim().replace(/[^a-z0-9_-]/g, "");
+    if (!cleanUsername) {
+      toast.error("Username/Slug tidak boleh kosong!");
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
+      user_id: user.id,
+      username: cleanUsername,
+      title: title.trim(),
+      bio_description: description.trim(),
+      avatar_url: avatarUrl,
+      theme_color: themeColor,
+    };
 
     if (selectedPage) {
       const { error } = await supabase
         .from("bio_profiles")
-        .update({
-          username: cleanUsername,
-          title,
-          bio_description: description,
-          avatar_url: avatarUrl,
-          theme_color: themeColor,
-        })
+        .update(payload)
         .eq("id", selectedPage.id);
 
-      if (error) toast.error("Gagal memperbarui halaman: " + error.message);
-      else {
+      if (error) {
+        toast.error("Gagal memperbarui halaman: " + error.message);
+      } else {
         toast.success("Halaman berhasil diperbarui!");
-        loadUserPages();
+        await loadUserPages();
       }
     } else {
       const { data, error } = await supabase
         .from("bio_profiles")
-        .insert([
-          {
-            user_id: user.id,
-            username: cleanUsername,
-            title,
-            bio_description: description,
-            avatar_url: avatarUrl,
-            theme_color: themeColor,
-          },
-        ])
+        .insert([payload])
         .select()
         .single();
 
@@ -200,7 +226,7 @@ export default function BioManagementPage() {
       } else if (data) {
         toast.success("Halaman baru berhasil dibuat!");
         await loadUserPages();
-        handleSelectPage(data);
+        await handleSelectPage(data);
       }
     }
 
@@ -222,6 +248,9 @@ export default function BioManagementPage() {
       toast.error("Gagal menghapus halaman: " + error.message);
     } else {
       toast.success("Halaman berhasil dihapus!");
+      if (selectedPage?.id === pageToDelete) {
+        resetFormToNew();
+      }
       await loadUserPages();
     }
 
@@ -230,24 +259,30 @@ export default function BioManagementPage() {
     setPageToDelete(null);
   };
 
+  const sanitizeUrl = (inputUrl: string) => {
+    let formatted = inputUrl.trim();
+    if (!/^https?:\/\//i.test(formatted)) {
+      formatted = `https://${formatted}`;
+    }
+    return formatted;
+  };
+
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPage) {
       toast.error("Simpan atau pilih halaman terlebih dahulu!");
       return;
     }
-    if (!newLinkTitle || !newLinkUrl) return;
+    if (!newLinkTitle.trim() || !newLinkUrl.trim()) return;
 
-    const formattedUrl = newLinkUrl.startsWith("http://") || newLinkUrl.startsWith("https://")
-      ? newLinkUrl
-      : `https://${newLinkUrl}`;
+    const formattedUrl = sanitizeUrl(newLinkUrl);
 
     const { data, error } = await supabase
       .from("bio_links")
       .insert([
         {
           bio_id: selectedPage.id,
-          title: newLinkTitle,
+          title: newLinkTitle.trim(),
           url: formattedUrl,
           icon_type: newIconType,
           clicks: 0,
@@ -259,7 +294,7 @@ export default function BioManagementPage() {
     if (error) {
       toast.error("Gagal menambahkan link: " + error.message);
     } else if (data) {
-      setLinks([...links, data]);
+      setLinks((prev) => [...prev, data]);
       setNewLinkTitle("");
       setNewLinkUrl("");
       setNewIconType("link");
@@ -268,9 +303,13 @@ export default function BioManagementPage() {
   };
 
   const handleDeleteLink = async (id: string) => {
-    await supabase.from("bio_links").delete().eq("id", id);
-    setLinks(links.filter((l) => l.id !== id));
-    toast.success("Link berhasil dihapus!");
+    const { error } = await supabase.from("bio_links").delete().eq("id", id);
+    if (error) {
+      toast.error("Gagal menghapus link: " + error.message);
+    } else {
+      setLinks((prev) => prev.filter((l) => l.id !== id));
+      toast.success("Link berhasil dihapus!");
+    }
   };
 
   const bioPageUrl = username && origin ? `${origin}/${username}` : "";
@@ -286,54 +325,51 @@ export default function BioManagementPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-      {/* Header dengan Tombol Keluar Berwarna Merah */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-slate-800">
-  <span className="text-2xl font-black tracking-wider text-white">
-    mr<span className="text-indigo-500">.id</span>
-  </span>
+      {/* Sticky Header Navigasi */}
+      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+        <div className="max-w-7xl mx-auto px-8 flex items-center justify-between h-16">
+          {/* Container Kiri: Logo + Navigation Links */}
+          <div className="flex items-center space-x-10 h-full">
+            <span className="text-2xl font-black tracking-wider text-white">
+              mr<span className="text-indigo-500">.id</span>
+            </span>
 
-  <div className="flex items-center space-x-6 text-sm font-bold">
-    <Link
-      href="/dashboard"
-      className="text-indigo-400 hover:text-indigo-300 transition-all"
-    >
-      Dashboard
-    </Link>
-    <Link
-      href="/dashboard/bio"
-      className="text-indigo-400 hover:text-indigo-300 transition-all"
-    >
-      Kelola Halaman
-    </Link>
-    <Link
-      href="/dashboard/analytics"
-      className="text-indigo-400 hover:text-indigo-300 transition-all"
-    >
-      Analytics Grafik
-    </Link>
+            <nav className="flex items-center space-x-8 h-full text-sm font-semibold">
+  <Link
+    href="/dashboard"
+    className={`flex items-center h-full border-b-2 transition-all ${
+      pathname === "/dashboard"
+        ? "border-indigo-500 text-indigo-400 font-bold"
+        : "border-transparent text-slate-400 hover:text-slate-200"
+    }`}
+  >
+    Dashboard Link
+  </Link>
+  <Link
+    href="/dashboard/bio"
+    className={`flex items-center h-full border-b-2 transition-all ${
+      pathname.startsWith("/dashboard/bio") || pathname === "/dashboard/pages"
+        ? "border-indigo-500 text-indigo-400 font-bold"
+        : "border-transparent text-slate-400 hover:text-slate-200"
+    }`}
+  >
+    Kelola Halaman
+  </Link>
+</nav>
+          </div>
 
-    {/* Tombol Keluar dengan Outlined Red Style & Ikon Logout */}
-    <button
-      onClick={handleLogout}
-      className="flex items-center space-x-2 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-4 py-2 rounded-full text-xs font-bold transition-all"
-    >
-      <svg
-        className="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-        />
-      </svg>
-      <span>Keluar</span>
-    </button>
-  </div>
-</header>
+          {/* Container Kanan: Tombol Keluar */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Keluar</span>
+          </button>
+        </div>
+      </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10 w-full flex-1">
         <div className="flex items-center justify-between mb-8">
@@ -351,7 +387,6 @@ export default function BioManagementPage() {
           </button>
         </div>
 
-        {/* Daftar Halaman yang Dibuat */}
         {pages.length > 0 && (
           <div className="mb-8">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
@@ -380,7 +415,7 @@ export default function BioManagementPage() {
                           />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-xs">
-                            {page.title[0]?.toUpperCase()}
+                            {page.title[0]?.toUpperCase() || "P"}
                           </div>
                         )}
                         <h4 className="font-bold text-sm truncate">{page.title}</h4>
@@ -409,7 +444,6 @@ export default function BioManagementPage() {
           </div>
         )}
 
-        {/* Preview Link & Statistik Total Klik */}
         {selectedPage && !isCreatingNew && username && (
           <div className="mb-8 p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -439,7 +473,6 @@ export default function BioManagementPage() {
           </div>
         )}
 
-        {/* Form Pengaturan Halaman & Tema Warna */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl mb-8">
           <h2 className="text-lg font-bold mb-4">
             {isCreatingNew ? "Buat Halaman Baru" : `Edit Halaman: ${selectedPage?.title}`}
@@ -452,10 +485,7 @@ export default function BioManagementPage() {
                 required
                 placeholder="contoh: webinar-2026 atau materi-teknis"
                 value={username}
-                onChange={(e) => {
-                  const sanitized = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
-                  setUsername(sanitized);
-                }}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -483,7 +513,6 @@ export default function BioManagementPage() {
               />
             </div>
 
-            {/* Pilihan Tema Warna */}
             <div>
               <label className="block text-xs text-slate-400 mb-2">Pilih Tema Warna Halaman</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
@@ -498,10 +527,7 @@ export default function BioManagementPage() {
                         active ? `${theme.borderClass} bg-slate-800` : "border-slate-800 bg-slate-950 hover:border-slate-700"
                       }`}
                     >
-                      <div 
-                        className="w-6 h-6 rounded-full" 
-                        style={{ backgroundColor: theme.color }} 
-                      />
+                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: theme.color }} />
                       <span className="text-[11px] font-medium text-slate-300">{theme.name}</span>
                     </button>
                   );
@@ -509,7 +535,6 @@ export default function BioManagementPage() {
               </div>
             </div>
 
-            {/* Upload Foto Profil / Logo */}
             <div>
               <label className="block text-xs text-slate-400 mb-1">Foto Profil / Logo Halaman</label>
               <div className="flex items-center space-x-4">
@@ -525,7 +550,7 @@ export default function BioManagementPage() {
                   accept="image/png, image/jpeg, image/jpg, image/webp"
                   onChange={handleFileUpload}
                   disabled={uploading}
-                  className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 file:cursor-pointer"
+                  className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 file:cursor-pointer disabled:opacity-50"
                 />
               </div>
             </div>
@@ -540,7 +565,6 @@ export default function BioManagementPage() {
           </form>
         </div>
 
-        {/* Tambah Tombol Link dengan Ikon & Statistik Klik */}
         {selectedPage && !isCreatingNew && (
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl mb-8">
             <h2 className="text-lg font-bold mb-4">Tambah Tombol Link</h2>
@@ -548,10 +572,7 @@ export default function BioManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs text-slate-400 mb-1">Ikon Tombol</label>
-                  <IconSelect
-                    value={newIconType}
-                    onChange={(val) => setNewIconType(val)}
-                  />
+                  <IconSelect value={newIconType} onChange={(val) => setNewIconType(val)} />
                 </div>
 
                 <div className="md:col-span-2">
@@ -587,7 +608,6 @@ export default function BioManagementPage() {
               </button>
             </form>
 
-            {/* Daftar Link Beserta Counter Klik */}
             <div className="mt-6 space-y-3">
               <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Daftar Tombol Aktif ({links.length})
@@ -625,7 +645,6 @@ export default function BioManagementPage() {
         )}
       </main>
 
-      {/* Modal Dialog Konfirmasi Hapus Modern */}
       <ConfirmModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
