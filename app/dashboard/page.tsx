@@ -160,8 +160,9 @@ export default function DashboardPage() {
     const svgBlob = new Blob([svgData], {
       type: "image/svg+xml;charset=utf-8",
     });
-    const URLObject = window.URL || window.webkitURL;
-    const blobURL = URLObject.createObjectURL(svgBlob);
+    
+    // Perbaikan kompatibilitas URL object di TypeScript
+    const blobURL = window.URL.createObjectURL(svgBlob);
 
     const image = new Image();
     image.onload = () => {
@@ -182,6 +183,7 @@ export default function DashboardPage() {
         downloadLink.click();
         document.body.removeChild(downloadLink);
       }
+      window.URL.revokeObjectURL(blobURL);
     };
     image.src = blobURL;
   };
@@ -206,33 +208,36 @@ export default function DashboardPage() {
             <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
               <Link
                 href="/dashboard"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
                   pathname === "/dashboard"
                     ? "border-indigo-500 text-indigo-400 font-bold"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                Dashboard
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Dashboard</span>
               </Link>
               <Link
                 href="/dashboard/pages"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
                   pathname.startsWith("/dashboard/pages")
                     ? "border-indigo-500 text-indigo-400 font-bold"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                Kelola Halaman
+                <FileText className="w-4 h-4" />
+                <span>Kelola Halaman</span>
               </Link>
               <Link
                 href="/dashboard/analytics"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
                   pathname.startsWith("/dashboard/analytics")
                     ? "border-indigo-500 text-indigo-400 font-bold"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                Analytics
+                <BarChart3 className="w-4 h-4" />
+                <span>Analytics</span>
               </Link>
             </nav>
           </div>
@@ -271,66 +276,67 @@ export default function DashboardPage() {
         </div>
 
         {/* Mobile Menu Dropdown */}
-{mobileMenuOpen && (
-  <div className="md:hidden bg-[#0a0d18] border-b border-slate-800/80 px-4 pt-4 pb-6 space-y-2 font-sans">
-    {/* Nav Links */}
-    <Link
-      href="/dashboard"
-      onClick={() => setMobileMenuOpen(false)}
-      className={`block px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-        pathname === "/dashboard"
-          ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-          : "text-slate-300 hover:bg-slate-900 hover:text-white"
-      }`}
-    >
-      Dashboard
-    </Link>
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#0a0d18] border-b border-slate-800/80 px-4 pt-4 pb-6 space-y-2 font-sans">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                pathname === "/dashboard"
+                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
+                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dashboard</span>
+            </Link>
 
-    <Link
-      href="/dashboard/pages"
-      onClick={() => setMobileMenuOpen(false)}
-      className={`block px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-        pathname.startsWith("/dashboard/pages")
-          ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-          : "text-slate-300 hover:bg-slate-900 hover:text-white"
-      }`}
-    >
-      Kelola Halaman
-    </Link>
+            <Link
+              href="/dashboard/pages"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                pathname.startsWith("/dashboard/pages")
+                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
+                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Kelola Halaman</span>
+            </Link>
 
-    <Link
-      href="/dashboard/analytics"
-      onClick={() => setMobileMenuOpen(false)}
-      className={`block px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-        pathname.startsWith("/dashboard/analytics")
-          ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-          : "text-slate-300 hover:bg-slate-900 hover:text-white"
-      }`}
-    >
-      Analytics
-    </Link>
+            <Link
+              href="/dashboard/analytics"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                pathname.startsWith("/dashboard/analytics")
+                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
+                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>Analytics</span>
+            </Link>
 
-    {/* Bottom Section: User Info & Logout Button */}
-    <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between">
-      <div className="flex items-center space-x-3 overflow-hidden pr-2">
-        <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shrink-0">
-          {user?.email?.[0]?.toUpperCase() || "R"}
-        </div>
-        <span className="text-sm font-medium text-slate-200 truncate">
-          {user?.email || "rrhmii@yahoo.co.id"}
-        </span>
-      </div>
+            <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <div className="flex items-center space-x-3 overflow-hidden pr-2">
+                <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shrink-0">
+                  {user?.email?.[0]?.toUpperCase() || "R"}
+                </div>
+                <span className="text-sm font-medium text-slate-200 truncate">
+                  {user?.email || "rrhmii@yahoo.co.id"}
+                </span>
+              </div>
 
-      <button
-        onClick={handleLogout}
-        className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
-      >
-        <LogOut className="w-3.5 h-3.5 text-slate-300" />
-        <span>Keluar</span>
-      </button>
-    </div>
-  </div>
-)}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
+              >
+                <LogOut className="w-3.5 h-3.5 text-slate-300" />
+                <span>Keluar</span>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Konten Utama */}

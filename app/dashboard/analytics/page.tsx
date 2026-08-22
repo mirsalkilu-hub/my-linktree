@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 import {
   AreaChart,
   Area,
@@ -36,6 +37,7 @@ interface BioProfile {
 
 interface DailyStat {
   date: string;
+  rawDate: string;
   clicks: number;
 }
 
@@ -53,11 +55,25 @@ const BAR_COLORS = [
   "#8b5cf6",
 ];
 
+// Helper format tanggal lokal (Contoh: "22 Agt")
+const formatDateLabel = (d: Date) => {
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+  return `${d.getDate()} ${months[d.getMonth()]}`;
+};
+
+// PERBAIKAN: Format YYYY-MM-DD berbasis zona waktu LOKAL, bukan UTC
+const toLocalDateKey = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export default function AnalyticsPage() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [pages, setPages] = useState<BioProfile[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>("");
   const [dailyData, setDailyData] = useState<DailyStat[]>([]);
@@ -65,26 +81,95 @@ export default function AnalyticsPage() {
   const [totalClicks, setTotalClicks] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  // Mencegah masalah hydration pada Recharts
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  useEffect(() => {
-    loadPages();
+  const loadAnalyticsData = useCallback(async (bioId: string) => {
+    setLoading(true);
+
+    try {
+      // 1. Ambil data klik tombol link
+      const { data: links, error: linkErr } = await supabase
+        .from("bio_links")
+        .select("id, title, clicks")
+        .eq("bio_id", bioId);
+
+      if (linkErr) throw linkErr;
+
+      const formattedLinks: LinkStat[] = (links || []).map((l) => ({
+        name: l.title.length > 15 ? l.title.substring(0, 15) + "..." : l.title,
+        clicks: l.clicks || 0,
+      }));
+
+      setLinkData(formattedLinks);
+      const sumClicks = formattedLinks.reduce((acc, item) => acc + item.clicks, 0);
+      setTotalClicks(sumClicks);
+
+      // 2. Ambil log analytics 7 hari terakhir
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      const { data: logs, error: logErr } = await supabase
+        .from("bio_link_analytics")
+        .select("created_at")
+        .eq("bio_id", bioId)
+        .gte("created_at", sevenDaysAgo.toISOString());
+
+      if (logErr) throw logErr;
+
+      // Inisialisasi map tanggal 7 hari terakhir berbasis lokal
+      const daysMap: Record<string, { label: string; clicks: number }> = {};
+      
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const localKey = toLocalDateKey(d);
+        daysMap[localKey] = {
+          label: formatDateLabel(d),
+          clicks: 0,
+        };
+      }
+
+      // Hitung log berdasarkan tanggal lokal
+      if (logs) {
+        logs.forEach((log) => {
+          const logDate = new Date(log.created_at);
+          const localKey = toLocalDateKey(logDate);
+          if (daysMap[localKey]) {
+            daysMap[localKey].clicks += 1;
+          }
+        });
+      }
+
+      const chartData: DailyStat[] = Object.keys(daysMap).map((key) => ({
+        rawDate: key,
+        date: daysMap[key].label,
+        clicks: daysMap[key].clicks,
+      }));
+
+      setDailyData(chartData);
+    } catch (err) {
+      console.error("Gagal memuat data analytics:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
-    if (selectedPageId) {
-      loadAnalyticsData(selectedPageId);
-    }
-  }, [selectedPageId]);
-
-  const loadPages = async () => {
+  const loadPages = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
     if (!user) {
       router.push("/login");
       return;
@@ -104,80 +189,28 @@ export default function AnalyticsPage() {
     } else {
       setLoading(false);
     }
-  };
+  }, [router]);
 
-  const loadAnalyticsData = async (bioId: string) => {
-    setLoading(true);
+  useEffect(() => {
+    loadPages();
+  }, [loadPages]);
 
-    const { data: links } = await supabase
-      .from("bio_links")
-      .select("id, title, clicks")
-      .eq("bio_id", bioId);
-
-    const formattedLinks: LinkStat[] = (links || []).map((l) => ({
-      name: l.title.length > 15 ? l.title.substring(0, 15) + "..." : l.title,
-      clicks: l.clicks || 0,
-    }));
-
-    setLinkData(formattedLinks);
-
-    const sumClicks = formattedLinks.reduce((acc, item) => acc + item.clicks, 0);
-    setTotalClicks(sumClicks);
-
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-
-    const { data: logs } = await supabase
-      .from("bio_link_analytics")
-      .select("created_at")
-      .eq("bio_id", bioId)
-      .gte("created_at", sevenDaysAgo.toISOString());
-
-    const daysMap: Record<string, number> = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateKey = d.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-      });
-      daysMap[dateKey] = 0;
+  useEffect(() => {
+    if (selectedPageId) {
+      loadAnalyticsData(selectedPageId);
     }
-
-    if (logs) {
-      logs.forEach((log) => {
-        const dateKey = new Date(log.created_at).toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "short",
-        });
-        if (daysMap[dateKey] !== undefined) {
-          daysMap[dateKey] += 1;
-        }
-      });
-    }
-
-    const chartData: DailyStat[] = Object.keys(daysMap).map((key) => ({
-      date: key,
-      clicks: daysMap[key],
-    }));
-
-    setDailyData(chartData);
-    setLoading(false);
-  };
+  }, [selectedPageId, loadAnalyticsData]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
       {/* Header Navigasi */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-          
-          {/* Logo & Desktop Nav */}
           <div className="flex items-center space-x-8 h-full">
             <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
               mr<span className="text-indigo-500">.id</span>
             </span>
 
-            {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center space-x-2 h-full py-3">
               <Link
                 href="/dashboard"
@@ -215,7 +248,6 @@ export default function AnalyticsPage() {
             </nav>
           </div>
 
-          {/* Right Side: Profile & Logout */}
           <div className="flex items-center space-x-3">
             {user && (
               <div className="hidden sm:flex items-center space-x-2">
@@ -233,7 +265,6 @@ export default function AnalyticsPage() {
               <span>Keluar</span>
             </button>
 
-            {/* Mobile Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
@@ -244,7 +275,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-2">
             <Link
@@ -310,7 +340,6 @@ export default function AnalyticsPage() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
-        {/* Selector Halaman */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
@@ -339,7 +368,7 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Ringkasan Stats Cards */}
+        {/* Ringkasan Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center space-x-4">
             <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
@@ -382,13 +411,13 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Section Grafik */}
-        {loading ? (
+        {loading || !mounted ? (
           <div className="bg-slate-900 border border-slate-800 p-12 rounded-2xl text-center text-slate-400 text-sm">
             Memuat data grafik analytics...
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Area Chart: Tren Klik 7 Hari Terakhir */}
+            {/* Area Chart */}
             <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
               <h3 className="text-sm font-bold text-white mb-1">Tren Klik 7 Hari Terakhir</h3>
               <p className="text-xs text-slate-400 mb-6">Aktivitas klik pengunjung harian</p>
@@ -421,7 +450,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Bar Chart: Perbandingan Klik per Tombol */}
+            {/* Bar Chart */}
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
               <h3 className="text-sm font-bold text-white mb-1">Klik per Tombol Link</h3>
               <p className="text-xs text-slate-400 mb-6">Perbandingan popularitas tombol link</p>

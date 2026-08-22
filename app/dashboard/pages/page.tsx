@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ConfirmModal";
 import LinkIcon from "@/components/LinkIcon";
 import IconSelect from "@/components/IconSelect";
-import { LogOut, Menu, X, Plus, BarChart2, ExternalLink, Trash2 } from "lucide-react";
+import { LayoutDashboard, FileText, LogOut, Menu, X, Plus, BarChart2, ExternalLink, Trash2 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 interface BioProfile {
@@ -38,6 +38,12 @@ const THEME_OPTIONS = [
   { id: "amber", name: "Warm Amber", color: "#f59e0b", borderClass: "border-amber-500" },
   { id: "dark", name: "Dark Minimalist", color: "#334155", borderClass: "border-slate-500" },
 ];
+
+const sanitizeUrl = (inputUrl: string) => {
+  const formatted = inputUrl.trim();
+  if (!formatted) return "";
+  return /^https?:\/\//i.test(formatted) ? formatted : `https://${formatted}`;
+};
 
 export default function BioManagementPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -83,6 +89,20 @@ export default function BioManagementPage() {
     setLinks([]);
   }, []);
 
+  const fetchPageLinks = useCallback(async (bioId: string) => {
+    const { data, error } = await supabase
+      .from("bio_links")
+      .select("*")
+      .eq("bio_id", bioId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      toast.error("Gagal memuat link: " + error.message);
+    } else {
+      setLinks(data || []);
+    }
+  }, []);
+
   const handleSelectPage = useCallback(async (page: BioProfile) => {
     setSelectedPage(page);
     setIsCreatingNew(false);
@@ -92,33 +112,24 @@ export default function BioManagementPage() {
     setAvatarUrl(page.avatar_url || "");
     setThemeColor(page.theme_color || "indigo");
 
-    const { data: linkData, error } = await supabase
-      .from("bio_links")
-      .select("*")
-      .eq("bio_id", page.id)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      toast.error("Gagal memuat link: " + error.message);
-    } else {
-      setLinks(linkData || []);
-    }
-  }, []);
+    await fetchPageLinks(page.id);
+  }, [fetchPageLinks]);
 
   const loadUserPages = useCallback(async () => {
     setPageLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
       router.push("/login");
       return;
     }
 
-    setUser(user);
+    setUser(currentUser);
 
     const { data: profiles, error } = await supabase
       .from("bio_profiles")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", currentUser.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -140,7 +151,7 @@ export default function BioManagementPage() {
       setOrigin(window.location.origin);
     }
     loadUserPages();
-  }, [loadUserPages]);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -150,9 +161,9 @@ export default function BioManagementPage() {
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
-      if (!event.target.files || event.target.files.length === 0) return;
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-      const file = event.target.files[0];
       const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
       if (!validTypes.includes(file.type)) {
         toast.error("Format file harus berupa PNG, JPG, JPEG, atau WEBP");
@@ -176,7 +187,7 @@ export default function BioManagementPage() {
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
       toast.success("Foto berhasil diunggah!");
-    } catch (error: unknown) {
+    } catch (error) {
       const err = error as Error;
       toast.error("Gagal mengunggah foto: " + err.message);
     } finally {
@@ -187,13 +198,8 @@ export default function BioManagementPage() {
 
   const handleSavePage = async (e: FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setLoading(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setLoading(false);
-      return;
-    }
 
     const cleanUsername = username.toLowerCase().trim().replace(/[^a-z0-9_-]/g, "");
     if (!cleanUsername) {
@@ -215,7 +221,8 @@ export default function BioManagementPage() {
       const { error } = await supabase
         .from("bio_profiles")
         .update(payload)
-        .eq("id", selectedPage.id);
+        .eq("id", selectedPage.id)
+        .eq("user_id", user.id);
 
       if (error) {
         toast.error("Gagal memperbarui halaman: " + error.message);
@@ -248,7 +255,7 @@ export default function BioManagementPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!pageToDelete) return;
+    if (!pageToDelete || !user) return;
 
     setIsDeleting(true);
 
@@ -260,7 +267,11 @@ export default function BioManagementPage() {
       }
     }
 
-    const { error } = await supabase.from("bio_profiles").delete().eq("id", pageToDelete);
+    const { error } = await supabase
+      .from("bio_profiles")
+      .delete()
+      .eq("id", pageToDelete)
+      .eq("user_id", user.id);
 
     if (error) {
       toast.error("Gagal menghapus halaman: " + error.message);
@@ -275,14 +286,6 @@ export default function BioManagementPage() {
     setIsDeleting(false);
     setIsModalOpen(false);
     setPageToDelete(null);
-  };
-
-  const sanitizeUrl = (inputUrl: string) => {
-    let formatted = inputUrl.trim();
-    if (!/^https?:\/\//i.test(formatted)) {
-      formatted = `https://${formatted}`;
-    }
-    return formatted;
   };
 
   const handleAddLink = async (e: FormEvent) => {
@@ -354,33 +357,36 @@ export default function BioManagementPage() {
             <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
               <Link
                 href="/dashboard"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
                   pathname === "/dashboard"
                     ? "border-indigo-500 text-indigo-400 font-bold"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                Dashboard
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Dashboard</span>
               </Link>
               <Link
                 href="/dashboard/pages"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
                   pathname.startsWith("/dashboard/pages")
                     ? "border-indigo-500 text-indigo-400 font-bold"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                Kelola Halaman
+                <FileText className="w-4 h-4" />
+                <span>Kelola Halaman</span>
               </Link>
               <Link
                 href="/dashboard/analytics"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
                   pathname.startsWith("/dashboard/analytics")
                     ? "border-indigo-500 text-indigo-400 font-bold"
                     : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
-                Analytics
+                <BarChart2 className="w-4 h-4" />
+                <span>Analytics</span>
               </Link>
             </nav>
           </div>
@@ -394,7 +400,6 @@ export default function BioManagementPage() {
               </div>
             )}
 
-            {/* Tombol Keluar (Desktop) - Disamakan dengan Dashboard */}
             <button
               onClick={handleLogout}
               className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-red-400 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 rounded-full transition-all duration-200"
@@ -418,35 +423,38 @@ export default function BioManagementPage() {
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
                 pathname === "/dashboard"
                   ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              Dashboard
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dashboard</span>
             </Link>
             <Link
               href="/dashboard/pages"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
                 pathname.startsWith("/dashboard/pages")
                   ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              Kelola Halaman
+              <FileText className="w-4 h-4" />
+              <span>Kelola Halaman</span>
             </Link>
             <Link
               href="/dashboard/analytics"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
                 pathname.startsWith("/dashboard/analytics")
                   ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              Analytics
+              <BarChart2 className="w-4 h-4" />
+              <span>Analytics</span>
             </Link>
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
@@ -461,7 +469,6 @@ export default function BioManagementPage() {
                 </div>
               )}
 
-              {/* Tombol Keluar (Mobile) - Disamakan dengan Dashboard */}
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-1.5 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-400 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
