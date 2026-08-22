@@ -19,7 +19,10 @@ import {
   BarChart2, 
   ExternalLink, 
   Trash2, 
-  Pencil 
+  Pencil,
+  Sparkles,
+  Globe,
+  MousePointerClick
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
@@ -320,7 +323,6 @@ export default function BioManagementPage() {
     const formattedUrl = sanitizeUrl(newLinkUrl);
 
     if (editingLinkId) {
-      // Mode Edit / Update Link
       const { data, error } = await supabase
         .from("bio_links")
         .update({
@@ -340,7 +342,6 @@ export default function BioManagementPage() {
         toast.success("Link berhasil diperbarui!");
       }
     } else {
-      // Mode Tambah Link Baru
       const { data, error } = await supabase
         .from("bio_links")
         .insert([
@@ -397,8 +398,12 @@ export default function BioManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-      {/* Header Navigasi */}
+    <div className="min-h-screen bg-[#060919] text-white font-sans flex flex-col justify-between relative overflow-hidden">
+      {/* Background Ambient Glow Effects */}
+      <div className="absolute top-0 -left-20 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/15 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Header Navigasi Presisi */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           <div className="flex items-center space-x-8 h-full">
@@ -533,24 +538,33 @@ export default function BioManagementPage() {
         )}
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
+      {/* Main Content Area dengan Visual Effects */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Kelola Halaman Bio Anda</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="p-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                <Sparkles className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-xs font-semibold text-indigo-400 tracking-wider uppercase">
+                Bio Page Manager
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Kelola Halaman Bio Anda</h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">
               Buat dan kustomisasi halaman landing/bio lengkap dengan analisis klik.
             </p>
           </div>
           <button
             onClick={resetFormToNew}
-            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-3 rounded-xl transition-all text-center shrink-0 flex items-center justify-center gap-1.5"
+            className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs sm:text-sm font-semibold px-5 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] shrink-0 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Buat Halaman Baru</span>
           </button>
         </div>
 
-        {/* Daftar Halaman */}
+        {/* Daftar Halaman dengan Glassmorphism Cards */}
         {pages.length > 0 && (
           <div className="mb-6 sm:mb-8">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
@@ -563,42 +577,52 @@ export default function BioManagementPage() {
                   <div
                     key={page.id}
                     onClick={() => handleSelectPage(page)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 backdrop-blur-xl flex flex-col justify-between overflow-hidden ${
                       isSelected
-                        ? "bg-indigo-950/50 border-indigo-500"
-                        : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                        ? "bg-indigo-950/40 border-indigo-500/80 shadow-lg shadow-indigo-500/10"
+                        : "bg-slate-900/40 border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900/60"
                     }`}
                   >
+                    <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
                     <div>
                       <div className="flex items-center space-x-3 mb-2">
                         {page.avatar_url ? (
-                          <Image
-                            src={page.avatar_url}
-                            alt={page.title}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded-full object-cover shrink-0"
-                          />
+                          <div className="relative">
+                            <Image
+                              src={page.avatar_url}
+                              alt={page.title}
+                              width={36}
+                              height={36}
+                              className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-700/80"
+                            />
+                            {isSelected && (
+                              <span className="absolute -bottom-1 -right-1 flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold text-xs shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs shrink-0">
                             {page.title[0]?.toUpperCase() || "P"}
                           </div>
                         )}
-                        <h4 className="font-bold text-sm truncate">{page.title}</h4>
+                        <h4 className="font-bold text-sm text-white truncate group-hover:text-indigo-300 transition-colors">{page.title}</h4>
                       </div>
-                      <p className="text-xs text-indigo-400 truncate">/{page.username}</p>
+                      <p className="text-xs text-indigo-400 font-medium truncate">/{page.username}</p>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-800/80 flex justify-between items-center text-xs">
-                      <span className="text-slate-500">
-                        {isSelected ? "Sedang Diedit" : "Klik untuk Edit"}
+                      <span className={`text-[11px] font-medium ${isSelected ? "text-indigo-300" : "text-slate-500"}`}>
+                        {isSelected ? "• Sedang Diedit" : "Klik untuk Edit"}
                       </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openDeleteModal(page.id);
                         }}
-                        className="text-red-400 hover:underline"
+                        className="text-red-400 hover:text-red-300 transition-colors"
                       >
                         Hapus
                       </button>
@@ -612,20 +636,24 @@ export default function BioManagementPage() {
 
         {/* Banner URL & Quick Stats */}
         {selectedPage && !isCreatingNew && username && (
-          <div className="mb-6 sm:mb-8 p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mb-6 sm:mb-8 p-4 bg-indigo-950/30 border border-indigo-500/30 rounded-2xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-indigo-950/20">
             <div className="min-w-0 flex-1">
-              <span className="text-xs text-indigo-400 font-medium block">URL Publik:</span>
-              <strong className="text-xs sm:text-sm text-indigo-200 block truncate">{bioPageUrl}</strong>
+              <span className="text-xs text-indigo-400 font-medium block flex items-center gap-1">
+                <Globe className="w-3 h-3" /> URL Publik:
+              </span>
+              <strong className="text-xs sm:text-sm text-indigo-200 block truncate mt-0.5">{bioPageUrl}</strong>
             </div>
 
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:space-x-3 w-full sm:w-auto">
               <div className="col-span-2 sm:col-span-1 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Klik</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block flex items-center justify-center gap-1">
+                  <MousePointerClick className="w-3 h-3 text-indigo-400" /> Total Klik
+                </span>
                 <span className="text-lg font-bold text-indigo-400">{totalPageClicks}</span>
               </div>
               <Link
                 href="/dashboard/analytics"
-                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
+                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-white border border-slate-700/80 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
               >
                 <BarChart2 className="w-3.5 h-3.5" />
                 <span>Analytics</span>
@@ -634,7 +662,7 @@ export default function BioManagementPage() {
                 href={`/${username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
+                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-md shadow-indigo-500/20 text-center"
               >
                 <span>Lihat Halaman</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -644,8 +672,8 @@ export default function BioManagementPage() {
         )}
 
         {/* Form Setting Utama */}
-        <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8">
-          <h2 className="text-base sm:text-lg font-bold mb-4">
+        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8 shadow-xl">
+          <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
             {isCreatingNew ? "Buat Halaman Baru" : `Edit Halaman: ${selectedPage?.title}`}
           </h2>
           <form onSubmit={handleSavePage} className="space-y-4 sm:space-y-5">
@@ -657,7 +685,7 @@ export default function BioManagementPage() {
                 placeholder="contoh: webinar-2026 atau materi-teknis"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
               />
             </div>
 
@@ -669,7 +697,7 @@ export default function BioManagementPage() {
                 placeholder="Judul / Nama Halaman"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
               />
             </div>
 
@@ -680,7 +708,7 @@ export default function BioManagementPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
               />
             </div>
 
@@ -695,7 +723,7 @@ export default function BioManagementPage() {
                       type="button"
                       onClick={() => setThemeColor(theme.id)}
                       className={`p-2.5 rounded-xl border flex flex-col items-center justify-center space-y-1.5 transition-all ${
-                        active ? `${theme.borderClass} bg-slate-800` : "border-slate-800 bg-slate-950 hover:border-slate-700"
+                        active ? `${theme.borderClass} bg-indigo-950/30` : "border-slate-800/80 bg-slate-950/40 hover:border-slate-700"
                       }`}
                     >
                       <div className="w-5 h-5 rounded-full" style={{ backgroundColor: theme.color }} />
@@ -731,7 +759,7 @@ export default function BioManagementPage() {
             <button
               type="submit"
               disabled={loading || uploading}
-              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all disabled:opacity-50"
+              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 disabled:opacity-50"
             >
               {loading ? "Menyimpan..." : isCreatingNew ? "Buat Halaman" : "Simpan Perubahan"}
             </button>
@@ -740,8 +768,8 @@ export default function BioManagementPage() {
 
         {/* Manajemen Tombol Link */}
         {selectedPage && !isCreatingNew && (
-          <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8">
-            <h2 className="text-base sm:text-lg font-bold mb-4">
+          <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8 shadow-xl">
+            <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
               {editingLinkId ? "Edit Tombol Link" : "Tambah Tombol Link"}
             </h2>
             <form onSubmit={handleSaveLink} className="space-y-4">
@@ -759,7 +787,7 @@ export default function BioManagementPage() {
                     placeholder="Contoh: Registrasi Webinar / Whatsapp Admin"
                     value={newLinkTitle}
                     onChange={(e) => setNewLinkTitle(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
                   />
                 </div>
               </div>
@@ -772,14 +800,14 @@ export default function BioManagementPage() {
                   placeholder="https://... atau instagram.com/..."
                   value={newLinkUrl}
                   onChange={(e) => setNewLinkUrl(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
                 />
               </div>
 
               <div className="flex items-center gap-3">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5"
                 >
                   {editingLinkId ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   <span>{editingLinkId ? "Perbarui Tombol" : "Tambahkan Tombol"}</span>
@@ -804,56 +832,54 @@ export default function BioManagementPage() {
               {links.map((link) => (
                 <div
                   key={link.id}
-                  className={`bg-slate-950 border p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
-                    editingLinkId === link.id ? "border-indigo-500/80 bg-indigo-950/20" : "border-slate-800"
+                  className={`bg-slate-950/60 border p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                    editingLinkId === link.id ? "border-indigo-500/80 bg-indigo-950/20" : "border-slate-800/80"
                   }`}
                 >
                   <div className="flex items-center space-x-3 overflow-hidden min-w-0">
                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
-                      <LinkIcon type={link.icon_type} className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <LinkIcon type={link.icon_type} className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <h5 className="font-semibold text-xs sm:text-sm text-white truncate">{link.title}</h5>
-                      <p className="text-[11px] sm:text-xs text-slate-500 truncate">{link.url}</p>
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{link.url}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-900">
-                    <span className="text-[11px] sm:text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">
-                      👆 {link.clicks || 0} Klik
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
+                    <span className="text-xs text-indigo-400 bg-indigo-950/40 border border-indigo-500/30 px-2.5 py-1 rounded-full font-medium">
+                      {link.clicks || 0} klik
                     </span>
-                    <button
-                      onClick={() => handleEditLinkClick(link)}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteLink(link.id)}
-                      className="text-xs text-red-400 hover:text-red-300 hover:underline flex items-center gap-1"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Hapus</span>
-                    </button>
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => handleEditLinkClick(link)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLink(link.id)}
+                        className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        <ConfirmModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+          isLoading={isDeleting}
+          title="Hapus Halaman Bio"
+          message="Apakah Anda yakin ingin menghapus halaman ini? Semua link di dalamnya akan terhapus secara permanen."
+        />
       </main>
-
-      <ConfirmModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        loading={isDeleting}
-      />
-
-      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
-        © 2026 mr.id. All rights reserved.
-      </footer>
     </div>
   );
 }
