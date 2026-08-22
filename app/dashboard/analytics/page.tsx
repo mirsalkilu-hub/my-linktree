@@ -16,7 +16,7 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { TrendingUp, MousePointer, Layers, LogOut } from "lucide-react";
+import { TrendingUp, MousePointer, Layers, LogOut, Menu, X } from "lucide-react";
 
 interface BioProfile {
   id: string;
@@ -47,6 +47,7 @@ export default function AnalyticsPage() {
   const [linkData, setLinkData] = useState<LinkStat[]>([]);
   const [totalClicks, setTotalClicks] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   // Fungsi Logout
   const handleLogout = async () => {
@@ -148,74 +149,152 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-      {/* Header */}
+      {/* Header Navigasi */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
-  <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16 gap-2 sm:gap-4">
-    
-    {/* Side Kiri: Logo + Menu Scrollable */}
-    <div className="flex items-center space-x-4 sm:space-x-8 h-full overflow-x-auto no-scrollbar py-2">
-      <span className="text-lg sm:text-2xl font-black tracking-wider text-white shrink-0">
-        mr<span className="text-indigo-500">.id</span>
-      </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
+          
+          {/* Logo & Desktop Nav */}
+          <div className="flex items-center space-x-8 h-full">
+            <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
+              mr<span className="text-indigo-500">.id</span>
+            </span>
 
-      <nav className="flex items-center space-x-4 sm:space-x-8 h-full text-xs sm:text-sm font-semibold shrink-0">
-        <Link
-          href="/dashboard"
-          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
-            pathname === "/dashboard"
-              ? "border-indigo-500 text-indigo-400 font-bold"
-              : "border-transparent text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/pages"
-          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
-            pathname.startsWith("/dashboard/pages")
-              ? "border-indigo-500 text-indigo-400 font-bold"
-              : "border-transparent text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          Kelola Halaman
-        </Link>
-        <Link
-          href="/dashboard/analytics"
-          className={`flex items-center h-full border-b-2 whitespace-nowrap transition-all ${
-            pathname.startsWith("/dashboard/analytics")
-              ? "border-indigo-500 text-indigo-400 font-bold"
-              : "border-transparent text-slate-400 hover:text-slate-200"
-          }`}
-        >
-          Analytics
-        </Link>
-      </nav>
-    </div>
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
+              <Link
+                href="/dashboard"
+                className={`flex items-center h-full border-b-2 transition-all ${
+                  pathname === "/dashboard"
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/pages"
+                className={`flex items-center h-full border-b-2 transition-all ${
+                  pathname.startsWith("/dashboard/pages")
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Kelola Halaman
+              </Link>
+              <Link
+                href="/dashboard/analytics"
+                className={`flex items-center h-full border-b-2 transition-all ${
+                  pathname.startsWith("/dashboard/analytics")
+                    ? "border-indigo-500 text-indigo-400 font-bold"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Analytics
+              </Link>
+            </nav>
+          </div>
 
-    {/* Side Kanan: Profile Ringkas + Logout */}
-    <div className="flex items-center space-x-2 shrink-0">
-      {user && (
-        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-          {user.email?.[0] || "M"}
+          {/* Right Side: Desktop Profile/Logout + Mobile Hamburger Button */}
+          <div className="flex items-center space-x-3">
+            {/* User Profile Badge (Desktop) */}
+            {user && (
+              <div className="hidden sm:flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+                  {user.email?.[0] || "M"}
+                </div>
+              </div>
+            )}
+
+            {/* Logout Button (Desktop) */}
+            <button
+              onClick={handleLogout}
+              className="hidden md:flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Keluar</span>
+            </button>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
+              aria-label="Toggle Menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
-      )}
-      <button
-        onClick={handleLogout}
-        className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-2.5 py-1.5 sm:px-4 rounded-full text-xs font-bold transition-all"
-      >
-        <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        <span className="hidden sm:inline">Keluar</span>
-      </button>
-    </div>
 
-  </div>
-</header>
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                pathname === "/dashboard"
+                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/pages"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                pathname.startsWith("/dashboard/pages")
+                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              Kelola Halaman
+            </Link>
+            <Link
+              href="/dashboard/analytics"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+                pathname.startsWith("/dashboard/analytics")
+                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              Analytics
+            </Link>
 
-      <main className="max-w-6xl mx-auto px-6 py-10 w-full flex-1">
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              {user && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+                    {user.email?.[0] || "M"}
+                  </div>
+                  <span className="text-xs text-slate-300 truncate max-w-[150px]">
+                    {user.email}
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Keluar</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
         {/* Selector Halaman */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
               <TrendingUp className="text-indigo-500" /> Analisis Performa & Grafik Klik
             </h1>
             <p className="text-xs text-slate-400 mt-1">
@@ -225,15 +304,15 @@ export default function AnalyticsPage() {
 
           {pages.length > 0 && (
             <div className="flex items-center space-x-3">
-              <span className="text-xs text-slate-400">Pilih Halaman:</span>
+              <span className="text-xs text-slate-400 shrink-0">Pilih Halaman:</span>
               <select
                 value={selectedPageId}
                 onChange={(e) => setSelectedPageId(e.target.value)}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-indigo-500"
+                className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-indigo-500 w-full sm:w-auto"
               >
                 {pages.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.title} (/b/{p.username})
+                    {p.title} (/{p.username})
                   </option>
                 ))}
               </select>
@@ -264,7 +343,8 @@ export default function AnalyticsPage() {
                 Trafik 7 Hari Terakhir
               </span>
               <strong className="text-2xl font-black text-white">
-                {dailyData.reduce((acc, curr) => acc + curr.clicks, 0)} <span className="text-xs text-slate-500 font-normal">klik</span>
+                {dailyData.reduce((acc, curr) => acc + curr.clicks, 0)}{" "}
+                <span className="text-xs text-slate-500 font-normal">klik</span>
               </strong>
             </div>
           </div>
@@ -355,7 +435,7 @@ export default function AnalyticsPage() {
         )}
       </main>
 
-            <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
+      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
         © 2026 mr.id. All rights reserved.
       </footer>
     </div>
