@@ -388,12 +388,12 @@ export default function BioManagementPage() {
 
             {/* Logout Button (Desktop) */}
             <button
-              onClick={handleLogout}
-              className="hidden md:flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Keluar</span>
-            </button>
+  onClick={handleLogout}
+  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
+>
+  <LogOut className="w-4 h-4 text-slate-400" />
+  <span>Keluar</span>
+</button>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -584,7 +584,7 @@ export default function BioManagementPage() {
           </h2>
           <form onSubmit={handleSavePage} className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Username / Slug URL (Unik)</label>
+              <label className="block text-xs text-slate-400 mb-1">/Url (Unik)</label>
               <input
                 type="text"
                 required

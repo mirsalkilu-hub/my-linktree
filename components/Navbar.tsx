@@ -58,15 +58,13 @@ export default function Navbar() {
         </nav>
 
         {/* Desktop Logout Button */}
-        <div className="hidden md:flex items-center">
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 px-4 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-red-500/10 text-slate-300 hover:text-red-400 border border-slate-800 hover:border-red-500/30 transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar</span>
-          </button>
-        </div>
+        <button
+  onClick={handleLogout}
+  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-full transition-all duration-200"
+>
+  <LogOut className="w-4 h-4 text-indigo-400" />
+  <span>Logout</span>
+</button>
 
         {/* Mobile Hamburger Button */}
         <button

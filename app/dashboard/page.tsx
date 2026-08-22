@@ -245,12 +245,12 @@ export default function DashboardPage() {
             )}
 
             <button
-              onClick={handleLogout}
-              className="hidden md:flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Keluar</span>
-            </button>
+  onClick={handleLogout}
+  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
+>
+  <LogOut className="w-4 h-4 text-slate-400" />
+  <span>Keluar</span>
+</button>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -428,7 +428,7 @@ export default function DashboardPage() {
               <input
                 type="text"
                 required
-                placeholder="https://youtube.com/c/kilu atau https://mywebsite.com"
+                placeholder="Paste url here... (https://mywebsite.com)"
                 value={destinationUrl}
                 onChange={(e) => setDestinationUrl(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
@@ -441,11 +441,11 @@ export default function DashboardPage() {
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-xs font-semibold text-slate-500 select-none">
-                  mr.id/s/
+                  /s/
                 </span>
                 <input
                   type="text"
-                  placeholder="custom-code"
+                  placeholder="custom-url"
                   value={customCode}
                   onChange={(e) => setCustomCode(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-20 pr-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
