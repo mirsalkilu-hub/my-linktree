@@ -21,6 +21,9 @@ import {
   Plus,
   Layers,
   Loader2,
+  LayoutDashboard,
+  FileText,
+  BarChart3,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -268,65 +271,66 @@ export default function DashboardPage() {
         </div>
 
         {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                pathname === "/dashboard"
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/pages"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                pathname.startsWith("/dashboard/pages")
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              Kelola Halaman
-            </Link>
-            <Link
-              href="/dashboard/analytics"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                pathname.startsWith("/dashboard/analytics")
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              Analytics
-            </Link>
+{mobileMenuOpen && (
+  <div className="md:hidden bg-[#0a0d18] border-b border-slate-800/80 px-4 pt-4 pb-6 space-y-2 font-sans">
+    {/* Nav Links */}
+    <Link
+      href="/dashboard"
+      onClick={() => setMobileMenuOpen(false)}
+      className={`block px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+        pathname === "/dashboard"
+          ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
+          : "text-slate-300 hover:bg-slate-900 hover:text-white"
+      }`}
+    >
+      Dashboard
+    </Link>
 
-            {/* User Info & Tombol Keluar (Mobile Menu) */}
-            <div className="pt-3 border-t border-slate-800 space-y-3">
-              {user && (
-                <div className="flex items-center space-x-2 px-1">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-                    {user.email?.[0] || "M"}
-                  </div>
-                  <span className="text-xs text-slate-300 truncate">
-                    {user.email}
-                  </span>
-                </div>
-              )}
+    <Link
+      href="/dashboard/pages"
+      onClick={() => setMobileMenuOpen(false)}
+      className={`block px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+        pathname.startsWith("/dashboard/pages")
+          ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
+          : "text-slate-300 hover:bg-slate-900 hover:text-white"
+      }`}
+    >
+      Kelola Halaman
+    </Link>
 
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
-              >
-                <LogOut className="w-4 h-4 text-slate-400" />
-                <span>Keluar</span>
-              </button>
-            </div>
-          </div>
-        )}
+    <Link
+      href="/dashboard/analytics"
+      onClick={() => setMobileMenuOpen(false)}
+      className={`block px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+        pathname.startsWith("/dashboard/analytics")
+          ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
+          : "text-slate-300 hover:bg-slate-900 hover:text-white"
+      }`}
+    >
+      Analytics
+    </Link>
+
+    {/* Bottom Section: User Info & Logout Button */}
+    <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between">
+      <div className="flex items-center space-x-3 overflow-hidden pr-2">
+        <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shrink-0">
+          {user?.email?.[0]?.toUpperCase() || "R"}
+        </div>
+        <span className="text-sm font-medium text-slate-200 truncate">
+          {user?.email || "rrhmii@yahoo.co.id"}
+        </span>
+      </div>
+
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
+      >
+        <LogOut className="w-3.5 h-3.5 text-slate-300" />
+        <span>Keluar</span>
+      </button>
+    </div>
+  </div>
+)}
       </header>
 
       {/* Konten Utama */}
