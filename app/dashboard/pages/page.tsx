@@ -880,6 +880,9 @@ export default function BioManagementPage() {
           message="Apakah Anda yakin ingin menghapus halaman ini? Semua link di dalamnya akan terhapus secara permanen."
         />
       </main>
+      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
+        © 2026 mr.id. All rights reserved.
+      </footer>
     </div>
   );
 }
