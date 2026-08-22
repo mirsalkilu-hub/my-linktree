@@ -35,6 +35,78 @@ interface LinkItem {
   created_at: string;
 }
 
+// Custom Modal Component Bergaya Bio Page
+function ConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "Konfirmasi Hapus",
+  message = "Apakah Anda yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan.",
+  confirmText = "Hapus",
+  cancelText = "Batal",
+  loading = false,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void | Promise<void>;
+  title?: string;
+  message?: string;
+  confirmText?: string;
+  cancelText?: string;
+  loading?: boolean;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+      <div className="bg-slate-900/90 border border-white/10 rounded-3xl p-6 w-full max-w-sm text-center relative shadow-2xl backdrop-blur-2xl transition-all scale-100">
+        
+        {/* Top Accent Line */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent rounded-full" />
+
+        {/* Warning Icon Container */}
+        <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
+          <Trash2 className="w-6 h-6" />
+        </div>
+
+        {/* Title & Description */}
+        <h3 className="text-base font-extrabold text-white mb-1 tracking-wider uppercase">
+          {title}
+        </h3>
+        <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+          {message}
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex items-center space-x-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="w-1/2 py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+          >
+            {cancelText}
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="w-1/2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-xs font-black text-white shadow-lg shadow-rose-600/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-1.5"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <span>{confirmText}</span>
+            )}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [destinationUrl, setDestinationUrl] = useState("");
@@ -48,6 +120,11 @@ export default function DashboardPage() {
 
   const router = useRouter();
   const pathname = usePathname();
+
+  // State untuk Custom Delete Modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -134,13 +211,27 @@ export default function DashboardPage() {
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Yakin ingin menghapus link ini?")) return;
-    const { error } = await supabase.from("links").delete().eq("id", id);
+  // Triggers untuk membuka modal konfirmasi kustom
+  const promptDeleteLink = (id: string) => {
+    setSelectedLinkId(id);
+    setDeleteModalOpen(true);
+  };
+
+  // Eksekusi penghapusan dari modal
+  const handleConfirmDelete = async () => {
+    if (!selectedLinkId) return;
+
+    setIsDeleting(true);
+    const { error } = await supabase.from("links").delete().eq("id", selectedLinkId);
+    
+    setIsDeleting(false);
+    setDeleteModalOpen(false);
+    setSelectedLinkId(null);
+
     if (!error) {
       fetchUserAndLinks();
     } else {
-      alert("Gagal menghapus link: " + error.message);
+      setErrorMessage("Gagal menghapus link: " + error.message);
     }
   };
 
@@ -194,16 +285,28 @@ export default function DashboardPage() {
   const totalClicks = links.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between relative">
+      
+      {/* Custom Confirm Modal */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        loading={isDeleting}
+        title="Hapus Link"
+        message="Yakin ingin menghapus link ini? Pengunjung tidak akan dapat mengakses tautan singkat ini lagi."
+        confirmText="Hapus Link"
+      />
+
       {/* Header Sticky */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           <div className="flex items-center space-x-8 h-full">
             <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
               mr<span className="text-indigo-500">.id</span>
             </span>
 
-            {/* Navigasi Desktop Ber-Icon */}
+            {/* Navigasi Desktop */}
             <nav className="hidden md:flex items-center space-x-6 h-full text-sm font-semibold">
               <Link
                 href="/dashboard"
@@ -335,7 +438,7 @@ export default function DashboardPage() {
       {/* Konten Utama */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
         
-        {/* Banner Welcome Bergaya Halaman Bio */}
+        {/* Banner Welcome */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8 shadow-2xl">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -548,8 +651,8 @@ export default function DashboardPage() {
                         <span>{copiedId === item.id ? "Tersalin!" : "Salin"}</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
-                        className="inline-flex items-center justify-center p-2.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all"
+                        onClick={() => promptDeleteLink(item.id)}
+                        className="inline-flex items-center justify-center p-2.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all hover:border-red-500/50 active:scale-95"
                         title="Hapus Link"
                       >
                         <Trash2 className="w-4 h-4" />
