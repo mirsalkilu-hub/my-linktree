@@ -1,10 +1,28 @@
 "use client";
+
 import { QRCodeSVG } from "qrcode.react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { LogOut, Menu, X } from "lucide-react";
+import {
+  LogOut,
+  Menu,
+  X,
+  Link2,
+  MousePointerClick,
+  ArrowUpRight,
+  TrendingUp,
+  Sparkles,
+  Copy,
+  Trash2,
+  Download,
+  ExternalLink,
+  Plus,
+  Layers,
+  Loader2,
+} from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 
 interface LinkItem {
   id: string;
@@ -19,54 +37,93 @@ export default function DashboardPage() {
   const [destinationUrl, setDestinationUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const router = useRouter();
   const pathname = usePathname();
 
+  // Menentukan origin di client side untuk mencegah SSR/Hydration mismatch
   useEffect(() => {
-    fetchUserAndLinks();
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
   }, []);
 
-  const fetchUserAndLinks = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  const fetchUserAndLinks = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) {
       router.push("/login");
       return;
     }
     setUser(user);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("links")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
+    if (error) {
+      console.error("Gagal mengambil data link:", error.message);
+      return;
+    }
+
     if (data) setLinks(data);
+  }, [router]);
+
+  useEffect(() => {
+    fetchUserAndLinks();
+  }, [fetchUserAndLinks]);
+
+  const validateUrl = (url: string) => {
+    try {
+      const formatted = url.startsWith("http://") || url.startsWith("https://") 
+        ? url 
+        : `https://${url}`;
+      new URL(formatted);
+      return formatted;
+    } catch {
+      return null;
+    }
   };
 
   const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!destinationUrl) return;
+    setErrorMessage(null);
+
+    const formattedUrl = validateUrl(destinationUrl);
+    if (!formattedUrl) {
+      setErrorMessage("Format URL tidak valid. Harap periksa kembali.");
+      return;
+    }
 
     setLoading(true);
 
-    const formattedUrl = destinationUrl.startsWith("http")
-      ? destinationUrl
-      : `https://${destinationUrl}`;
-
-    const slug = customCode.trim() || Math.random().toString(36).substring(2, 7);
+    const slug =
+      customCode.trim().toLowerCase().replace(/\s+/g, "-") ||
+      Math.random().toString(36).substring(2, 7);
 
     const { error } = await supabase.from("links").insert([
       {
         original_url: formattedUrl,
         short_code: slug,
-        user_id: user.id,
+        user_id: user?.id,
       },
     ]);
 
     if (error) {
-      alert("Gagal membuat link: " + error.message);
+      if (error.code === "23505") {
+        setErrorMessage("Short code tersebut sudah digunakan, coba kode lain.");
+      } else {
+        setErrorMessage("Gagal membuat link: " + error.message);
+      }
     } else {
       setDestinationUrl("");
       setCustomCode("");
@@ -77,22 +134,31 @@ export default function DashboardPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Yakin ingin menghapus link ini?")) return;
-    await supabase.from("links").delete().eq("id", id);
-    fetchUserAndLinks();
+    const { error } = await supabase.from("links").delete().eq("id", id);
+    if (!error) {
+      fetchUserAndLinks();
+    } else {
+      alert("Gagal menghapus link: " + error.message);
+    }
   };
 
-  const copyToClipboard = (url: string) => {
+  const copyToClipboard = (id: string, url: string) => {
     navigator.clipboard.writeText(url);
-    alert("Link berhasil disalin!");
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const downloadQRCode = (id: string, shortCode: string) => {
-    const svgElement = document.getElementById(`qr-${id}`) as SVGSVGElement | null;
+    const svgElement = document.getElementById(
+      `qr-${id}`
+    ) as SVGSVGElement | null;
     if (!svgElement) return;
 
     const svgData = new XMLSerializer().serializeToString(svgElement);
-    const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
-    const URLObject = window.URL || window.webkitURL || window;
+    const svgBlob = new Blob([svgData], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const URLObject = window.URL || window.webkitURL;
     const blobURL = URLObject.createObjectURL(svgBlob);
 
     const image = new Image();
@@ -127,17 +193,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
-      {/* Header Sticky / Melayang */}
+      {/* Header Sticky */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-          
-          {/* Logo & Desktop Nav */}
           <div className="flex items-center space-x-8 h-full">
             <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
               mr<span className="text-indigo-500">.id</span>
             </span>
 
-            {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
               <Link
                 href="/dashboard"
@@ -172,18 +235,15 @@ export default function DashboardPage() {
             </nav>
           </div>
 
-          {/* Right Side: Desktop Profile/Logout + Mobile Hamburger Button */}
           <div className="flex items-center space-x-3">
-            {/* User Profile Badge (Desktop) */}
             {user && (
               <div className="hidden sm:flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0 shadow-md shadow-indigo-500/20">
                   {user.email?.[0] || "M"}
                 </div>
               </div>
             )}
 
-            {/* Logout Button (Desktop) */}
             <button
               onClick={handleLogout}
               className="hidden md:flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
@@ -192,7 +252,6 @@ export default function DashboardPage() {
               <span>Keluar</span>
             </button>
 
-            {/* Mobile Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
@@ -207,7 +266,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
             <Link
@@ -269,138 +327,235 @@ export default function DashboardPage() {
       </header>
 
       {/* Konten Utama */}
-      <main className="max-w-4xl mx-auto px-6 py-10 w-full flex-1">
-        
-        {/* Ringkasan Analitik */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              Total Tautan
-            </span>
-            <span className="text-3xl font-extrabold text-indigo-400 mt-2">
-              {links.length}
-            </span>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
+        {/* Banner Welcome */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8 shadow-2xl">
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Shortener & Bio Link Suite</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Selamat Datang Kembali! 👋
+              </h1>
+              <p className="text-sm text-slate-400 mt-1 max-w-lg">
+                Kelola tautan pendek, pantau performa statistik klik, dan optimalkan branding linimasa Anda dalam satu tempat.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/dashboard/pages"
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 hover:scale-105"
+              >
+                <Layers className="w-4 h-4" />
+                <span>Kelola Halaman Bio</span>
+              </Link>
+            </div>
           </div>
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              Total Klik Diterima
-            </span>
-            <span className="text-3xl font-extrabold text-pink-400 mt-2">
-              {totalClicks}
-            </span>
+        </div>
+
+        {/* Ringkasan Stat Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-indigo-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-indigo-950/20">
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Total Tautan Dibuat
+              </span>
+              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(99,102,241,0.25)]">
+                <Link2 className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <strong className="text-3xl font-black text-white tracking-tight">
+                {links.length}
+              </strong>
+              <div className="flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-full">
+                <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
+                <span>Aktif</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-rose-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-rose-950/20">
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Total Klik Diterima
+              </span>
+              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(244,63,94,0.25)]">
+                <MousePointerClick className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <strong className="text-3xl font-black text-white tracking-tight">
+                {totalClicks}
+              </strong>
+              <div className="flex items-center text-xs font-semibold text-indigo-400 bg-indigo-950/40 border border-indigo-800/50 px-2.5 py-1 rounded-full">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" />
+                <span>Realtime Log</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Form Buat Link Baru */}
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl mb-10">
-          <h2 className="text-xl font-bold mb-1">Buat Short Link Baru</h2>
-          <p className="text-slate-400 text-sm mb-6">
+        <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-slate-700 p-6 sm:p-8 rounded-3xl shadow-xl transition-all">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+              <Plus className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold">Buat Short Link Baru</h2>
+          </div>
+          <p className="text-slate-400 text-xs sm:text-sm mb-6">
             Masukkan URL tujuan Anda dan tentukan kode kustom jika diinginkan.
           </p>
 
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-950/50 border border-red-500/40 text-red-400 text-xs rounded-xl font-medium">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={handleCreateLink} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
                 URL Asli (Destination URL)
               </label>
               <input
                 type="text"
                 required
-                placeholder="https://youtube.com/c/kilu or https://mywebsite.com"
+                placeholder="https://youtube.com/c/kilu atau https://mywebsite.com"
                 value={destinationUrl}
                 onChange={(e) => setDestinationUrl(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
                 Custom Short Code (Opsional)
               </label>
-              <input
-                type="text"
-                placeholder="custom-code"
-                value={customCode}
-                onChange={(e) => setCustomCode(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-              />
+              <div className="relative flex items-center">
+                <span className="absolute left-4 text-xs font-semibold text-slate-500 select-none">
+                  mr.id/s/
+                </span>
+                <input
+                  type="text"
+                  placeholder="custom-code"
+                  value={customCode}
+                  onChange={(e) => setCustomCode(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-20 pr-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.99] disabled:opacity-50"
             >
-              {loading ? "Memproses..." : "Pendekkan Link"}
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Memproses...</span>
+                </>
+              ) : (
+                "Pendekkan Link"
+              )}
             </button>
           </form>
         </div>
 
-        {/* Daftar Link Anda */}
-        <h3 className="text-lg font-bold mb-4">
-          Daftar Link Anda ({links.length})
-        </h3>
+        {/* Daftar Link */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <span>Daftar Link Anda</span>
+              <span className="bg-indigo-950 border border-indigo-500/30 text-indigo-400 text-xs font-extrabold px-2.5 py-0.5 rounded-full">
+                {links.length}
+              </span>
+            </h3>
+          </div>
 
-        <div className="space-y-4">
-          {links.map((item) => {
-            const shortUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/s/${item.short_code}`;
-
-            return (
-              <div
-                key={item.id}
-                className="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
-              >
-                {/* QR Code Container */}
-                <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                  <div className="bg-white p-2 rounded-xl">
-                    <QRCodeSVG id={`qr-${item.id}`} value={shortUrl} size={64} />
-                  </div>
-                  <button
-                    onClick={() => downloadQRCode(item.id, item.short_code)}
-                    className="text-[10px] text-indigo-400 hover:underline font-semibold"
-                  >
-                    Unduh PNG
-                  </button>
-                </div>
-
-                {/* Detail URL & Statistik Klik */}
-                <div className="flex-1 w-full overflow-hidden text-left">
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={shortUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-indigo-400 font-bold hover:underline text-base truncate block"
-                    >
-                      {shortUrl}
-                    </a>
-                    <span className="bg-indigo-950 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                      {item.clicks || 0} Klik
-                    </span>
-                  </div>
-                  <p className="text-slate-400 text-xs truncate mt-1">
-                    {item.original_url}
-                  </p>
-                </div>
-
-                {/* Tombol Aksi */}
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <button
-                    onClick={() => copyToClipboard(shortUrl)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all"
-                  >
-                    Salin Link
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all"
-                  >
-                    Hapus
-                  </button>
-                </div>
+          <div className="space-y-4">
+            {links.length === 0 ? (
+              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-sm">
+                Belum ada link yang dibuat. Mulai buat short link pertama Anda di atas!
               </div>
-            );
-          })}
+            ) : (
+              links.map((item) => {
+                const shortUrl = `${origin}/s/${item.short_code}`;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-5 transition-all shadow-md hover:shadow-indigo-950/10"
+                  >
+                    {/* QR Code */}
+                    <div className="flex sm:flex-col items-center gap-2 shrink-0">
+                      <div className="bg-white p-2 rounded-xl shadow-sm">
+                        <QRCodeSVG
+                          id={`qr-${item.id}`}
+                          value={shortUrl}
+                          size={64}
+                        />
+                      </div>
+                      <button
+                        onClick={() => downloadQRCode(item.id, item.short_code)}
+                        className="inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>PNG</span>
+                      </button>
+                    </div>
+
+                    {/* Detail URL & Statistik */}
+                    <div className="flex-1 w-full overflow-hidden text-left space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a
+                          href={shortUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-indigo-400 font-bold hover:underline text-base truncate flex items-center gap-1.5 max-w-full"
+                        >
+                          <span className="truncate">{shortUrl}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-indigo-400/70 shrink-0" />
+                        </a>
+                        <span className="bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                          {item.clicks || 0} Klik
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-xs truncate">
+                        {item.original_url}
+                      </p>
+                    </div>
+
+                    {/* Tombol Aksi */}
+                    <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto justify-end">
+                      <button
+                        onClick={() => copyToClipboard(item.id, shortUrl)}
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>{copiedId === item.id ? "Tersalin!" : "Salin"}</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="inline-flex items-center justify-center p-2.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all"
+                        title="Hapus Link"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </main>
 
