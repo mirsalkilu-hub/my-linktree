@@ -160,9 +160,8 @@ export default function DashboardPage() {
     const svgBlob = new Blob([svgData], {
       type: "image/svg+xml;charset=utf-8",
     });
-    
-    // Perbaikan kompatibilitas URL object di TypeScript
-    const blobURL = window.URL.createObjectURL(svgBlob);
+    const URLObject = window.URL || window.webkitURL;
+    const blobURL = URLObject.createObjectURL(svgBlob);
 
     const image = new Image();
     image.onload = () => {
@@ -183,7 +182,6 @@ export default function DashboardPage() {
         downloadLink.click();
         document.body.removeChild(downloadLink);
       }
-      window.URL.revokeObjectURL(blobURL);
     };
     image.src = blobURL;
   };
@@ -205,7 +203,8 @@ export default function DashboardPage() {
               mr<span className="text-indigo-500">.id</span>
             </span>
 
-            <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
+            {/* Navigasi Desktop Ber-Icon */}
+            <nav className="hidden md:flex items-center space-x-6 h-full text-sm font-semibold">
               <Link
                 href="/dashboard"
                 className={`flex items-center gap-2 h-full border-b-2 transition-all ${
@@ -251,7 +250,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Tombol Keluar (Desktop Only) */}
             <button
               onClick={handleLogout}
               className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
@@ -260,17 +258,12 @@ export default function DashboardPage() {
               <span>Keluar</span>
             </button>
 
-            {/* Hamburger Button (Mobile Only) */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -281,39 +274,39 @@ export default function DashboardPage() {
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
                 pathname === "/dashboard"
                   ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <LayoutDashboard className="w-4 h-4" />
+              <LayoutDashboard className="w-4 h-4 text-indigo-400" />
               <span>Dashboard</span>
             </Link>
 
             <Link
               href="/dashboard/pages"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
                 pathname.startsWith("/dashboard/pages")
                   ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <FileText className="w-4 h-4" />
+              <FileText className="w-4 h-4 text-indigo-400" />
               <span>Kelola Halaman</span>
             </Link>
 
             <Link
               href="/dashboard/analytics"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
                 pathname.startsWith("/dashboard/analytics")
                   ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
                   : "text-slate-300 hover:bg-slate-900 hover:text-white"
               }`}
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-4 h-4 text-indigo-400" />
               <span>Analytics</span>
             </Link>
 
@@ -341,7 +334,8 @@ export default function DashboardPage() {
 
       {/* Konten Utama */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
-        {/* Banner Welcome */}
+        
+        {/* Banner Welcome Bergaya Halaman Bio */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8 shadow-2xl">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -361,7 +355,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href="/dashboard/pages"
-                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 hover:scale-105"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-2xl transition-all shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 border border-indigo-400/30"
               >
                 <Layers className="w-4 h-4" />
                 <span>Kelola Halaman Bio</span>
@@ -372,11 +366,11 @@ export default function DashboardPage() {
 
         {/* Ringkasan Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-indigo-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-indigo-950/20">
+          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-indigo-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-indigo-950/10">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Total Tautan Dibuat
+                TOTAL TAUTAN DIBUAT
               </span>
               <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(99,102,241,0.25)]">
                 <Link2 className="w-5 h-5" />
@@ -393,11 +387,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-rose-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-rose-950/20">
+          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-rose-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-rose-950/10">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Total Klik Diterima
+                TOTAL KLIK DITERIMA
               </span>
               <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(244,63,94,0.25)]">
                 <MousePointerClick className="w-5 h-5" />
@@ -436,7 +430,7 @@ export default function DashboardPage() {
           <form onSubmit={handleCreateLink} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                URL Asli (Destination URL)
+                URL ASLI (DESTINATION URL)
               </label>
               <input
                 type="text"
@@ -450,7 +444,7 @@ export default function DashboardPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                Custom Short Code (Opsional)
+                CUSTOM SHORT CODE (OPSIONAL)
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-xs font-semibold text-slate-500 select-none">
@@ -469,7 +463,7 @@ export default function DashboardPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.99] disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.99] disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -508,7 +502,6 @@ export default function DashboardPage() {
                     key={item.id}
                     className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-5 transition-all shadow-md hover:shadow-indigo-950/10"
                   >
-                    {/* QR Code */}
                     <div className="flex sm:flex-col items-center gap-2 shrink-0">
                       <div className="bg-white p-2 rounded-xl shadow-sm">
                         <QRCodeSVG
@@ -526,7 +519,6 @@ export default function DashboardPage() {
                       </button>
                     </div>
 
-                    {/* Detail URL & Statistik */}
                     <div className="flex-1 w-full overflow-hidden text-left space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <a
@@ -547,7 +539,6 @@ export default function DashboardPage() {
                       </p>
                     </div>
 
-                    {/* Tombol Aksi */}
                     <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto justify-end">
                       <button
                         onClick={() => copyToClipboard(item.id, shortUrl)}
