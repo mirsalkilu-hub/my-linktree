@@ -875,7 +875,7 @@ export default function BioManagementPage() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onConfirm={handleConfirmDelete}
-          isLoading={isDeleting}
+          loading={isDeleting}
           title="Hapus Halaman Bio"
           message="Apakah Anda yakin ingin menghapus halaman ini? Semua link di dalamnya akan terhapus secara permanen."
         />
