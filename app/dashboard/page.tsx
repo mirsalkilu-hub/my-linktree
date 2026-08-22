@@ -46,7 +46,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Menentukan origin di client side untuk mencegah SSR/Hydration mismatch
   useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
@@ -84,8 +83,8 @@ export default function DashboardPage() {
 
   const validateUrl = (url: string) => {
     try {
-      const formatted = url.startsWith("http://") || url.startsWith("https://") 
-        ? url 
+      const formatted = url.startsWith("http://") || url.startsWith("https://")
+        ? url
         : `https://${url}`;
       new URL(formatted);
       return formatted;
@@ -244,14 +243,16 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* Tombol Keluar (Desktop Only) */}
             <button
-  onClick={handleLogout}
-  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
->
-  <LogOut className="w-4 h-4 text-slate-400" />
-  <span>Keluar</span>
-</button>
+              onClick={handleLogout}
+              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
+            >
+              <LogOut className="w-4 h-4 text-slate-400" />
+              <span>Keluar</span>
+            </button>
 
+            {/* Hamburger Button (Mobile Only) */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
@@ -266,6 +267,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
             <Link
@@ -302,13 +304,14 @@ export default function DashboardPage() {
               Analytics
             </Link>
 
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+            {/* User Info & Tombol Keluar (Mobile Menu) */}
+            <div className="pt-3 border-t border-slate-800 space-y-3">
               {user && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 px-1">
                   <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
                     {user.email?.[0] || "M"}
                   </div>
-                  <span className="text-xs text-slate-300 truncate max-w-[150px]">
+                  <span className="text-xs text-slate-300 truncate">
                     {user.email}
                   </span>
                 </div>
@@ -316,9 +319,9 @@ export default function DashboardPage() {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4 text-slate-400" />
                 <span>Keluar</span>
               </button>
             </div>

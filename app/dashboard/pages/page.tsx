@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ChangeEvent, FormEvent } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ConfirmModal";
 import LinkIcon from "@/components/LinkIcon";
 import IconSelect from "@/components/IconSelect";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, Plus, BarChart2, ExternalLink, Trash2 } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 
 interface BioProfile {
   id: string;
@@ -38,7 +40,7 @@ const THEME_OPTIONS = [
 ];
 
 export default function BioManagementPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [pages, setPages] = useState<BioProfile[]>([]);
   const [selectedPage, setSelectedPage] = useState<BioProfile | null>(null);
 
@@ -138,14 +140,14 @@ export default function BioManagementPage() {
       setOrigin(window.location.origin);
     }
     loadUserPages();
-  }, []);
+  }, [loadUserPages]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
       if (!event.target.files || event.target.files.length === 0) return;
@@ -174,14 +176,16 @@ export default function BioManagementPage() {
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
       toast.success("Foto berhasil diunggah!");
-    } catch (error: any) {
-      toast.error("Gagal mengunggah foto: " + error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      toast.error("Gagal mengunggah foto: " + err.message);
     } finally {
       setUploading(false);
+      event.target.value = "";
     }
   };
 
-  const handleSavePage = async (e: React.FormEvent) => {
+  const handleSavePage = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -247,6 +251,15 @@ export default function BioManagementPage() {
     if (!pageToDelete) return;
 
     setIsDeleting(true);
+
+    const targetPage = pages.find((p) => p.id === pageToDelete);
+    if (targetPage?.avatar_url) {
+      const fileName = targetPage.avatar_url.split("/").pop();
+      if (fileName) {
+        await supabase.storage.from("avatars").remove([fileName]);
+      }
+    }
+
     const { error } = await supabase.from("bio_profiles").delete().eq("id", pageToDelete);
 
     if (error) {
@@ -272,7 +285,7 @@ export default function BioManagementPage() {
     return formatted;
   };
 
-  const handleAddLink = async (e: React.FormEvent) => {
+  const handleAddLink = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedPage) {
       toast.error("Simpan atau pilih halaman terlebih dahulu!");
@@ -323,7 +336,7 @@ export default function BioManagementPage() {
   if (pageLoading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
       </div>
     );
   }
@@ -333,14 +346,11 @@ export default function BioManagementPage() {
       {/* Header Navigasi */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-          
-          {/* Logo & Desktop Nav */}
           <div className="flex items-center space-x-8 h-full">
             <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
               mr<span className="text-indigo-500">.id</span>
             </span>
 
-            {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
               <Link
                 href="/dashboard"
@@ -375,9 +385,7 @@ export default function BioManagementPage() {
             </nav>
           </div>
 
-          {/* Right Side: Desktop Profile/Logout + Mobile Hamburger Button */}
           <div className="flex items-center space-x-3">
-            {/* User Profile Badge (Desktop) */}
             {user && (
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
@@ -386,31 +394,25 @@ export default function BioManagementPage() {
               </div>
             )}
 
-            {/* Logout Button (Desktop) */}
+            {/* Tombol Keluar (Desktop) - Disamakan dengan Dashboard */}
             <button
-  onClick={handleLogout}
-  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
->
-  <LogOut className="w-4 h-4 text-slate-400" />
-  <span>Keluar</span>
-</button>
+              onClick={handleLogout}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-red-400 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 rounded-full transition-all duration-200"
+            >
+              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" />
+              <span>Keluar</span>
+            </button>
 
-            {/* Mobile Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
             <Link
@@ -459,9 +461,10 @@ export default function BioManagementPage() {
                 </div>
               )}
 
+              {/* Tombol Keluar (Mobile) - Disamakan dengan Dashboard */}
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="flex items-center space-x-1.5 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-400 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Keluar</span>
@@ -472,7 +475,6 @@ export default function BioManagementPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
-        {/* Header Judul Halaman */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">Kelola Halaman Bio Anda</h1>
@@ -482,13 +484,14 @@ export default function BioManagementPage() {
           </div>
           <button
             onClick={resetFormToNew}
-            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-3 rounded-xl transition-all text-center shrink-0"
+            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-3 rounded-xl transition-all text-center shrink-0 flex items-center justify-center gap-1.5"
           >
-            + Buat Halaman Baru
+            <Plus className="w-4 h-4" />
+            <span>Buat Halaman Baru</span>
           </button>
         </div>
 
-        {/* List Halaman */}
+        {/* Daftar Halaman */}
         {pages.length > 0 && (
           <div className="mb-6 sm:mb-8">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
@@ -510,9 +513,11 @@ export default function BioManagementPage() {
                     <div>
                       <div className="flex items-center space-x-3 mb-2">
                         {page.avatar_url ? (
-                          <img
+                          <Image
                             src={page.avatar_url}
                             alt={page.title}
+                            width={32}
+                            height={32}
                             className="w-8 h-8 rounded-full object-cover shrink-0"
                           />
                         ) : (
@@ -546,7 +551,7 @@ export default function BioManagementPage() {
           </div>
         )}
 
-        {/* Banner URL Publik & Quick Actions */}
+        {/* Banner URL & Quick Stats */}
         {selectedPage && !isCreatingNew && username && (
           <div className="mb-6 sm:mb-8 p-4 bg-indigo-950/40 border border-indigo-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -556,28 +561,30 @@ export default function BioManagementPage() {
 
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:space-x-3 w-full sm:w-auto">
               <div className="col-span-2 sm:col-span-1 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Klik Halaman</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Total Klik</span>
                 <span className="text-lg font-bold text-indigo-400">{totalPageClicks}</span>
               </div>
               <Link
                 href="/dashboard/analytics"
-                className="flex items-center justify-center px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
+                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
               >
-                📊 Analytics
+                <BarChart2 className="w-3.5 h-3.5" />
+                <span>Analytics</span>
               </Link>
               <a
                 href={`/${username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center px-3 sm:px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
+                className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-center"
               >
-                Lihat Halaman ↗
+                <span>Lihat Halaman</span>
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
         )}
 
-        {/* Form Main Settings */}
+        {/* Form Setting Utama */}
         <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8">
           <h2 className="text-base sm:text-lg font-bold mb-4">
             {isCreatingNew ? "Buat Halaman Baru" : `Edit Halaman: ${selectedPage?.title}`}
@@ -644,9 +651,11 @@ export default function BioManagementPage() {
               <label className="block text-xs text-slate-400 mb-1">Foto Profil / Logo Halaman</label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 {avatarUrl && (
-                  <img
+                  <Image
                     src={avatarUrl}
                     alt="Preview Avatar"
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full object-cover border border-slate-700 shrink-0"
                   />
                 )}
@@ -670,7 +679,7 @@ export default function BioManagementPage() {
           </form>
         </div>
 
-        {/* Tambah Tombol Link & Daftar Link */}
+        {/* Manajemen Tombol Link */}
         {selectedPage && !isCreatingNew && (
           <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8">
             <h2 className="text-base sm:text-lg font-bold mb-4">Tambah Tombol Link</h2>
@@ -708,9 +717,10 @@ export default function BioManagementPage() {
 
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all"
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-1.5"
               >
-                + Tambahkan Tombol
+                <Plus className="w-4 h-4" />
+                <span>Tambahkan Tombol</span>
               </button>
             </form>
 
@@ -739,9 +749,10 @@ export default function BioManagementPage() {
                     </span>
                     <button
                       onClick={() => handleDeleteLink(link.id)}
-                      className="text-xs text-red-400 hover:underline"
+                      className="text-xs text-red-400 hover:underline flex items-center gap-1"
                     >
-                      Hapus
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus</span>
                     </button>
                   </div>
                 </div>

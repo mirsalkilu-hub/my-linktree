@@ -16,7 +16,17 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import { TrendingUp, MousePointer, Layers, LogOut, Menu, X } from "lucide-react";
+import {
+  TrendingUp,
+  MousePointer,
+  Layers,
+  LogOut,
+  Menu,
+  X,
+  LayoutDashboard,
+  FileText,
+  BarChart3,
+} from "lucide-react";
 
 interface BioProfile {
   id: string;
@@ -34,7 +44,14 @@ interface LinkStat {
   clicks: number;
 }
 
-const BAR_COLORS = ["#6366f1", "#3b82f6", "#10b981", "#f43f5e", "#f59e0b", "#8b5cf6"];
+const BAR_COLORS = [
+  "#6366f1",
+  "#3b82f6",
+  "#10b981",
+  "#f43f5e",
+  "#f59e0b",
+  "#8b5cf6",
+];
 
 export default function AnalyticsPage() {
   const pathname = usePathname();
@@ -49,7 +66,6 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-  // Fungsi Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -66,7 +82,9 @@ export default function AnalyticsPage() {
   }, [selectedPageId]);
 
   const loadPages = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       router.push("/login");
       return;
@@ -91,7 +109,6 @@ export default function AnalyticsPage() {
   const loadAnalyticsData = async (bioId: string) => {
     setLoading(true);
 
-    // 1. Ambil data link & total klik
     const { data: links } = await supabase
       .from("bio_links")
       .select("id, title, clicks")
@@ -107,7 +124,6 @@ export default function AnalyticsPage() {
     const sumClicks = formattedLinks.reduce((acc, item) => acc + item.clicks, 0);
     setTotalClicks(sumClicks);
 
-    // 2. Ambil log statistik 7 hari terakhir
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -117,12 +133,14 @@ export default function AnalyticsPage() {
       .eq("bio_id", bioId)
       .gte("created_at", sevenDaysAgo.toISOString());
 
-    // Kelompokkan tren per hari
     const daysMap: Record<string, number> = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateKey = d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+      const dateKey = d.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
       daysMap[dateKey] = 0;
     }
 
@@ -150,7 +168,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
       {/* Header Navigasi */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           
           {/* Logo & Desktop Nav */}
@@ -160,43 +178,45 @@ export default function AnalyticsPage() {
             </span>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
+            <nav className="hidden md:flex items-center space-x-2 h-full py-3">
               <Link
                 href="/dashboard"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   pathname === "/dashboard"
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
+                    ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                    : "text-slate-400 hover:text-white hover:bg-slate-900"
                 }`}
               >
-                Dashboard
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
               </Link>
               <Link
                 href="/dashboard/pages"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   pathname.startsWith("/dashboard/pages")
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
+                    ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                    : "text-slate-400 hover:text-white hover:bg-slate-900"
                 }`}
               >
-                Kelola Halaman
+                <FileText className="w-3.5 h-3.5" />
+                <span>Kelola Halaman</span>
               </Link>
               <Link
                 href="/dashboard/analytics"
-                className={`flex items-center h-full border-b-2 transition-all ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   pathname.startsWith("/dashboard/analytics")
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
+                    ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+                    : "text-slate-400 hover:text-white hover:bg-slate-900"
                 }`}
               >
-                Analytics
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Analytics</span>
               </Link>
             </nav>
           </div>
 
-          {/* Right Side: Desktop Profile/Logout + Mobile Hamburger Button */}
+          {/* Right Side: Profile & Logout */}
           <div className="flex items-center space-x-3">
-            {/* User Profile Badge (Desktop) */}
             {user && (
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
@@ -205,14 +225,13 @@ export default function AnalyticsPage() {
               </div>
             )}
 
-            {/* Logout Button (Desktop) */}
             <button
-  onClick={handleLogout}
-  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
->
-  <LogOut className="w-4 h-4 text-slate-400" />
-  <span>Keluar</span>
-</button>
+              onClick={handleLogout}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
+            >
+              <LogOut className="w-3.5 h-3.5 text-slate-400" />
+              <span>Keluar</span>
+            </button>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -220,50 +239,49 @@ export default function AnalyticsPage() {
               className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
+          <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-2">
             <Link
               href="/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 pathname === "/dashboard"
                   ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              Dashboard
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dashboard</span>
             </Link>
             <Link
               href="/dashboard/pages"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 pathname.startsWith("/dashboard/pages")
                   ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              Kelola Halaman
+              <FileText className="w-4 h-4" />
+              <span>Kelola Halaman</span>
             </Link>
             <Link
               href="/dashboard/analytics"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 pathname.startsWith("/dashboard/analytics")
                   ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
                   : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              Analytics
+              <BarChart3 className="w-4 h-4" />
+              <span>Analytics</span>
             </Link>
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
@@ -280,9 +298,9 @@ export default function AnalyticsPage() {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1.5 border border-red-600/80 bg-red-950/20 text-red-500 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-900/50 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-full transition-all duration-200"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3.5 h-3.5 text-slate-400" />
                 <span>Keluar</span>
               </button>
             </div>
@@ -290,6 +308,7 @@ export default function AnalyticsPage() {
         )}
       </header>
 
+      {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1">
         {/* Selector Halaman */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
