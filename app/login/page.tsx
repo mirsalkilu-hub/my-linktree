@@ -35,7 +35,12 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setErrorMsg(error.message);
+      // Mengubah pesan bawaan Supabase jika terjadi kesalahan login
+      if (error.message.includes("Invalid login credentials")) {
+        setErrorMsg("email atau password salah");
+      } else {
+        setErrorMsg(error.message);
+      }
     } else {
       router.push("/dashboard");
     }
@@ -70,13 +75,27 @@ export default function LoginPage() {
               Email <span className="text-red-500">*</span>
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-4 text-slate-400 pointer-events-none text-base font-medium">
-                @
+              {/* Replacement: Ikon Email (Amplop) */}
+              <span className="absolute left-4 text-slate-400 pointer-events-none flex items-center justify-center">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.8"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
               </span>
               <input
                 type="email"
                 required
-                placeholder="name@example.com"
+                placeholder="name@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
