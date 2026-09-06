@@ -105,7 +105,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 w-full bg-[#070913]/80 backdrop-blur-md border-b border-slate-800">
         <div className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
           <span className="text-2xl font-black tracking-wider text-white">
-            mr<span className="text-indigo-500">.id</span>
+            urlyu<span className="text-indigo-500">.com</span>
           </span>
 
           <Link
@@ -247,7 +247,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="relative z-10 text-center py-6 border-t border-slate-900/80 text-slate-600 text-xs">
-        © 2026 mr.id. All rights reserved.
+        © 2026 urlyu.com. All rights reserved.
       </footer>
     </div>
   );

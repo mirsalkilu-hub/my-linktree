@@ -381,7 +381,7 @@ export default function PublicBioPage({
         <div className="w-full border-t border-white/10 pt-5 flex justify-center">
           <div className="inline-flex items-center space-x-2 bg-white/[0.02] border border-white/10 hover:border-indigo-500/40 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest text-slate-400 transition-colors">
             <span>Powered By</span>
-            <span className="text-indigo-400 font-black">mr.id</span>
+            <span className="text-indigo-400 font-black">urlyu.com</span>
           </div>
         </div>
 

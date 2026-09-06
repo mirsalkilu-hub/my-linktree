@@ -408,7 +408,7 @@ export default function BioManagementPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           <div className="flex items-center space-x-8 h-full">
             <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
-              mr<span className="text-indigo-500">.id</span>
+              urlyu<span className="text-indigo-500">.com</span>
             </span>
 
             <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
@@ -881,7 +881,7 @@ export default function BioManagementPage() {
         />
       </main>
       <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
-        © 2026 mr.id. All rights reserved.
+        © 2026 urlyu.com. All rights reserved.
       </footer>
     </div>
   );

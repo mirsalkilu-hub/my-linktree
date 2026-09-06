@@ -74,7 +74,7 @@ export default function RegisterPage() {
         {/* Header Title */}
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-black tracking-wider text-white">
-            mr<span className="text-indigo-500">.id</span>
+            urlyu<span className="text-indigo-500">.com</span>
           </Link>
           <h2 className="text-xl font-bold mt-4 text-slate-100">Buat Akun Baru</h2>
         </div>
