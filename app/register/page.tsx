@@ -73,11 +73,18 @@ export default function RegisterPage() {
         
         {/* Header Title */}
         <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-black tracking-wider text-white">
-            urlyu<span className="text-indigo-500">.com</span>
-          </Link>
-          <h2 className="text-xl font-bold mt-4 text-slate-100">Buat Akun Baru</h2>
-        </div>
+  <Link href="/" className="inline-flex items-center justify-center space-x-3 group">
+    <img
+      src="/logo.png"
+      alt="urlyu.com logo"
+      className="w-9 h-9 object-contain rounded-lg transition-transform group-hover:scale-105"
+    />
+    <span className="text-3xl font-black tracking-wider text-white">
+      urlyu<span className="text-indigo-500">.com</span>
+    </span>
+  </Link>
+  <h2 className="text-xl font-bold mt-4 text-slate-100">Masuk ke Akun Anda</h2>
+</div>
 
         {/* Error Alert */}
         {errorMessage && (
