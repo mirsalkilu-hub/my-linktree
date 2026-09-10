@@ -103,19 +103,28 @@ export default function HomePage() {
 
       {/* Header Sticky & Garis Bawah */}
       <header className="sticky top-0 z-50 w-full bg-[#070913]/80 backdrop-blur-md border-b border-slate-800">
-        <div className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
-          <span className="text-2xl font-black tracking-wider text-white">
-            urlyu<span className="text-indigo-500">.com</span>
-          </span>
+  <div className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
+    
+    {/* Ditambahkan flex & space-x-3 agar logo & teks sejajar */}
+    <div className="flex items-center space-x-3">
+      <img
+        src="/logo.png"
+        alt="urlyu.com logo"
+        className="w-8 h-8 object-contain rounded-lg"
+      />
+      <span className="text-2xl font-black tracking-wider text-white">
+        urlyu<span className="text-indigo-500">.com</span>
+      </span>
+    </div>
 
-          <Link
-            href="/login"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-          >
-            Masuk / Daftar
-          </Link>
-        </div>
-      </header>
+    <Link
+      href="/login"
+      className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+    >
+      Masuk / Daftar
+    </Link>
+  </div>
+</header>
 
       {/* Main Hero Section */}
       <main className="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center flex-1 flex flex-col items-center justify-center">

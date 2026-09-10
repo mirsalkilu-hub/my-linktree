@@ -404,139 +404,152 @@ export default function BioManagementPage() {
       <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/15 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Header Navigasi Presisi */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-          <div className="flex items-center space-x-8 h-full">
-            <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
-              urlyu<span className="text-indigo-500">.com</span>
-            </span>
+       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
+  <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
+    
+    {/* Kiri: Logo + Navigation */}
+    <div className="flex items-center space-x-6 h-full">
+      {/* Brand Logo & Title */}
+      <Link href="/dashboard" className="flex items-center space-x-3">
+        <img
+          src="/logo.png"
+          alt="urlyu.com logo"
+          className="w-8 h-8 object-contain rounded-lg"
+        />
+        <span className="text-2xl font-black tracking-wider text-white">
+          urlyu<span className="text-indigo-500">.com</span>
+        </span>
+      </Link>
 
-            <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
-              <Link
-                href="/dashboard"
-                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
-                  pathname === "/dashboard"
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
-              </Link>
-              <Link
-                href="/dashboard/pages"
-                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
-                  pathname.startsWith("/dashboard/pages")
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>Kelola Halaman</span>
-              </Link>
-              <Link
-                href="/dashboard/analytics"
-                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
-                  pathname.startsWith("/dashboard/analytics")
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <BarChart2 className="w-4 h-4" />
-                <span>Analytics</span>
-              </Link>
-            </nav>
-          </div>
+      {/* Desktop Navigation */}
+      <nav className="hidden md:flex items-center space-x-8 h-full text-sm font-semibold">
+        <Link
+          href="/dashboard"
+          className={`flex items-center gap-2 h-full border-b-2 transition-all ${
+            pathname === "/dashboard"
+              ? "border-indigo-500 text-indigo-400 font-bold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Dashboard</span>
+        </Link>
+        <Link
+          href="/dashboard/pages"
+          className={`flex items-center gap-2 h-full border-b-2 transition-all ${
+            pathname.startsWith("/dashboard/pages")
+              ? "border-indigo-500 text-indigo-400 font-bold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Kelola Halaman</span>
+        </Link>
+        <Link
+          href="/dashboard/analytics"
+          className={`flex items-center gap-2 h-full border-b-2 transition-all ${
+            pathname.startsWith("/dashboard/analytics")
+              ? "border-indigo-500 text-indigo-400 font-bold"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <BarChart2 className="w-4 h-4" />
+          <span>Analytics</span>
+        </Link>
+      </nav>
+    </div>
 
-          <div className="flex items-center space-x-3">
-            {user && (
-              <div className="hidden sm:flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-                  {user.email?.[0] || "M"}
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-red-400 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 rounded-full transition-all duration-200"
-            >
-              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" />
-              <span>Keluar</span>
-            </button>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
-              aria-label="Toggle Menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+    {/* Kanan: User Profile / Logout / Mobile Toggle */}
+    <div className="flex items-center space-x-3">
+      {user && (
+        <div className="hidden sm:flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+            {user.email?.[0] || "M"}
           </div>
         </div>
+      )}
 
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                pathname === "/dashboard"
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Dashboard</span>
-            </Link>
-            <Link
-              href="/dashboard/pages"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                pathname.startsWith("/dashboard/pages")
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Kelola Halaman</span>
-            </Link>
-            <Link
-              href="/dashboard/analytics"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
-                pathname.startsWith("/dashboard/analytics")
-                  ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <BarChart2 className="w-4 h-4" />
-              <span>Analytics</span>
-            </Link>
+      <button
+        onClick={handleLogout}
+        className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-red-400 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 rounded-full transition-all duration-200"
+      >
+        <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" />
+        <span>Keluar</span>
+      </button>
 
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-              {user && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-                    {user.email?.[0] || "M"}
-                  </div>
-                  <span className="text-xs text-slate-300 truncate max-w-[150px]">
-                    {user.email}
-                  </span>
-                </div>
-              )}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
+        aria-label="Toggle Menu"
+      >
+        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+    </div>
+  </div>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-1.5 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-400 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Keluar</span>
-              </button>
+  {/* Mobile Menu Dropdown */}
+  {mobileMenuOpen && (
+    <div className="md:hidden bg-slate-900/95 border-b border-slate-800 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
+      <Link
+        href="/dashboard"
+        onClick={() => setMobileMenuOpen(false)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+          pathname === "/dashboard"
+            ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+        }`}
+      >
+        <LayoutDashboard className="w-4 h-4" />
+        <span>Dashboard</span>
+      </Link>
+      <Link
+        href="/dashboard/pages"
+        onClick={() => setMobileMenuOpen(false)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+          pathname.startsWith("/dashboard/pages")
+            ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+        }`}
+      >
+        <FileText className="w-4 h-4" />
+        <span>Kelola Halaman</span>
+      </Link>
+      <Link
+        href="/dashboard/analytics"
+        onClick={() => setMobileMenuOpen(false)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${
+          pathname.startsWith("/dashboard/analytics")
+            ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
+            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+        }`}
+      >
+        <BarChart2 className="w-4 h-4" />
+        <span>Analytics</span>
+      </Link>
+
+      <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+        {user && (
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
+              {user.email?.[0] || "M"}
             </div>
+            <span className="text-xs text-slate-300 truncate max-w-[150px]">
+              {user.email}
+            </span>
           </div>
         )}
-      </header>
+
+        <button
+          onClick={handleLogout}
+          className="flex items-center space-x-1.5 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-400 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Keluar</span>
+        </button>
+      </div>
+    </div>
+  )}
+</header> 
 
       {/* Main Content Area dengan Visual Effects */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1 relative z-10">

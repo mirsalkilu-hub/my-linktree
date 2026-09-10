@@ -229,10 +229,15 @@ export default function AnalyticsPage() {
       {/* Header Navigasi Sticky */}
       <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-          <div className="flex items-center space-x-8 h-full">
-            <span className="text-xl sm:text-2xl font-black tracking-wider text-white shrink-0">
-              urlyu<span className="text-indigo-500">.com</span>
-            </span>
+          <div className="flex items-center space-x-3">
+      <img
+        src="/logo.png"
+        alt="urlyu.com logo"
+        className="w-8 h-8 object-contain rounded-lg"
+      />
+      <span className="text-2xl font-black tracking-wider text-white">
+        urlyu<span className="text-indigo-500">.com</span>
+      </span>
 
             <nav className="hidden md:flex items-center space-x-2 h-full py-3">
               <Link
