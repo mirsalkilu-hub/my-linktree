@@ -3,8 +3,8 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "mr.id - Platform Shortener Link & Bio Landing Page",
-  description: "Kelola tautan dan halaman bio modern Anda di mr.id",
+  title: "urlyu.com - Platform Shortener Link & Bio Landing Page",
+  description: "Kelola tautan dan halaman bio modern Anda di urlyu.com",
 };
 
 export default function RootLayout({
