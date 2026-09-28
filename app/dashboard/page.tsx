@@ -607,7 +607,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               links.map((item) => {
-                const shortUrl = `${origin}/s/${item.short_code}`;
+                const shortUrl = `${origin}/${item.short_code}`;
 
                 return (
                   <div

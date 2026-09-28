@@ -171,6 +171,7 @@ export default function PublicBioPage({
   const [profile, setProfile] = useState<BioProfile | null>(null);
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
@@ -183,6 +184,26 @@ export default function PublicBioPage({
         .maybeSingle();
 
       if (!profData) {
+        const { data: shortLink } = await supabase
+          .from("links")
+          .select("id, original_url, clicks")
+          .eq("short_code", username)
+          .maybeSingle();
+
+        if (shortLink?.original_url) {
+          setRedirecting(true);
+          await supabase
+            .from("links")
+            .update({ clicks: (shortLink.clicks || 0) + 1 })
+            .eq("id", shortLink.id);
+
+          const destination = /^https?:\/\//i.test(shortLink.original_url)
+            ? shortLink.original_url
+            : `https://${shortLink.original_url}`;
+          window.location.replace(destination);
+          return;
+        }
+
         setLoading(false);
         return;
       }
@@ -202,7 +223,7 @@ export default function PublicBioPage({
     fetchData();
   }, [username]);
 
-  if (loading) {
+  if (loading || redirecting) {
     return (
       <div className="site-shell min-h-screen text-white flex items-center justify-center p-4">
         <div className="animate-pulse flex items-center gap-3 text-sm text-slate-400 font-semibold tracking-wider">

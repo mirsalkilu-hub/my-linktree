@@ -50,7 +50,7 @@ export default function HomePage() {
       setErrorMessage("Gagal menyimpan link. Silakan coba lagi.");
     } else if (data) {
       const domain = window.location.origin;
-      setShortUrl(`${domain}/s/${slug}`);
+      setShortUrl(`${domain}/${slug}`);
       setSlugCode(slug);
       setLongUrl("");
     }
