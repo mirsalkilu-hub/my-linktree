@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { notFound, useRouter } from "next/navigation";
 import LinkIcon from "@/components/LinkIcon";
+import SiteFooter from "@/components/SiteFooter";
 
 // Interface Data
 interface LinkItem {
@@ -118,6 +119,47 @@ const THEME_PRESETS: Record<
   },
 };
 
+const THEME_ALIASES: Record<string, string> = {
+  cyan: "blue",
+  fuchsia: "rose",
+  teal: "emerald",
+  orange: "amber",
+  lime: "emerald",
+  aurora: "blue",
+  sunset: "rose",
+  ocean: "blue",
+  neon: "emerald",
+  lavender: "indigo",
+};
+
+const THEME_ACCENTS: Record<string, string> = {
+  cyan: "#06b6d4",
+  fuchsia: "#d946ef",
+  teal: "#14b8a6",
+  orange: "#f97316",
+  lime: "#84cc16",
+  aurora: "#22d3ee",
+  sunset: "#fb7185",
+  ocean: "#38bdf8",
+  neon: "#a3e635",
+  lavender: "#c084fc",
+};
+
+const THEME_BACKGROUNDS: Record<string, string> = {
+  aurora: "#071827",
+  sunset: "#1d101b",
+  ocean: "#061725",
+  neon: "#101a12",
+  lavender: "#151022",
+};
+
+const FONT_FAMILIES: Record<string, string> = {
+  sans: "ui-sans-serif, system-ui, sans-serif",
+  serif: "Georgia, serif",
+  mono: "ui-monospace, SFMono-Regular, monospace",
+  rounded: "Trebuchet MS, sans-serif",
+};
+
 export default function PublicBioPage({
   params,
 }: {
@@ -162,7 +204,7 @@ export default function PublicBioPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#030712] text-white flex items-center justify-center p-4">
+      <div className="site-shell min-h-screen text-white flex items-center justify-center p-4">
         <div className="animate-pulse flex items-center gap-3 text-sm text-slate-400 font-semibold tracking-wider">
           <div className="w-3 h-3 rounded-full bg-indigo-500 animate-ping" />
           MEMUAT PROFIL...
@@ -175,7 +217,13 @@ export default function PublicBioPage({
     notFound();
   }
 
-  const theme = THEME_PRESETS[profile.theme_color || "indigo"] || THEME_PRESETS.indigo;
+  const [themeId, fontId] = (profile.theme_color || "indigo::sans").split("::");
+  const baseTheme = THEME_PRESETS[THEME_ALIASES[themeId] || themeId] || THEME_PRESETS.indigo;
+  const theme = {
+    ...baseTheme,
+    accentColor: THEME_ACCENTS[themeId] || baseTheme.accentColor,
+  };
+  const profileFont = FONT_FAMILIES[fontId] || FONT_FAMILIES.sans;
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
   const triggerToast = () => {
@@ -232,7 +280,13 @@ export default function PublicBioPage({
   ];
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden selection:bg-indigo-500 selection:text-white">
+    <div
+      className="site-shell min-h-screen text-white flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden selection:bg-indigo-500 selection:text-white"
+      style={{
+        fontFamily: profileFont,
+        background: THEME_BACKGROUNDS[themeId] || undefined,
+      }}
+    >
       
       {/* Background Ambient Blur Dynamic */}
       <div 
@@ -250,7 +304,7 @@ export default function PublicBioPage({
       </div>
 
       {/* Main Container Card */}
-      <div className={`w-full max-w-md bg-slate-900/40 border ${theme.cardBorder} rounded-[36px] p-6 sm:p-8 relative flex flex-col items-center text-center backdrop-blur-2xl transition-all duration-500 z-10`}>
+      <div className={`profile-card w-full max-w-md border ${theme.cardBorder} rounded-[32px] p-6 sm:p-8 relative flex flex-col items-center text-center transition-all duration-500 z-10`}>
         
         {/* Top Glow Border Light */}
         <div className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
@@ -279,15 +333,15 @@ export default function PublicBioPage({
 
         {/* Avatar Profil dengan Glow & Ring */}
         <div className="mt-3 mb-4 relative group">
-          <div className="absolute -inset-0.5 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-500" style={{ backgroundColor: theme.accentColor }} />
+          <div className="absolute -inset-1 rounded-full blur-lg opacity-60 group-hover:opacity-90 transition duration-500" style={{ backgroundColor: theme.accentColor }} />
           {profile.avatar_url ? (
             <img
               src={profile.avatar_url}
               alt={profile.title}
-              className={`relative w-28 h-28 rounded-full object-cover border-2 ${theme.avatarBorder} ${theme.avatarGlow} transition-all duration-500 group-hover:scale-105`}
+              className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 ${theme.avatarBorder} ${theme.avatarGlow} transition-all duration-500 group-hover:scale-105`}
             />
           ) : (
-            <div className={`relative w-28 h-28 rounded-full bg-slate-950 border-2 ${theme.avatarBorder} ${theme.avatarGlow} flex items-center justify-center text-3xl font-black text-white transition-all duration-500 group-hover:scale-105`}>
+            <div className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-slate-950 border-2 ${theme.avatarBorder} ${theme.avatarGlow} flex items-center justify-center text-3xl font-black text-white transition-all duration-500 group-hover:scale-105`}>
               {profile.title[0]?.toUpperCase()}
             </div>
           )}
@@ -295,7 +349,7 @@ export default function PublicBioPage({
 
         {/* Live Status Indicator & Badge Username */}
         <div className="flex flex-col items-center gap-2 mb-3">
-          <div className={`inline-flex items-center space-x-2 px-3.5 py-1 rounded-full text-xs font-semibold border backdrop-blur-md ${theme.badgeBg} ${theme.badgeText} shadow-sm`}>
+          <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-[11px] font-semibold border backdrop-blur-md ${theme.badgeBg} ${theme.badgeText} shadow-sm`}>
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -304,26 +358,26 @@ export default function PublicBioPage({
           </div>
 
           {profile.status_text && (
-            <p className="text-[11px] font-medium text-slate-400 tracking-wide uppercase">
+            <p className="text-[10px] font-medium text-slate-400 tracking-wide uppercase">
               {profile.status_text}
             </p>
           )}
         </div>
 
         {/* Title / Name */}
-        <h1 className="text-xl sm:text-2xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 mb-1 leading-snug break-words max-w-xs">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-2 leading-snug break-words max-w-xs">
           {profile.title}
         </h1>
 
         {/* Bio Description */}
         {profile.bio_description && (
-          <p className="text-xs text-slate-400 mb-7 font-medium max-w-xs leading-relaxed uppercase tracking-widest">
+          <p className="text-xs sm:text-sm text-slate-400 mb-7 font-medium max-w-sm leading-relaxed">
             {profile.bio_description}
           </p>
         )}
 
         {/* List Link Buttons */}
-        <div className="w-full space-y-3.5 mb-8">
+        <div className="w-full space-y-3 mb-8">
           {links && links.length > 0 ? (
             links.map((link) => {
               const isFeatured = link.is_featured;
@@ -335,7 +389,7 @@ export default function PublicBioPage({
                   target="_blank"
                   rel="noopener noreferrer"
                   style={isFeatured ? { borderColor: theme.accentColor } : theme.buttonStyle}
-                  className={`w-full py-4 px-5 rounded-2xl border flex items-center justify-between transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group relative overflow-hidden backdrop-blur-xl ${
+                  className={`profile-link w-full py-3.5 px-4 rounded-2xl border flex items-center justify-between transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group relative overflow-hidden backdrop-blur-xl ${
                     isFeatured
                       ? "bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 shadow-[0_0_25px_-5px_rgba(99,102,241,0.4)]"
                       : theme.buttonHoverClass
@@ -346,7 +400,7 @@ export default function PublicBioPage({
 
                   {/* Badge Highlight / Featured */}
                   {isFeatured && (
-                    <div className="absolute top-0 right-0 bg-indigo-500 text-[9px] font-black tracking-widest text-white px-2.5 py-0.5 rounded-bl-lg uppercase shadow-sm">
+                    <div className="absolute top-0 right-0 text-[9px] font-black tracking-widest text-white px-2.5 py-0.5 rounded-bl-lg uppercase shadow-sm" style={{ backgroundColor: theme.accentColor }}>
                       Featured
                     </div>
                   )}
@@ -357,7 +411,7 @@ export default function PublicBioPage({
                   </div>
 
                   {/* Title Button */}
-                  <span className="font-extrabold text-xs sm:text-sm tracking-wider uppercase text-slate-200 group-hover:text-white truncate mx-3 transition-colors z-10">
+                  <span className="font-bold text-xs sm:text-sm text-slate-200 group-hover:text-white truncate mx-3 transition-colors z-10">
                     {link.title}
                   </span>
 
@@ -378,12 +432,7 @@ export default function PublicBioPage({
         </div>
 
         {/* Footer */}
-        <div className="w-full border-t border-white/10 pt-5 flex justify-center">
-          <div className="inline-flex items-center space-x-2 bg-white/[0.02] border border-white/10 hover:border-indigo-500/40 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest text-slate-400 transition-colors">
-            <span>Powered By</span>
-            <span className="text-indigo-400 font-black">urlyu.com</span>
-          </div>
-        </div>
+        <SiteFooter compact />
 
       </div>
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import { Mail, ArrowLeft } from "lucide-react";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -32,11 +33,11 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl">
+    <div className="auth-shell min-h-screen text-white flex flex-col items-center justify-center p-4">
+      <div className="auth-card w-full max-w-md p-6 sm:p-8 rounded-2xl">
         <div className="text-center mb-6">
           <span className="text-2xl font-black tracking-wider text-white">
-            mr<span className="text-indigo-500">.id</span>
+            urlyu<span className="text-indigo-500">.com</span>
           </span>
           <h1 className="text-xl font-bold mt-4">Lupa Kata Sandi?</h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -70,7 +71,7 @@ export default function ForgotPasswordPage() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                  className="auth-input w-full rounded-xl pl-10 pr-4 py-3 text-sm transition-all placeholder:text-slate-600"
                 />
               </div>
             </div>
@@ -78,7 +79,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl text-sm transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+              className="primary-action w-full text-white font-semibold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
             >
               {loading ? "Mengirim Tautan..." : "Kirim Tautan Reset"}
             </button>
@@ -95,6 +96,7 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       </div>
+      <SiteFooter compact />
     </div>
   );
 }

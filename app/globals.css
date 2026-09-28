@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #070913;
+  --foreground: #f8fafc;
+  --surface: rgba(15, 23, 42, 0.72);
+  --surface-solid: #0f172a;
+  --surface-muted: rgba(11, 19, 41, 0.78);
+  --line: rgba(148, 163, 184, 0.18);
+  --accent: #6366f1;
+  --accent-strong: #818cf8;
 }
 
 @theme inline {
@@ -12,25 +18,138 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  min-width: 320px;
 }
-/* Custom Utility Classes untuk KiluLink Modern UI */
+
 @layer utilities {
+  .site-shell {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .site-footer {
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    background: rgba(7, 9, 19, 0.36);
+  }
+
+  .auth-shell {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.16), transparent 34rem),
+      var(--background);
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(20px);
+  }
+
+  .auth-input {
+    background: var(--surface-muted);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    color: var(--foreground);
+  }
+
+  .auth-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+    outline: none;
+  }
+
+  .primary-action {
+    background: var(--accent);
+    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.24);
+  }
+
+  .primary-action:hover {
+    background: var(--accent-strong);
+  }
+
+  .app-header {
+    background: rgba(7, 9, 19, 0.82);
+    border-color: var(--line);
+    backdrop-filter: blur(16px);
+  }
+
+  .dashboard-hero {
+    background:
+      radial-gradient(circle at 90% 10%, var(--dashboard-accent-soft), transparent 20rem),
+      linear-gradient(110deg, rgba(30, 27, 75, 0.74), rgba(15, 23, 42, 0.92) 68%);
+    border: 1px solid color-mix(in srgb, var(--dashboard-accent) 32%, transparent);
+  }
+
+  .analytics-hero {
+    background:
+      radial-gradient(circle at 90% 20%, rgba(99, 102, 241, 0.18), transparent 24rem),
+      linear-gradient(110deg, rgba(30, 27, 75, 0.7), rgba(15, 23, 42, 0.92) 62%);
+    border: 1px solid rgba(99, 102, 241, 0.24);
+    box-shadow: 0 20px 55px rgba(2, 6, 23, 0.28);
+  }
+
+  .analytics-panel {
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid var(--line);
+    box-shadow: 0 16px 40px rgba(2, 6, 23, 0.2);
+    backdrop-filter: blur(18px);
+  }
+
+  .analytics-stat {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.84), rgba(15, 23, 42, 0.62));
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 32px rgba(2, 6, 23, 0.18);
+  }
+
+  .analytics-select {
+    background: rgba(2, 6, 23, 0.58);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
+
+  .analytics-select:focus {
+    border-color: rgba(129, 140, 248, 0.7);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+    outline: none;
+  }
+
+  .manager-hero {
+    background:
+      radial-gradient(circle at 88% 10%, rgba(52, 211, 153, 0.12), transparent 20rem),
+      linear-gradient(120deg, rgba(30, 27, 75, 0.72), rgba(15, 23, 42, 0.86) 68%);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    box-shadow: 0 18px 45px rgba(2, 6, 23, 0.24);
+  }
+
+  .manager-panel {
+    background: rgba(15, 23, 42, 0.66);
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 36px rgba(2, 6, 23, 0.18);
+    backdrop-filter: blur(16px);
+  }
+
+  .profile-card {
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.52));
+    box-shadow: 0 30px 90px rgba(2, 6, 23, 0.42);
+    backdrop-filter: blur(24px);
+  }
+
+  .profile-link {
+    background: rgba(15, 23, 42, 0.56);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.14);
+  }
+
+  .profile-link:hover {
+    background: rgba(30, 41, 59, 0.72);
+  }
+
   .glass-card {
-    background: rgba(15, 23, 42, 0.75);
+    background: var(--surface);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--line);
   }
 
   .glass-card-hover {
@@ -43,7 +162,8 @@ body {
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #e879f9 100%);
+    background: linear-gradient(135deg, #818cf8 0%, #60a5fa 55%, #34d399 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
@@ -60,13 +180,4 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
 }

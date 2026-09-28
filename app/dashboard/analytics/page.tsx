@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import DashboardHeader from "@/components/DashboardHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { User } from "@supabase/supabase-js";
 import {
   AreaChart,
@@ -225,9 +227,11 @@ export default function AnalyticsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between">
+    <div className="site-shell min-h-screen text-white font-sans flex flex-col justify-between">
       {/* Header Navigasi Sticky */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+      <DashboardHeader user={user} />
+      {false && (
+      <header className="app-header sticky top-0 z-50 border-b transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           <div className="flex items-center space-x-3">
       <img
@@ -280,7 +284,7 @@ export default function AnalyticsPage() {
             {user && (
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0 shadow-md shadow-indigo-500/20">
-                  {user.email?.[0] || "M"}
+                  {user?.email?.[0] || "M"}
                 </div>
               </div>
             )}
@@ -369,22 +373,24 @@ export default function AnalyticsPage() {
             </div>
           </div>
         )}
-      </header>
+      </header>)}
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 space-y-6 sm:space-y-7">
         {/* Banner Title & Dropdown Filter */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8 rounded-3xl shadow-xl">
+        <div className="analytics-hero flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-5 sm:p-7 rounded-2xl">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-bold uppercase tracking-[0.16em] mb-3">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Realtime Traffic Insights</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-              <TrendingUp className="w-7 h-7 text-indigo-400" />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-400/20">
+                <TrendingUp className="w-5 h-5" />
+              </span>
               <span>Analisis Performa & Grafik Klik</span>
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-slate-400 mt-2 max-w-xl">
               Pantau tren trafik dan performa tombol di setiap halaman bio Anda.
             </p>
           </div>
@@ -397,7 +403,7 @@ export default function AnalyticsPage() {
               <select
                 value={selectedPageId}
                 onChange={(e) => setSelectedPageId(e.target.value)}
-                className="bg-slate-950 border border-slate-800 hover:border-indigo-500/50 text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-lg w-full sm:w-auto"
+                className="analytics-select text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all shadow-lg w-full sm:w-auto"
               >
                 {pages.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -410,8 +416,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Ringkasan Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-indigo-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-indigo-950/10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+          <div className="analytics-stat relative overflow-hidden hover:border-indigo-500/40 p-5 sm:p-6 rounded-2xl transition-all duration-300 group">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -422,7 +428,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="flex items-baseline justify-between">
-              <strong className="text-3xl font-black text-white tracking-tight">
+              <strong className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 {totalClicks}
               </strong>
               <span className="text-xs font-medium text-slate-400">
@@ -431,7 +437,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-emerald-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-emerald-950/10">
+          <div className="analytics-stat relative overflow-hidden hover:border-emerald-500/40 p-5 sm:p-6 rounded-2xl transition-all duration-300 group">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -442,7 +448,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="flex items-baseline justify-between">
-              <strong className="text-3xl font-black text-white tracking-tight">
+              <strong className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 {recent7DaysClicks}{" "}
                 <span className="text-xs font-semibold text-emerald-400">
                   klik
@@ -455,7 +461,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-violet-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-violet-950/10">
+          <div className="analytics-stat relative overflow-hidden hover:border-violet-500/40 p-5 sm:p-6 rounded-2xl transition-all duration-300 group">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -466,7 +472,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="flex items-baseline justify-between">
-              <strong className="text-3xl font-black text-white tracking-tight">
+              <strong className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 {linkData.length}
               </strong>
               <span className="text-xs font-medium text-slate-400">
@@ -478,13 +484,13 @@ export default function AnalyticsPage() {
 
         {/* Section Area & Bar Chart */}
         {loading || !mounted ? (
-          <div className="bg-slate-900/80 border border-slate-800 p-12 rounded-3xl text-center text-slate-400 text-sm animate-pulse">
+          <div className="analytics-panel p-12 rounded-2xl text-center text-slate-400 text-sm animate-pulse">
             Memuat data grafik analytics...
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
             {/* Area Chart */}
-            <div className="lg:col-span-2 bg-slate-900/90 border border-slate-800 p-6 sm:p-7 rounded-3xl shadow-xl">
+            <div className="analytics-panel lg:col-span-2 p-5 sm:p-7 rounded-2xl">
               <h3 className="text-lg font-bold text-white mb-1">
                 Tren Klik 7 Hari Terakhir
               </h3>
@@ -553,7 +559,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Bar Chart */}
-            <div className="bg-slate-900/90 border border-slate-800 p-6 sm:p-7 rounded-3xl shadow-xl">
+            <div className="analytics-panel p-5 sm:p-7 rounded-2xl">
               <h3 className="text-lg font-bold text-white mb-1">
                 Klik per Tombol Link
               </h3>
@@ -618,9 +624,7 @@ export default function AnalyticsPage() {
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
-        © 2026 urlyu.com. All rights reserved.
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

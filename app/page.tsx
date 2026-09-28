@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../lib/supabase";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function HomePage() {
   const [longUrl, setLongUrl] = useState("");
@@ -96,13 +97,13 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070913] text-white font-sans flex flex-col justify-between relative overflow-x-clip">
+    <div className="site-shell min-h-screen text-white font-sans flex flex-col justify-between relative overflow-x-clip">
       {/* Ambient Glow Background Effect */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-1/2 left-1/3 w-[300px] h-[200px] bg-purple-600/10 blur-[100px] rounded-full pointer-events-none" />
 
       {/* Header Sticky & Garis Bawah */}
-      <header className="sticky top-0 z-50 w-full bg-[#070913]/80 backdrop-blur-md border-b border-slate-800">
+      <header className="app-header sticky top-0 z-50 w-full border-b">
   <div className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
     
     {/* Ditambahkan flex & space-x-3 agar logo & teks sejajar */}
@@ -255,9 +256,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-6 border-t border-slate-900/80 text-slate-600 text-xs">
-        © 2026 urlyu.com. All rights reserved.
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

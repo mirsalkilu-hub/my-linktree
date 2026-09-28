@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import DashboardHeader from "@/components/DashboardHeader";
+import SiteFooter from "@/components/SiteFooter";
 import toast from "react-hot-toast";
 import ConfirmModal from "@/components/ConfirmModal";
 import LinkIcon from "@/components/LinkIcon";
@@ -50,7 +52,24 @@ const THEME_OPTIONS = [
   { id: "emerald", name: "Emerald Green", color: "#10b981", borderClass: "border-emerald-500" },
   { id: "rose", name: "Rose Pink", color: "#f43f5e", borderClass: "border-rose-500" },
   { id: "amber", name: "Warm Amber", color: "#f59e0b", borderClass: "border-amber-500" },
+  { id: "cyan", name: "Electric Cyan", color: "#06b6d4", borderClass: "border-cyan-500" },
+  { id: "fuchsia", name: "Fuchsia Pop", color: "#d946ef", borderClass: "border-fuchsia-500" },
+  { id: "teal", name: "Deep Teal", color: "#14b8a6", borderClass: "border-teal-500" },
+  { id: "orange", name: "Sunset Orange", color: "#f97316", borderClass: "border-orange-500" },
+  { id: "lime", name: "Lime Fresh", color: "#84cc16", borderClass: "border-lime-500" },
+  { id: "aurora", name: "Aurora Night", color: "#22d3ee", borderClass: "border-cyan-400" },
+  { id: "sunset", name: "Sunset Glow", color: "#fb7185", borderClass: "border-rose-400" },
+  { id: "ocean", name: "Deep Ocean", color: "#38bdf8", borderClass: "border-sky-400" },
+  { id: "neon", name: "Neon Club", color: "#a3e635", borderClass: "border-lime-400" },
+  { id: "lavender", name: "Lavender Mist", color: "#c084fc", borderClass: "border-purple-400" },
   { id: "dark", name: "Dark Minimalist", color: "#334155", borderClass: "border-slate-500" },
+];
+
+const FONT_OPTIONS = [
+  { id: "sans", name: "Modern Sans", style: "ui-sans-serif, system-ui, sans-serif" },
+  { id: "serif", name: "Editorial Serif", style: "Georgia, serif" },
+  { id: "mono", name: "Tech Mono", style: "ui-monospace, SFMono-Regular, monospace" },
+  { id: "rounded", name: "Soft Rounded", style: "Trebuchet MS, sans-serif" },
 ];
 
 const sanitizeUrl = (inputUrl: string) => {
@@ -70,6 +89,7 @@ export default function BioManagementPage() {
   const [description, setDescription] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [themeColor, setThemeColor] = useState("indigo");
+  const [fontFamily, setFontFamily] = useState("sans");
 
   // Links State
   const [links, setLinks] = useState<BioLinkItem[]>([]);
@@ -108,6 +128,7 @@ export default function BioManagementPage() {
     setDescription("");
     setAvatarUrl("");
     setThemeColor("indigo");
+    setFontFamily("sans");
     setLinks([]);
     resetLinkForm();
   }, []);
@@ -133,7 +154,9 @@ export default function BioManagementPage() {
     setTitle(page.title || "");
     setDescription(page.bio_description || "");
     setAvatarUrl(page.avatar_url || "");
-    setThemeColor(page.theme_color || "indigo");
+    const [savedTheme, savedFont] = (page.theme_color || "indigo").split("::");
+    setThemeColor(savedTheme || "indigo");
+    setFontFamily(savedFont || "sans");
     resetLinkForm();
 
     await fetchPageLinks(page.id);
@@ -238,7 +261,7 @@ export default function BioManagementPage() {
       title: title.trim(),
       bio_description: description.trim(),
       avatar_url: avatarUrl,
-      theme_color: themeColor,
+      theme_color: `${themeColor}::${fontFamily}`,
     };
 
     if (selectedPage) {
@@ -391,20 +414,22 @@ export default function BioManagementPage() {
 
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div className="site-shell min-h-screen text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#060919] text-white font-sans flex flex-col justify-between relative overflow-hidden">
+    <div className="site-shell min-h-screen text-white font-sans flex flex-col justify-between relative">
       {/* Background Ambient Glow Effects */}
       <div className="absolute top-0 -left-20 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/15 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Header Navigasi Presisi */}
-       <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
+      <DashboardHeader user={user} />
+      {false && (
+      <header className="app-header fixed top-0 left-0 right-0 z-50 border-b">
   <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
     
     {/* Kiri: Logo + Navigation */}
@@ -464,7 +489,7 @@ export default function BioManagementPage() {
       {user && (
         <div className="hidden sm:flex items-center space-x-2">
           <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-            {user.email?.[0] || "M"}
+            {user?.email?.[0] || "M"}
           </div>
         </div>
       )}
@@ -531,10 +556,10 @@ export default function BioManagementPage() {
         {user && (
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0">
-              {user.email?.[0] || "M"}
+              {user?.email?.[0] || "M"}
             </div>
             <span className="text-xs text-slate-300 truncate max-w-[150px]">
-              {user.email}
+              {user?.email}
             </span>
           </div>
         )}
@@ -549,28 +574,28 @@ export default function BioManagementPage() {
       </div>
     </div>
   )}
-</header> 
+</header>)}
 
       {/* Main Content Area dengan Visual Effects */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 w-full flex-1 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 relative z-10 space-y-6 sm:space-y-7">
+        <div className="manager-hero flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-5 sm:p-7 rounded-2xl">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="p-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
                 <Sparkles className="w-3.5 h-3.5" />
               </span>
-              <span className="text-xs font-semibold text-indigo-400 tracking-wider uppercase">
+              <span className="text-[11px] font-bold text-indigo-300 tracking-[0.18em] uppercase">
                 Bio Page Manager
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Kelola Halaman Bio Anda</h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Kelola Halaman Bio Anda</h1>
+            <p className="text-xs sm:text-sm text-slate-300/80 mt-2 max-w-2xl">
               Buat dan kustomisasi halaman landing/bio lengkap dengan analisis klik.
             </p>
           </div>
           <button
             onClick={resetFormToNew}
-            className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs sm:text-sm font-semibold px-5 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] shrink-0 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-400 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-[0.98] shrink-0 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Buat Halaman Baru</span>
@@ -579,18 +604,18 @@ export default function BioManagementPage() {
 
         {/* Daftar Halaman dengan Glassmorphism Cards */}
         {pages.length > 0 && (
-          <div className="mb-6 sm:mb-8">
+          <div className="manager-panel p-4 sm:p-5 rounded-2xl">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
               Daftar Halaman Anda ({pages.length})
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {pages.map((page) => {
                 const isSelected = selectedPage?.id === page.id && !isCreatingNew;
                 return (
                   <div
                     key={page.id}
                     onClick={() => handleSelectPage(page)}
-                    className={`group relative p-4 rounded-2xl border cursor-pointer transition-all duration-300 backdrop-blur-xl flex flex-col justify-between overflow-hidden ${
+                    className={`group relative p-4 rounded-xl border cursor-pointer transition-all duration-300 backdrop-blur-xl flex flex-col justify-between overflow-hidden ${
                       isSelected
                         ? "bg-indigo-950/40 border-indigo-500/80 shadow-lg shadow-indigo-500/10"
                         : "bg-slate-900/40 border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900/60"
@@ -649,7 +674,7 @@ export default function BioManagementPage() {
 
         {/* Banner URL & Quick Stats */}
         {selectedPage && !isCreatingNew && username && (
-          <div className="mb-6 sm:mb-8 p-4 bg-indigo-950/30 border border-indigo-500/30 rounded-2xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-indigo-950/20">
+          <div className="manager-panel p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
               <span className="text-xs text-indigo-400 font-medium block flex items-center gap-1">
                 <Globe className="w-3 h-3" /> URL Publik:
@@ -685,7 +710,7 @@ export default function BioManagementPage() {
         )}
 
         {/* Form Setting Utama */}
-        <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8 shadow-xl">
+        <div className="manager-panel p-4 sm:p-6 rounded-2xl">
           <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
             {isCreatingNew ? "Buat Halaman Baru" : `Edit Halaman: ${selectedPage?.title}`}
           </h2>
@@ -727,7 +752,7 @@ export default function BioManagementPage() {
 
             <div>
               <label className="block text-xs text-slate-400 mb-2">Pilih Tema Warna Halaman</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 {THEME_OPTIONS.map((theme) => {
                   const active = themeColor === theme.id;
                   return (
@@ -741,6 +766,31 @@ export default function BioManagementPage() {
                     >
                       <div className="w-5 h-5 rounded-full" style={{ backgroundColor: theme.color }} />
                       <span className="text-[10px] sm:text-[11px] font-medium text-slate-300">{theme.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-slate-400 mb-2">Pilih Font Halaman</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {FONT_OPTIONS.map((font) => {
+                  const active = fontFamily === font.id;
+                  return (
+                    <button
+                      key={font.id}
+                      type="button"
+                      onClick={() => setFontFamily(font.id)}
+                      style={{ fontFamily: font.style }}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        active
+                          ? "border-indigo-500 bg-indigo-950/40 text-white shadow-lg shadow-indigo-500/10"
+                          : "border-slate-800/80 bg-slate-950/40 text-slate-300 hover:border-slate-600"
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold">Aa</span>
+                      <span className="block text-[10px] mt-1 text-slate-400">{font.name}</span>
                     </button>
                   );
                 })}
@@ -781,7 +831,7 @@ export default function BioManagementPage() {
 
         {/* Manajemen Tombol Link */}
         {selectedPage && !isCreatingNew && (
-          <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl p-4 sm:p-6 rounded-2xl mb-6 sm:mb-8 shadow-xl">
+          <div className="manager-panel p-4 sm:p-6 rounded-2xl">
             <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
               {editingLinkId ? "Edit Tombol Link" : "Tambah Tombol Link"}
             </h2>
@@ -893,9 +943,7 @@ export default function BioManagementPage() {
           message="Apakah Anda yakin ingin menghapus halaman ini? Semua link di dalamnya akan terhapus secara permanen."
         />
       </main>
-      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
-        © 2026 urlyu.com. All rights reserved.
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

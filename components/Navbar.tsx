@@ -25,13 +25,11 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 glass-card border-b border-slate-800/80 px-4 sm:px-8 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo mr.id */}
+        {/* Logo */}
         <Link href="/dashboard" className="flex items-center space-x-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-all">
-            mr
-          </div>
+          <img src="/logo.png" alt="urlyu.com logo" className="w-9 h-9 rounded-xl object-contain group-hover:scale-105 transition-all" />
           <span className="text-xl font-black tracking-wider text-white">
-            mr<span className="gradient-text">.id</span>
+            urlyu<span className="gradient-text">.com</span>
           </span>
         </Link>
 

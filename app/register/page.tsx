@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -68,8 +69,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0f172a]/60 border border-slate-800 p-8 rounded-2xl backdrop-blur-xl shadow-2xl">
+    <div className="auth-shell min-h-screen text-white flex flex-col items-center justify-center p-4">
+      <div className="auth-card w-full max-w-md p-8 rounded-2xl">
         
         {/* Header Title */}
         <div className="text-center mb-8">
@@ -83,7 +84,7 @@ export default function RegisterPage() {
       urlyu<span className="text-indigo-500">.com</span>
     </span>
   </Link>
-  <h2 className="text-xl font-bold mt-4 text-slate-100">Masuk ke Akun Anda</h2>
+  <h2 className="text-xl font-bold mt-4 text-slate-100">Buat Akun Anda</h2>
 </div>
 
         {/* Error Alert */}
@@ -112,7 +113,7 @@ export default function RegisterPage() {
                 placeholder="Your full name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="auth-input w-full rounded-xl pl-11 pr-4 py-3 text-sm placeholder-slate-500 transition-all"
               />
             </div>
           </div>
@@ -146,7 +147,7 @@ export default function RegisterPage() {
                 placeholder="name@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="auth-input w-full rounded-xl pl-11 pr-4 py-3 text-sm placeholder-slate-500 transition-all"
               />
             </div>
           </div>
@@ -168,7 +169,7 @@ export default function RegisterPage() {
                 placeholder="Minimum 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="auth-input w-full rounded-xl pl-11 pr-11 py-3 text-sm placeholder-slate-500 transition-all"
               />
               <button
                 type="button"
@@ -200,7 +201,7 @@ export default function RegisterPage() {
                 placeholder="Type password again"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="auth-input w-full rounded-xl pl-11 pr-11 py-3 text-sm placeholder-slate-500 transition-all"
               />
               <button
                 type="button"
@@ -222,7 +223,7 @@ export default function RegisterPage() {
               id="terms"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="w-4 h-4 rounded bg-[#0b1329] border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+              className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
             />
             <label htmlFor="terms" className="text-xs text-slate-300 leading-snug cursor-pointer">
               I accept the{" "}
@@ -240,7 +241,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/30 active:scale-95 disabled:opacity-50 text-sm mt-2"
+            className="primary-action w-full text-white font-semibold py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 text-sm mt-2"
           >
             {loading ? "Memproses..." : "Daftar"}
           </button>
@@ -251,7 +252,7 @@ export default function RegisterPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800"></div>
           </div>
-          <span className="relative px-3 bg-[#0f172a] text-slate-500 text-xs">
+          <span className="relative px-3 bg-slate-900 text-slate-500 text-xs">
             atau
           </span>
         </div>
@@ -291,6 +292,7 @@ export default function RegisterPage() {
         </p>
 
       </div>
+      <SiteFooter compact />
     </div>
   );
 }

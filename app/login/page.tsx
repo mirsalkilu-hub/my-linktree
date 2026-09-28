@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -48,8 +49,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#0f172a]/60 border border-slate-800 p-8 rounded-2xl backdrop-blur-xl shadow-2xl">
+    <div className="auth-shell min-h-screen text-white flex flex-col items-center justify-center p-4">
+      <div className="auth-card w-full max-w-md p-8 rounded-2xl">
         
         {/* Header Logo */}
         <div className="text-center mb-8">
@@ -105,7 +106,7 @@ export default function LoginPage() {
                 placeholder="name@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="auth-input w-full rounded-xl pl-11 pr-4 py-3 text-sm placeholder-slate-500 transition-all"
               />
             </div>
           </div>
@@ -135,7 +136,7 @@ export default function LoginPage() {
                 placeholder="Masukkan kata sandi"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#0b1329]/80 border border-slate-700/80 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+                className="auth-input w-full rounded-xl pl-11 pr-11 py-3 text-sm placeholder-slate-500 transition-all"
               />
               <button
                 type="button"
@@ -154,7 +155,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/30 active:scale-95 disabled:opacity-50 text-sm mt-2"
+            className="primary-action w-full text-white font-semibold py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 text-sm mt-2"
           >
             {loading ? "Memproses..." : "Masuk"}
           </button>
@@ -165,7 +166,7 @@ export default function LoginPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800"></div>
           </div>
-          <span className="relative px-3 bg-[#0f172a] text-slate-500 text-xs">
+          <span className="relative px-3 bg-slate-900 text-slate-500 text-xs">
             atau
           </span>
         </div>
@@ -206,6 +207,7 @@ export default function LoginPage() {
         </p>
 
       </div>
+      <SiteFooter compact />
     </div>
   );
 }

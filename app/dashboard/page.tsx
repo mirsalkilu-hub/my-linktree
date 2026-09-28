@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import DashboardHeader from "@/components/DashboardHeader";
+import SiteFooter from "@/components/SiteFooter";
 import {
   LogOut,
   Menu,
@@ -285,7 +287,7 @@ export default function DashboardPage() {
   const totalClicks = links.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-between relative">
+    <div className="site-shell min-h-screen text-white font-sans flex flex-col justify-between relative">
       
       {/* Custom Confirm Modal */}
       <ConfirmModal
@@ -299,7 +301,9 @@ export default function DashboardPage() {
       />
 
       {/* Header Sticky */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 transition-all">
+      <DashboardHeader user={user} />
+      {false && (
+      <header className="app-header sticky top-0 z-40 border-b transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           <div className="flex items-center space-x-3">
       <img
@@ -353,7 +357,7 @@ export default function DashboardPage() {
             {user && (
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0 shadow-md shadow-indigo-500/20">
-                  {user.email?.[0] || "M"}
+                  {user?.email?.[0] || "M"}
                 </div>
               </div>
             )}
@@ -438,7 +442,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-      </header>
+      </header>)}
 
       {/* Konten Utama */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
@@ -672,9 +676,7 @@ export default function DashboardPage() {
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-6 border-t border-slate-900 text-slate-600 text-xs">
-        © 2026 urlyu.com. All rights reserved.
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
