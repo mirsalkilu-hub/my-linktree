@@ -560,14 +560,14 @@ export default function DashboardPage() {
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-xs font-semibold text-slate-500 select-none">
-                  /s/
+                  /
                 </span>
                 <input
                   type="text"
                   placeholder="custom-url"
                   value={customCode}
                   onChange={(e) => setCustomCode(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-20 pr-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-8 pr-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
                 />
               </div>
             </div>
