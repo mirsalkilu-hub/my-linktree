@@ -38,6 +38,7 @@ interface BioProfile {
   bio_description?: string;
   avatar_url?: string;
   theme_color?: string;
+  ads_enabled?: boolean;
   created_at: string;
 }
 
@@ -95,6 +96,7 @@ export default function BioManagementPage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [themeColor, setThemeColor] = useState("indigo");
   const [fontFamily, setFontFamily] = useState("sans");
+  const [adsEnabled, setAdsEnabled] = useState(true);
 
   // Link state
   const [links, setLinks] = useState<BioLinkItem[]>([]);
@@ -103,6 +105,7 @@ export default function BioManagementPage() {
   const [newIconType, setNewIconType] = useState("link");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [updatingLinkId, setUpdatingLinkId] = useState<string | null>(null);
+  const [updatingAds, setUpdatingAds] = useState(false);
   const [reorderingLinks, setReorderingLinks] = useState(false);
 
   const [uploading, setUploading] = useState(false);
@@ -136,6 +139,7 @@ export default function BioManagementPage() {
     setAvatarUrl("");
     setThemeColor("indigo");
     setFontFamily("sans");
+    setAdsEnabled(true);
     setLinks([]);
     resetLinkForm();
   }, []);
@@ -183,6 +187,7 @@ export default function BioManagementPage() {
     const [savedTheme, savedFont] = (page.theme_color || "indigo").split("::");
     setThemeColor(savedTheme || "indigo");
     setFontFamily(savedFont || "sans");
+    setAdsEnabled(page.ads_enabled !== false);
     resetLinkForm();
 
     await fetchPageLinks(page.id);
@@ -288,6 +293,7 @@ export default function BioManagementPage() {
       bio_description: description.trim(),
       avatar_url: avatarUrl,
       theme_color: `${themeColor}::${fontFamily}`,
+      ads_enabled: adsEnabled,
     };
 
     if (selectedPage) {
@@ -461,6 +467,32 @@ export default function BioManagementPage() {
     }
 
     setUpdatingLinkId(null);
+  };
+
+  const handleToggleAds = async () => {
+    if (!selectedPage || !user || updatingAds) return;
+
+    const nextAdsEnabled = !adsEnabled;
+    setUpdatingAds(true);
+
+    const { error } = await supabase
+      .from("bio_profiles")
+      .update({ ads_enabled: nextAdsEnabled })
+      .eq("id", selectedPage.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      toast.error("Could not update Adsterra setting: " + error.message);
+    } else {
+      setAdsEnabled(nextAdsEnabled);
+      setSelectedPage((page) => page ? { ...page, ads_enabled: nextAdsEnabled } : page);
+      setPages((currentPages) => currentPages.map((page) =>
+        page.id === selectedPage.id ? { ...page, ads_enabled: nextAdsEnabled } : page
+      ));
+      toast.success(`Adsterra ads ${nextAdsEnabled ? "enabled" : "disabled"}.`);
+    }
+
+    setUpdatingAds(false);
   };
 
   const handleMoveLink = async (linkId: string, direction: -1 | 1) => {
@@ -802,6 +834,31 @@ export default function BioManagementPage() {
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
+          </div>
+        )}
+
+        {selectedPage && !isCreatingNew && (
+          <div className="manager-panel p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Adsterra ads</h2>
+              <p className="text-xs text-slate-400 mt-1">Show or hide ads on this bio page.</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={adsEnabled}
+              aria-label={`${adsEnabled ? "Disable" : "Enable"} Adsterra ads`}
+              onClick={handleToggleAds}
+              disabled={updatingAds}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                adsEnabled
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                  : "border-slate-700 bg-slate-900 text-slate-400 hover:text-white"
+              }`}
+            >
+              <Power className="h-3.5 w-3.5" />
+              <span>{adsEnabled ? "On" : "Off"}</span>
+            </button>
           </div>
         )}
 

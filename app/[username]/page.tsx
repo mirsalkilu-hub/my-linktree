@@ -24,6 +24,7 @@ interface BioProfile {
   avatar_url?: string;
   theme_color?: string;
   status_text?: string;
+  ads_enabled?: boolean;
 }
 
 // Configuration Preset Tema Visual
@@ -326,10 +327,12 @@ export default function PublicBioPage({
       }}
     >
       
-      <Script
-        src="https://awkwardmonopoly.com/20/18/63/201863e19025f3e3a9bb97ff8f3d4bc0.js"
-        strategy="afterInteractive"
-      />
+      {profile.ads_enabled !== false && (
+        <Script
+          src="https://awkwardmonopoly.com/20/18/63/201863e19025f3e3a9bb97ff8f3d4bc0.js"
+          strategy="afterInteractive"
+        />
+      )}
 
       {/* Background Ambient Blur Dynamic */}
       <div 
