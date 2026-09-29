@@ -291,6 +291,14 @@ export default function PublicBioPage({
     triggerToast();
   };
 
+  const trackLinkClick = (linkId: string) => {
+    void supabase
+      .rpc("record_bio_link_click", { p_link_id: linkId })
+      .then(({ error }) => {
+        if (error) console.error("Could not record bio link click:", error);
+      });
+  };
+
   const shareItems = [
     {
       name: "WhatsApp",
@@ -432,6 +440,7 @@ export default function PublicBioPage({
                 <a
                   key={link.id}
                   href={link.url}
+                  onClick={() => trackLinkClick(link.id)}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={isFeatured ? { borderColor: theme.accentColor } : theme.buttonStyle}
