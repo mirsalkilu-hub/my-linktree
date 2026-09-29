@@ -59,21 +59,21 @@ const BAR_COLORS = [
   "#8b5cf6",
 ];
 
-// Helper format tanggal lokal (Contoh: "22 Agt")
+// Format a local date label (for example, "Aug 22")
 const formatDateLabel = (d: Date) => {
   const months = [
     "Jan",
     "Feb",
     "Mar",
     "Apr",
-    "Mei",
+    "May",
     "Jun",
     "Jul",
-    "Agt",
+    "Aug",
     "Sep",
-    "Okt",
+    "Oct",
     "Nov",
-    "Des",
+    "Dec",
   ];
   return `${d.getDate()} ${months[d.getMonth()]}`;
 };
@@ -179,7 +179,7 @@ export default function AnalyticsPage() {
 
       setDailyData(chartData);
     } catch (err) {
-      console.error("Gagal memuat data analytics:", err);
+      console.error("Could not load analytics data:", err);
     } finally {
       setLoading(false);
     }
@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span>Kelola Halaman</span>
+                <span>Manage Pages</span>
               </Link>
               <Link
                 href="/dashboard/analytics"
@@ -294,7 +294,7 @@ export default function AnalyticsPage() {
               className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
             >
               <LogOut className="w-4 h-4 text-slate-400" />
-              <span>Keluar</span>
+              <span>Log out</span>
             </button>
 
             <button
@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
               }`}
             >
               <FileText className="w-4 h-4" />
-              <span>Kelola Halaman</span>
+              <span>Manage Pages</span>
             </Link>
 
             <Link
@@ -368,7 +368,7 @@ export default function AnalyticsPage() {
                 className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
               >
                 <LogOut className="w-3.5 h-3.5 text-slate-300" />
-                <span>Keluar</span>
+                <span>Log out</span>
               </button>
             </div>
           </div>
@@ -388,17 +388,17 @@ export default function AnalyticsPage() {
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-400/20">
                 <TrendingUp className="w-5 h-5" />
               </span>
-              <span>Analisis Performa & Grafik Klik</span>
+              <span>Performance & Click Analytics</span>
             </h1>
             <p className="text-sm text-slate-400 mt-2 max-w-xl">
-              Pantau tren trafik dan performa tombol di setiap halaman bio Anda.
+              Track traffic trends and button performance across your bio pages.
             </p>
           </div>
 
           {pages.length > 0 && (
             <div className="flex items-center gap-3 shrink-0">
               <span className="text-xs font-semibold text-slate-400 whitespace-nowrap hidden sm:inline">
-                Pilih Halaman:
+                Select a page:
               </span>
               <select
                 value={selectedPageId}
@@ -421,7 +421,7 @@ export default function AnalyticsPage() {
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TOTAL KLIK SEMUA TOMBOL
+                TOTAL BUTTON CLICKS
               </span>
               <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(99,102,241,0.25)]">
                 <MousePointer className="w-5 h-5" />
@@ -432,7 +432,7 @@ export default function AnalyticsPage() {
                 {totalClicks}
               </strong>
               <span className="text-xs font-medium text-slate-400">
-                Total Akumulasi
+                All-time total
               </span>
             </div>
           </div>
@@ -441,7 +441,7 @@ export default function AnalyticsPage() {
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TRAFIK 7 HARI TERAKHIR
+                TRAFFIC IN THE LAST 7 DAYS
               </span>
               <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(16,185,129,0.25)]">
                 <TrendingUp className="w-5 h-5" />
@@ -451,12 +451,12 @@ export default function AnalyticsPage() {
               <strong className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 {recent7DaysClicks}{" "}
                 <span className="text-xs font-semibold text-emerald-400">
-                  klik
+                  clicks
                 </span>
               </strong>
               <div className="flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-full">
                 <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-                <span>Aktif</span>
+                <span>Active</span>
               </div>
             </div>
           </div>
@@ -465,7 +465,7 @@ export default function AnalyticsPage() {
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TOTAL TOMBOL LINK
+                TOTAL LINK BUTTONS
               </span>
               <div className="p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(139,92,246,0.25)]">
                 <Layers className="w-5 h-5" />
@@ -476,7 +476,7 @@ export default function AnalyticsPage() {
                 {linkData.length}
               </strong>
               <span className="text-xs font-medium text-slate-400">
-                Tombol Aktif
+                Active buttons
               </span>
             </div>
           </div>
@@ -485,17 +485,17 @@ export default function AnalyticsPage() {
         {/* Section Area & Bar Chart */}
         {loading || !mounted ? (
           <div className="analytics-panel p-12 rounded-2xl text-center text-slate-400 text-sm animate-pulse">
-            Memuat data grafik analytics...
+            Loading analytics charts...
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
             {/* Area Chart */}
             <div className="analytics-panel lg:col-span-2 p-5 sm:p-7 rounded-2xl">
               <h3 className="text-lg font-bold text-white mb-1">
-                Tren Klik 7 Hari Terakhir
+                Click Trends Over the Last 7 Days
               </h3>
               <p className="text-xs text-slate-400 mb-6">
-                Aktivitas klik pengunjung harian
+                Daily visitor clicks
               </p>
 
               <div className="h-72 w-full">
@@ -561,10 +561,10 @@ export default function AnalyticsPage() {
             {/* Bar Chart */}
             <div className="analytics-panel p-5 sm:p-7 rounded-2xl">
               <h3 className="text-lg font-bold text-white mb-1">
-                Klik per Tombol Link
+                Clicks per Link Button
               </h3>
               <p className="text-xs text-slate-400 mb-6">
-                Perbandingan popularitas tombol link
+                Compare link button popularity
               </p>
 
               <div className="h-72 w-full">
@@ -614,7 +614,7 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-full flex items-center justify-center text-xs text-slate-500">
-                    Belum ada tombol link
+                    No link buttons yet
                   </div>
                 )}
               </div>

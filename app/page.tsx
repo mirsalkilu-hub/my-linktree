@@ -47,7 +47,7 @@ export default function HomePage() {
 
     if (error) {
       console.error(error);
-      setErrorMessage("Gagal menyimpan link. Silakan coba lagi.");
+      setErrorMessage("Could not save the link. Please try again.");
     } else if (data) {
       const domain = window.location.origin;
       setShortUrl(`${domain}/${slug}`);
@@ -102,11 +102,11 @@ export default function HomePage() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute top-1/2 left-1/3 w-[300px] h-[200px] bg-purple-600/10 blur-[100px] rounded-full pointer-events-none" />
 
-      {/* Header Sticky & Garis Bawah */}
+      {/* Sticky header */}
       <header className="app-header sticky top-0 z-50 w-full border-b">
   <div className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
     
-    {/* Ditambahkan flex & space-x-3 agar logo & teks sejajar */}
+    {/* Align the logo and brand name */}
     <div className="flex items-center space-x-3">
       <img
         src="/logo.png"
@@ -122,7 +122,7 @@ export default function HomePage() {
       href="/login"
       className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
     >
-      Masuk / Daftar
+      Sign in / Sign up
     </Link>
   </div>
 </header>
@@ -132,20 +132,20 @@ export default function HomePage() {
         {/* Badge Indicator */}
         <div className="inline-flex items-center space-x-2 bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-xs font-medium mb-6 backdrop-blur-md">
           <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
-          <span>Platform Pemendek Link & Halaman Bio Modern</span>
+          <span>Modern link shortener and bio page platform</span>
         </div>
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight mb-4">
-          Persingkat Link Panjang <br />
+          Shorten long links <br />
           <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">
-            Dalam Hitungan Detik.
+            In seconds.
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-slate-400 text-sm sm:text-base max-w-2xl mb-8 leading-relaxed">
-          Buat tautan yang lebih rapi, profesional, dan mudah dibagikan ke mana saja.
+          Create clean, professional links that are easy to share anywhere.
         </p>
 
         {/* Shortener Form */}
@@ -158,7 +158,7 @@ export default function HomePage() {
               <input
                 type="url"
                 required
-                placeholder="Tempelkan URL panjang di sini (https://...)"
+                placeholder="Paste a long URL here (https://...)"
                 value={longUrl}
                 onChange={(e) => setLongUrl(e.target.value)}
                 className="w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none py-2"
@@ -169,7 +169,7 @@ export default function HomePage() {
               disabled={isLoading}
               className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all whitespace-nowrap shadow-lg shadow-indigo-600/30 active:scale-95 shrink-0 disabled:opacity-50"
             >
-              {isLoading ? "Memproses..." : "Persingkat 🚀"}
+              {isLoading ? "Shortening..." : "Shorten 🚀"}
             </button>
           </form>
         </div>
@@ -184,7 +184,7 @@ export default function HomePage() {
           <div className="w-full max-w-2xl bg-indigo-950/40 border border-indigo-500/30 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 mb-8 text-left">
             <div className="flex-1 w-full flex flex-col gap-2">
               <span className="text-[10px] text-indigo-300 font-medium uppercase tracking-wider">
-                Link Pendek Anda:
+                Your short link:
               </span>
               <a
                 href={shortUrl}
@@ -198,7 +198,7 @@ export default function HomePage() {
                 onClick={copyToClipboard}
                 className="w-fit bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 px-4 py-2 rounded-xl text-xs font-semibold transition-all mt-1"
               >
-                {copied ? "✅ Tersalin!" : "📋 Salin Link"}
+                {copied ? "✅ Copied!" : "📋 Copy link"}
               </button>
             </div>
 
@@ -211,7 +211,7 @@ export default function HomePage() {
                 onClick={downloadQRCode}
                 className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
               >
-                Unduh PNG
+                Download PNG
               </button>
             </div>
           </div>
@@ -221,15 +221,15 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 mt-2">
           <span className="flex items-center space-x-1">
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            <span>Tanpa Iklan Spam</span>
+            <span>No spam ads</span>
           </span>
           <span className="flex items-center space-x-1">
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            <span>Analitik Statistik Real-time</span>
+            <span>Real-time analytics</span>
           </span>
           <span className="flex items-center space-x-1">
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            <span>QR Code Otomatis</span>
+            <span>Instant QR codes</span>
           </span>
         </div>
       </main>
@@ -240,17 +240,17 @@ export default function HomePage() {
           <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
             <div className="w-9 h-9 bg-indigo-600/20 text-indigo-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">🔗</div>
             <h3 className="font-semibold text-sm mb-1">URL Shortener</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Ubah tautan panjang dan rumit menjadi tautan ringkas yang mudah diingat.</p>
+            <p className="text-xs text-slate-400 leading-relaxed">Turn long, complicated URLs into short links that are easy to remember.</p>
           </div>
           <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
             <div className="w-9 h-9 bg-purple-600/20 text-purple-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">📱</div>
-            <h3 className="font-semibold text-sm mb-1">Kelola Halaman Bio</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Buat landing page biolink pribadi untuk menyatukan semua sosmed Anda.</p>
+            <h3 className="font-semibold text-sm mb-1">Bio Page Manager</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">Create a personal bio page to bring all your social profiles together.</p>
           </div>
           <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
             <div className="w-9 h-9 bg-pink-600/20 text-pink-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">📊</div>
-            <h3 className="font-semibold text-sm mb-1">Grafik Analitik</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Pantau perkembangan performa jumlah klik link Anda secara akurat.</p>
+            <h3 className="font-semibold text-sm mb-1">Link Analytics</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">Track link performance and click activity over time.</p>
           </div>
         </div>
       </section>

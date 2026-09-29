@@ -18,7 +18,7 @@ export default function ResetPasswordPage() {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
-        toast.error("Sesi reset kata sandi tidak valid atau telah kadaluarsa.");
+        toast.error("Your password reset session is invalid or has expired.");
       }
     };
     checkSession();
@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast.error("Kata sandi minimal 6 karakter.");
+      toast.error("Password must be at least 6 characters.");
       return;
     }
 
@@ -38,9 +38,9 @@ export default function ResetPasswordPage() {
     });
 
     if (error) {
-      toast.error("Gagal memperbarui kata sandi: " + error.message);
+      toast.error("Could not update your password: " + error.message);
     } else {
-      toast.success("Kata sandi berhasil diperbarui! Silakan masuk.");
+      toast.success("Password updated. Please sign in.");
       router.push("/login");
     }
 
@@ -54,16 +54,16 @@ export default function ResetPasswordPage() {
           <span className="text-2xl font-black tracking-wider text-white">
             urlyu<span className="text-indigo-500">.com</span>
           </span>
-          <h1 className="text-xl font-bold mt-4">Atur Kata Sandi Baru</h1>
+          <h1 className="text-xl font-bold mt-4">Set a new password</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Masukkan kata sandi baru untuk akun Anda.
+            Enter a new password for your account.
           </p>
         </div>
 
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              Kata Sandi Baru <span className="text-red-500">*</span>
+              New password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -71,7 +71,7 @@ export default function ResetPasswordPage() {
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={6}
-                placeholder="Minimal 6 karakter"
+                placeholder="At least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="auth-input w-full rounded-xl pl-10 pr-10 py-3 text-sm transition-all placeholder:text-slate-600"
@@ -91,7 +91,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="primary-action w-full text-white font-semibold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
           >
-            {loading ? "Simpan Kata Sandi..." : "Simpan Kata Sandi Baru"}
+            {loading ? "Saving password..." : "Save new password"}
           </button>
         </form>
       </div>

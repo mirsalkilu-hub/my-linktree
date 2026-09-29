@@ -5,7 +5,7 @@ import LinkIcon from "./LinkIcon";
 import { ChevronDown } from "lucide-react";
 
 export const ICON_OPTIONS = [
-  { id: "link", label: "Link Default" },
+  { id: "link", label: "Default Link" },
   { id: "whatsapp", label: "WhatsApp" },
   { id: "instagram", label: "Instagram" },
   { id: "youtube", label: "YouTube" },
@@ -27,7 +27,7 @@ export default function IconSelect({ value, onChange }: IconSelectProps) {
 
   const selectedOption = ICON_OPTIONS.find((opt) => opt.id === value) || ICON_OPTIONS[0];
 
-  // Tutup dropdown jika klik di luar komponen
+  // Close the dropdown when clicking outside the component
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

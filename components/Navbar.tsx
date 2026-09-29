@@ -18,7 +18,7 @@ export default function Navbar() {
 
   const navItems = [
     { label: "Shortener Link", href: "/dashboard", icon: Link2 },
-    { label: "Kelola Halaman", href: "/dashboard/bio", icon: LayoutGrid },
+    { label: "Manage Pages", href: "/dashboard/bio", icon: LayoutGrid },
     { label: "Analytics Grafik", href: "/dashboard/analytics", icon: BarChart2 },
   ];
 
@@ -100,7 +100,7 @@ export default function Navbar() {
             className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-sm font-semibold rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 mt-2"
           >
             <LogOut className="w-4 h-4" />
-            <span>Keluar</span>
+            <span>Log out</span>
           </button>
         </div>
       )}

@@ -23,10 +23,10 @@ export default function ForgotPasswordPage() {
     });
 
     if (error) {
-      toast.error("Gagal mengirim email: " + error.message);
+      toast.error("Could not send the email: " + error.message);
     } else {
       setIsSubmitted(true);
-      toast.success("Instruksi reset password telah dikirim ke email Anda!");
+      toast.success("Password reset instructions have been sent to your email.");
     }
 
     setLoading(false);
@@ -39,22 +39,22 @@ export default function ForgotPasswordPage() {
           <span className="text-2xl font-black tracking-wider text-white">
             urlyu<span className="text-indigo-500">.com</span>
           </span>
-          <h1 className="text-xl font-bold mt-4">Lupa Kata Sandi?</h1>
+          <h1 className="text-xl font-bold mt-4">Forgot your password?</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Masukkan email Anda untuk menerima tautan pemulihan kata sandi.
+            Enter your email to receive a password reset link.
           </p>
         </div>
 
         {isSubmitted ? (
           <div className="bg-indigo-950/40 border border-indigo-500/30 p-4 rounded-2xl text-center space-y-3">
             <p className="text-xs text-indigo-200">
-              Cek kotak masuk email <strong className="text-white">{email}</strong> untuk melanjutkan proses reset password.
+              Check the inbox for <strong className="text-white">{email}</strong> to continue resetting your password.
             </p>
             <button
               onClick={() => setIsSubmitted(false)}
               className="text-xs text-indigo-400 hover:underline font-semibold"
             >
-              Kirim ulang tautan
+              Resend link
             </button>
           </div>
         ) : (
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
               disabled={loading}
               className="primary-action w-full text-white font-semibold py-3 rounded-xl text-sm transition-all disabled:opacity-50"
             >
-              {loading ? "Mengirim Tautan..." : "Kirim Tautan Reset"}
+              {loading ? "Sending link..." : "Send reset link"}
             </button>
           </form>
         )}
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
             className="inline-flex items-center space-x-2 text-xs text-slate-400 hover:text-white transition-all font-medium"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Kembali ke Halaman Masuk</span>
+            <span>Back to sign in</span>
           </Link>
         </div>
       </div>

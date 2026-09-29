@@ -38,7 +38,7 @@ export default function LoginPage() {
     if (error) {
       // Mengubah pesan bawaan Supabase jika terjadi kesalahan login
       if (error.message.includes("Invalid login credentials")) {
-        setErrorMsg("email atau password salah");
+        setErrorMsg("Incorrect email or password.");
       } else {
         setErrorMsg(error.message);
       }
@@ -64,7 +64,7 @@ export default function LoginPage() {
       urlyu<span className="text-indigo-500">.com</span>
     </span>
   </Link>
-  <h2 className="text-xl font-bold mt-4 text-slate-100">Masuk ke Akun Anda</h2>
+  <h2 className="text-xl font-bold mt-4 text-slate-100">Sign in to your account</h2>
 </div>
 
         {/* Error Message */}
@@ -121,7 +121,7 @@ export default function LoginPage() {
                 href="/forgot-password"
                 className="text-xs text-indigo-400 hover:underline hover:text-indigo-300"
               >
-                Lupa password?
+                Forgot password?
               </Link>
             </div>
             <div className="relative flex items-center">
@@ -133,7 +133,7 @@ export default function LoginPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder="Masukkan kata sandi"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="auth-input w-full rounded-xl pl-11 pr-11 py-3 text-sm placeholder-slate-500 transition-all"
@@ -157,7 +157,7 @@ export default function LoginPage() {
             disabled={loading}
             className="primary-action w-full text-white font-semibold py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 text-sm mt-2"
           >
-            {loading ? "Memproses..." : "Masuk"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
@@ -167,7 +167,7 @@ export default function LoginPage() {
             <div className="w-full border-t border-slate-800"></div>
           </div>
           <span className="relative px-3 bg-slate-900 text-slate-500 text-xs">
-            atau
+            or
           </span>
         </div>
 
@@ -195,14 +195,14 @@ export default function LoginPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Lanjutkan dengan Google</span>
+          <span>Continue with Google</span>
         </button>
 
         {/* Link ke Pendaftaran */}
         <p className="text-center text-xs text-slate-400 mt-6">
-          Belum punya akun?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="text-indigo-400 font-semibold hover:underline">
-            Daftar sekarang
+            Sign up
           </Link>
         </p>
 

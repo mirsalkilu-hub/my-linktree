@@ -16,25 +16,25 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<HTMLDivElement>(null);
 
-  // Handle upload logo kustom di tengah QR
+  // Handle custom logo uploads for the center of the QR code
   const handleLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 1 * 1024 * 1024) {
-      toast.error("Ukuran logo maksimal 1MB");
+      toast.error("Logo file must be 1 MB or smaller.");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
       setCenterLogo(reader.result as string);
-      toast.success("Logo di tengah QR berhasil dipasang!");
+      toast.success("Center logo added to the QR code.");
     };
     reader.readAsDataURL(file);
   };
 
-  // Download sebagai PNG
+  // Download as PNG
   const handleDownloadPNG = () => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current.querySelector("canvas");
@@ -45,10 +45,10 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
     anchor.href = image;
     anchor.download = `qrcode-${pageTitle.toLowerCase().replace(/\s+/g, "-")}.png`;
     anchor.click();
-    toast.success("QR Code PNG berhasil diunduh!");
+    toast.success("QR code downloaded as PNG.");
   };
 
-  // Copy SVG ke Clipboard
+  // Copy SVG to the clipboard
   const handleCopySVG = async () => {
     if (!svgRef.current) return;
     const svgElement = svgRef.current.querySelector("svg");
@@ -57,15 +57,15 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
     const svgString = new XMLSerializer().serializeToString(svgElement);
     try {
       await navigator.clipboard.writeText(svgString);
-      toast.success("Kode SVG berhasil disalin ke clipboard!");
+      toast.success("SVG code copied to the clipboard.");
     } catch (err) {
-      toast.error("Gagal menyalin SVG.");
+      toast.error("Could not copy the SVG.");
     }
   };
 
   return (
     <>
-      {/* Tombol Pemicu di Area URL Publik */}
+      {/* Trigger button in the public URL area */}
       <button
         onClick={() => setIsOpen(true)}
         className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-semibold transition-all text-center"
@@ -74,15 +74,15 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
         <span>QR Code</span>
       </button>
 
-      {/* Modal Popup */}
+      {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full space-y-5 relative shadow-2xl">
-            {/* Header Modal */}
+            {/* Modal header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-indigo-500" />
-                <h3 className="font-bold text-base text-white">QR Code Instant</h3>
+                <h3 className="font-bold text-base text-white">QR Code</h3>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -92,9 +92,9 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
               </button>
             </div>
 
-            {/* Preview QR Code */}
+            {/* QR code preview */}
             <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl">
-              {/* Visible SVG Render for UI & Copy SVG */}
+              {/* Visible SVG for preview and copying */}
               <div ref={svgRef}>
                 <QRCodeSVG
                   value={url}
@@ -117,7 +117,7 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
                 />
               </div>
 
-              {/* Hidden Canvas Render khusus untuk Download PNG */}
+              {/* Hidden canvas used for PNG downloads */}
               <div ref={canvasRef} className="hidden">
                 <QRCodeCanvas
                   value={url}
@@ -141,15 +141,15 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
               </div>
             </div>
 
-            {/* Opsi Kustomisasi Logo Tengah */}
+            {/* Center logo customization */}
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-2">
-                Logo Tengah (Opsional)
+                Center Logo (Optional)
               </label>
               <div className="flex items-center gap-2">
                 <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 hover:border-slate-700 cursor-pointer transition-all">
                   <ImageIcon className="w-4 h-4 text-indigo-400" />
-                  <span>{centerLogo ? "Ganti Logo" : "Upload Logo (PNG/JPG)"}</span>
+                  <span>{centerLogo ? "Change Logo" : "Upload Logo (PNG/JPG)"}</span>
                   <input
                     type="file"
                     accept="image/png, image/jpeg, image/webp"
@@ -162,13 +162,13 @@ export default function BioQRCodeModal({ url, pageTitle }: BioQRCodeModalProps) 
                     onClick={() => setCenterLogo(null)}
                     className="px-3 py-2 text-xs bg-red-950/40 text-red-400 border border-red-900/50 rounded-xl hover:bg-red-900/50 transition-all"
                   >
-                    Hapus
+                    Remove
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Tombol Aksi Cepat */}
+            {/* Actions */}
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={handleDownloadPNG}

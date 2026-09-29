@@ -3,8 +3,8 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "urlyu.com - Platform Shortener Link & Bio Landing Page",
-  description: "Kelola tautan dan halaman bio modern Anda di urlyu.com",
+  title: "urlyu.com - Link Shortener & Bio Page Platform",
+  description: "Manage your short links and modern bio pages with urlyu.com",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body>
         {children}
         <Toaster

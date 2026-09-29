@@ -26,7 +26,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/pages", label: "Kelola Halaman", icon: FileText },
+    { href: "/dashboard/pages", label: "Manage Pages", icon: FileText },
     { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   ];
 
@@ -80,7 +80,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
             className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
           >
             <LogOut className="w-4 h-4 text-slate-400" />
-            <span>Keluar</span>
+            <span>Log out</span>
           </button>
 
           <button
@@ -126,7 +126,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
               className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
             >
               <LogOut className="w-3.5 h-3.5 text-slate-300" />
-              <span>Keluar</span>
+              <span>Log out</span>
             </button>
           </div>
         </div>

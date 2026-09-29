@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { notFound, useRouter } from "next/navigation";
+import Script from "next/script";
 import LinkIcon from "@/components/LinkIcon";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -210,13 +211,29 @@ export default function PublicBioPage({
 
       setProfile(profData);
 
-      const { data: linkData } = await supabase
+      const { data: linkData, error: linkError } = await supabase
         .from("bio_links")
         .select("*")
         .eq("bio_id", profData.id)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
 
-      setLinks(linkData || []);
+      if (
+        linkError &&
+        (linkError.code === "42703" ||
+          linkError.code === "PGRST204" ||
+          /is_active|sort_order/.test(linkError.message))
+      ) {
+        const { data: legacyLinks } = await supabase
+          .from("bio_links")
+          .select("*")
+          .eq("bio_id", profData.id)
+          .order("created_at", { ascending: true });
+        setLinks(legacyLinks || []);
+      } else {
+        setLinks(linkData || []);
+      }
       setLoading(false);
     }
 
@@ -228,7 +245,7 @@ export default function PublicBioPage({
       <div className="site-shell min-h-screen text-white flex items-center justify-center p-4">
         <div className="animate-pulse flex items-center gap-3 text-sm text-slate-400 font-semibold tracking-wider">
           <div className="w-3 h-3 rounded-full bg-indigo-500 animate-ping" />
-          MEMUAT PROFIL...
+          LOADING PROFILE...
         </div>
       </div>
     );
@@ -257,7 +274,7 @@ export default function PublicBioPage({
       try {
         await navigator.share({
           title: profile.title,
-          text: `Lihat link bio dari @${profile.username}`,
+          text: `Check out @${profile.username}'s bio links`,
           url: currentUrl,
         });
         return;
@@ -277,7 +294,7 @@ export default function PublicBioPage({
     {
       name: "WhatsApp",
       style: { background: "linear-gradient(135deg, #059669, #0d9488)" },
-      url: `https://api.whatsapp.com/send?text=${encodeURIComponent(`Cek bio link @${profile.username}: ${currentUrl}`)}`,
+      url: `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out @${profile.username}'s bio links: ${currentUrl}`)}`,
       icon: "💬",
     },
     {
@@ -289,7 +306,7 @@ export default function PublicBioPage({
     {
       name: "X / Twitter",
       style: { background: "linear-gradient(135deg, #18181b, #27272a)", border: "1px solid rgba(255,255,255,0.15)" },
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(`Cek bio link @${profile.username}`)}`,
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(`Check out @${profile.username}'s bio links`)}`,
       icon: "𝕏",
     },
     {
@@ -309,6 +326,11 @@ export default function PublicBioPage({
       }}
     >
       
+      <Script
+        src="https://awkwardmonopoly.com/20/18/63/201863e19025f3e3a9bb97ff8f3d4bc0.js"
+        strategy="afterInteractive"
+      />
+
       {/* Background Ambient Blur Dynamic */}
       <div 
         className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full blur-[140px] opacity-20 pointer-events-none transition-all duration-700"
@@ -320,7 +342,7 @@ export default function PublicBioPage({
       <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${showToast ? "translate-y-0 opacity-100" : "-translate-y-8 opacity-0 pointer-events-none"}`}>
         <div className="bg-slate-900/90 border border-emerald-500/40 text-emerald-300 text-xs font-bold px-5 py-2.5 rounded-full shadow-2xl backdrop-blur-xl flex items-center space-x-2">
           <span>✨</span>
-          <span>Tautan berhasil tersalin!</span>
+          <span>Link copied successfully!</span>
         </div>
       </div>
 
@@ -334,7 +356,7 @@ export default function PublicBioPage({
         <button
           onClick={() => router.push("/")}
           className="absolute top-6 left-6 w-11 h-11 rounded-2xl bg-slate-950/60 hover:bg-white/10 border border-white/10 hover:border-white/30 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md backdrop-blur-md group"
-          title="Beranda"
+          title="Home"
         >
           <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -345,7 +367,7 @@ export default function PublicBioPage({
         <button
           onClick={handleShareClick}
           className="absolute top-6 right-6 w-11 h-11 rounded-2xl bg-slate-950/60 hover:bg-white/10 border border-white/10 hover:border-white/30 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md backdrop-blur-md group"
-          title="Bagikan Halaman"
+          title="Share page"
         >
           <svg className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684" />
@@ -447,7 +469,7 @@ export default function PublicBioPage({
             })
           ) : (
             <div className="p-5 bg-white/[0.02] border border-white/10 rounded-2xl text-xs text-slate-500 font-medium">
-              Belum ada tautan yang ditambahkan.
+              No links have been added yet.
             </div>
           )}
         </div>
@@ -468,8 +490,8 @@ export default function PublicBioPage({
               ✕
             </button>
 
-            <h3 className="text-base font-extrabold text-white mb-1 tracking-wider uppercase">Bagikan Profil</h3>
-            <p className="text-xs text-slate-400 mb-5">Pilih platform untuk membagikan tautan ini</p>
+            <h3 className="text-base font-extrabold text-white mb-1 tracking-wider uppercase">Share profile</h3>
+            <p className="text-xs text-slate-400 mb-5">Choose a platform to share this link</p>
 
             <div className="grid grid-cols-2 gap-3 mb-5">
               {shareItems.map((item) => (
@@ -499,7 +521,7 @@ export default function PublicBioPage({
                 style={{ backgroundColor: theme.accentColor }}
                 className="text-white text-xs font-black px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-95 shadow-md shrink-0"
               >
-                Salin
+                Copy
               </button>
             </div>
           </div>

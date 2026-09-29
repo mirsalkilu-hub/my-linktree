@@ -22,6 +22,9 @@ import {
   ExternalLink, 
   Trash2, 
   Pencil,
+  Power,
+  ChevronUp,
+  ChevronDown,
   Sparkles,
   Globe,
   MousePointerClick
@@ -44,6 +47,8 @@ interface BioLinkItem {
   url: string;
   icon_type?: string;
   clicks?: number;
+  is_active?: boolean;
+  sort_order?: number;
 }
 
 const THEME_OPTIONS = [
@@ -83,7 +88,7 @@ export default function BioManagementPage() {
   const [pages, setPages] = useState<BioProfile[]>([]);
   const [selectedPage, setSelectedPage] = useState<BioProfile | null>(null);
 
-  // Form State Halaman
+  // Page form state
   const [username, setUsername] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -91,12 +96,14 @@ export default function BioManagementPage() {
   const [themeColor, setThemeColor] = useState("indigo");
   const [fontFamily, setFontFamily] = useState("sans");
 
-  // Links State
+  // Link state
   const [links, setLinks] = useState<BioLinkItem[]>([]);
   const [newLinkTitle, setNewLinkTitle] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newIconType, setNewIconType] = useState("link");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [updatingLinkId, setUpdatingLinkId] = useState<string | null>(null);
+  const [reorderingLinks, setReorderingLinks] = useState(false);
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -105,7 +112,7 @@ export default function BioManagementPage() {
   const [origin, setOrigin] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Confirm Modal State
+  // Confirmation modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pageToDelete, setPageToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -138,10 +145,29 @@ export default function BioManagementPage() {
       .from("bio_links")
       .select("*")
       .eq("bio_id", bioId)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
 
-    if (error) {
-      toast.error("Gagal memuat link: " + error.message);
+    if (error?.code === "42703" || error?.message.includes("sort_order")) {
+      const { data: legacyLinks, error: legacyError } = await supabase
+        .from("bio_links")
+        .select("*")
+        .eq("bio_id", bioId)
+        .order("created_at", { ascending: true });
+
+      if (legacyError) {
+        toast.error("Could not load links: " + legacyError.message);
+      } else {
+        setLinks(
+          (legacyLinks || []).map((link, index) => ({
+            ...link,
+            is_active: link.is_active !== false,
+            sort_order: link.sort_order ?? index,
+          }))
+        );
+      }
+    } else if (error) {
+      toast.error("Could not load links: " + error.message);
     } else {
       setLinks(data || []);
     }
@@ -180,7 +206,7 @@ export default function BioManagementPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      toast.error("Gagal memuat daftar halaman.");
+      toast.error("Could not load your pages.");
     } else if (profiles && profiles.length > 0) {
       setPages(profiles);
       if (!selectedPage || !profiles.some((p) => p.id === selectedPage.id)) {
@@ -213,12 +239,12 @@ export default function BioManagementPage() {
 
       const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
       if (!validTypes.includes(file.type)) {
-        toast.error("Format file harus berupa PNG, JPG, JPEG, atau WEBP");
+        toast.error("File must be a PNG, JPG, JPEG, or WEBP image.");
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
-        toast.error("Ukuran file maksimal adalah 2MB");
+        toast.error("File size must be 2 MB or smaller.");
         return;
       }
 
@@ -233,10 +259,10 @@ export default function BioManagementPage() {
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
-      toast.success("Foto berhasil diunggah!");
+      toast.success("Image uploaded successfully.");
     } catch (error) {
       const err = error as Error;
-      toast.error("Gagal mengunggah foto: " + err.message);
+      toast.error("Could not upload image: " + err.message);
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -250,7 +276,7 @@ export default function BioManagementPage() {
 
     const cleanUsername = username.toLowerCase().trim().replace(/[^a-z0-9_-]/g, "");
     if (!cleanUsername) {
-      toast.error("Username/Slug tidak boleh kosong!");
+      toast.error("Username/slug cannot be empty.");
       setLoading(false);
       return;
     }
@@ -272,9 +298,9 @@ export default function BioManagementPage() {
         .eq("user_id", user.id);
 
       if (error) {
-        toast.error("Gagal memperbarui halaman: " + error.message);
+        toast.error("Could not update page: " + error.message);
       } else {
-        toast.success("Halaman berhasil diperbarui!");
+        toast.success("Page updated successfully.");
         await loadUserPages();
       }
     } else {
@@ -285,9 +311,9 @@ export default function BioManagementPage() {
         .single();
 
       if (error) {
-        toast.error("Gagal membuat halaman: " + error.message);
+        toast.error("Could not create page: " + error.message);
       } else if (data) {
-        toast.success("Halaman baru berhasil dibuat!");
+        toast.success("New page created successfully.");
         await loadUserPages();
         await handleSelectPage(data);
       }
@@ -321,9 +347,9 @@ export default function BioManagementPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      toast.error("Gagal menghapus halaman: " + error.message);
+      toast.error("Could not delete page: " + error.message);
     } else {
-      toast.success("Halaman berhasil dihapus!");
+      toast.success("Page deleted successfully.");
       if (selectedPage?.id === pageToDelete) {
         resetFormToNew();
       }
@@ -338,7 +364,7 @@ export default function BioManagementPage() {
   const handleSaveLink = async (e: FormEvent) => {
     e.preventDefault();
     if (!selectedPage) {
-      toast.error("Simpan atau pilih halaman terlebih dahulu!");
+      toast.error("Save or select a page first.");
       return;
     }
     if (!newLinkTitle.trim() || !newLinkUrl.trim()) return;
@@ -358,11 +384,11 @@ export default function BioManagementPage() {
         .single();
 
       if (error) {
-        toast.error("Gagal memperbarui link: " + error.message);
+        toast.error("Could not update link: " + error.message);
       } else if (data) {
         setLinks((prev) => prev.map((item) => (item.id === editingLinkId ? data : item)));
         resetLinkForm();
-        toast.success("Link berhasil diperbarui!");
+        toast.success("Link updated successfully.");
       }
     } else {
       const { data, error } = await supabase
@@ -374,17 +400,22 @@ export default function BioManagementPage() {
             url: formattedUrl,
             icon_type: newIconType,
             clicks: 0,
+            is_active: true,
+            sort_order: links.reduce(
+              (maxOrder, link) => Math.max(maxOrder, link.sort_order ?? -1),
+              -1
+            ) + 1,
           },
         ])
         .select()
         .single();
 
       if (error) {
-        toast.error("Gagal menambahkan link: " + error.message);
+        toast.error("Could not add link: " + error.message);
       } else if (data) {
         setLinks((prev) => [...prev, data]);
         resetLinkForm();
-        toast.success("Link berhasil ditambahkan!");
+        toast.success("Link added successfully.");
       }
     }
   };
@@ -399,14 +430,79 @@ export default function BioManagementPage() {
   const handleDeleteLink = async (id: string) => {
     const { error } = await supabase.from("bio_links").delete().eq("id", id);
     if (error) {
-      toast.error("Gagal menghapus link: " + error.message);
+      toast.error("Could not delete link: " + error.message);
     } else {
       setLinks((prev) => prev.filter((l) => l.id !== id));
       if (editingLinkId === id) {
         resetLinkForm();
       }
-      toast.success("Link berhasil dihapus!");
+      toast.success("Link deleted successfully.");
     }
+  };
+
+  const handleToggleLink = async (link: BioLinkItem) => {
+    const isActive = link.is_active !== false;
+    setUpdatingLinkId(link.id);
+
+    const { error } = await supabase
+      .from("bio_links")
+      .update({ is_active: !isActive })
+      .eq("id", link.id);
+
+    if (error) {
+      toast.error("Could not update link status: " + error.message);
+    } else {
+      setLinks((previousLinks) =>
+        previousLinks.map((item) =>
+          item.id === link.id ? { ...item, is_active: !isActive } : item
+        )
+      );
+      toast.success(`Link ${isActive ? "disabled" : "enabled"}.`);
+    }
+
+    setUpdatingLinkId(null);
+  };
+
+  const handleMoveLink = async (linkId: string, direction: -1 | 1) => {
+    if (!selectedPage || reorderingLinks) return;
+
+    const currentIndex = links.findIndex((link) => link.id === linkId);
+    const targetIndex = currentIndex + direction;
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= links.length) return;
+
+    const currentLink = links[currentIndex];
+    const targetLink = links[targetIndex];
+    const currentOrder = currentLink.sort_order ?? currentIndex;
+    const targetOrder = targetLink.sort_order ?? targetIndex;
+
+    setReorderingLinks(true);
+    const updates = await Promise.all([
+      supabase
+        .from("bio_links")
+        .update({ sort_order: targetOrder })
+        .eq("id", currentLink.id),
+      supabase
+        .from("bio_links")
+        .update({ sort_order: currentOrder })
+        .eq("id", targetLink.id),
+    ]);
+    const updateError = updates.find(({ error }) => error)?.error;
+
+    if (updateError) {
+      toast.error("Could not change link order: " + updateError.message);
+      await fetchPageLinks(selectedPage.id);
+    } else {
+      setLinks((previousLinks) => {
+        const reorderedLinks = [...previousLinks];
+        [reorderedLinks[currentIndex], reorderedLinks[targetIndex]] = [
+          { ...targetLink, sort_order: currentOrder },
+          { ...currentLink, sort_order: targetOrder },
+        ];
+        return reorderedLinks;
+      });
+    }
+
+    setReorderingLinks(false);
   };
 
   const bioPageUrl = username && origin ? `${origin}/${username}` : "";
@@ -426,7 +522,7 @@ export default function BioManagementPage() {
       <div className="absolute top-0 -left-20 w-96 h-96 bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-1/3 -right-20 w-96 h-96 bg-purple-600/15 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Header Navigasi Presisi */}
+      {/* Main navigation */}
       <DashboardHeader user={user} />
       {false && (
       <header className="app-header fixed top-0 left-0 right-0 z-50 border-b">
@@ -468,7 +564,7 @@ export default function BioManagementPage() {
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>Kelola Halaman</span>
+          <span>Manage Pages</span>
         </Link>
         <Link
           href="/dashboard/analytics"
@@ -499,7 +595,7 @@ export default function BioManagementPage() {
         className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-red-400 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 rounded-full transition-all duration-200"
       >
         <LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-400 transition-colors" />
-        <span>Keluar</span>
+        <span>Log out</span>
       </button>
 
       <button
@@ -537,7 +633,7 @@ export default function BioManagementPage() {
         }`}
       >
         <FileText className="w-4 h-4" />
-        <span>Kelola Halaman</span>
+        <span>Manage Pages</span>
       </Link>
       <Link
         href="/dashboard/analytics"
@@ -569,7 +665,7 @@ export default function BioManagementPage() {
           className="flex items-center space-x-1.5 bg-slate-900/50 hover:bg-red-950/30 border border-slate-800 hover:border-red-500/50 text-slate-300 hover:text-red-400 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
         >
           <LogOut className="w-3.5 h-3.5" />
-          <span>Keluar</span>
+          <span>Log out</span>
         </button>
       </div>
     </div>
@@ -588,9 +684,9 @@ export default function BioManagementPage() {
                 Bio Page Manager
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Kelola Halaman Bio Anda</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Manage your bio pages</h1>
             <p className="text-xs sm:text-sm text-slate-300/80 mt-2 max-w-2xl">
-              Buat dan kustomisasi halaman landing/bio lengkap dengan analisis klik.
+              Create and customize bio pages with built-in click analytics.
             </p>
           </div>
           <button
@@ -598,15 +694,15 @@ export default function BioManagementPage() {
             className="w-full sm:w-auto bg-indigo-500 hover:bg-indigo-400 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 active:scale-[0.98] shrink-0 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            <span>Buat Halaman Baru</span>
+            <span>Create new page</span>
           </button>
         </div>
 
-        {/* Daftar Halaman dengan Glassmorphism Cards */}
+        {/* Page list */}
         {pages.length > 0 && (
           <div className="manager-panel p-4 sm:p-5 rounded-2xl">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              Daftar Halaman Anda ({pages.length})
+              Your pages ({pages.length})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {pages.map((page) => {
@@ -653,7 +749,7 @@ export default function BioManagementPage() {
 
                     <div className="mt-4 pt-3 border-t border-slate-800/80 flex justify-between items-center text-xs">
                       <span className={`text-[11px] font-medium ${isSelected ? "text-indigo-300" : "text-slate-500"}`}>
-                        {isSelected ? "• Sedang Diedit" : "Klik untuk Edit"}
+                        {isSelected ? "• Currently editing" : "Click to edit"}
                       </span>
                       <button
                         onClick={(e) => {
@@ -662,7 +758,7 @@ export default function BioManagementPage() {
                         }}
                         className="text-red-400 hover:text-red-300 transition-colors"
                       >
-                        Hapus
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -677,7 +773,7 @@ export default function BioManagementPage() {
           <div className="manager-panel p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
               <span className="text-xs text-indigo-400 font-medium block flex items-center gap-1">
-                <Globe className="w-3 h-3" /> URL Publik:
+                <Globe className="w-3 h-3" /> Public URL:
               </span>
               <strong className="text-xs sm:text-sm text-indigo-200 block truncate mt-0.5">{bioPageUrl}</strong>
             </div>
@@ -685,7 +781,7 @@ export default function BioManagementPage() {
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:space-x-3 w-full sm:w-auto">
               <div className="col-span-2 sm:col-span-1 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block flex items-center justify-center gap-1">
-                  <MousePointerClick className="w-3 h-3 text-indigo-400" /> Total Klik
+                  <MousePointerClick className="w-3 h-3 text-indigo-400" /> Total clicks
                 </span>
                 <span className="text-lg font-bold text-indigo-400">{totalPageClicks}</span>
               </div>
@@ -702,7 +798,7 @@ export default function BioManagementPage() {
                 rel="noreferrer"
                 className="flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-md shadow-indigo-500/20 text-center"
               >
-                <span>Lihat Halaman</span>
+                <span>View page</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
@@ -712,15 +808,15 @@ export default function BioManagementPage() {
         {/* Form Setting Utama */}
         <div className="manager-panel p-4 sm:p-6 rounded-2xl">
           <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
-            {isCreatingNew ? "Buat Halaman Baru" : `Edit Halaman: ${selectedPage?.title}`}
+            {isCreatingNew ? "Create new page" : `Edit page: ${selectedPage?.title}`}
           </h2>
           <form onSubmit={handleSavePage} className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">/Url (Unik)</label>
+              <label className="block text-xs text-slate-400 mb-1">/URL (unique)</label>
               <input
                 type="text"
                 required
-                placeholder="contoh: webinar-2026 atau materi-teknis"
+                placeholder="e.g. webinar-2026 or design-resources"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
@@ -728,11 +824,11 @@ export default function BioManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Judul Halaman</label>
+              <label className="block text-xs text-slate-400 mb-1">Page title</label>
               <input
                 type="text"
                 required
-                placeholder="Judul / Nama Halaman"
+                placeholder="Page title / name"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
@@ -740,9 +836,9 @@ export default function BioManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Deskripsi Singkat (Opsional)</label>
+              <label className="block text-xs text-slate-400 mb-1">Short description (optional)</label>
               <textarea
-                placeholder="Tulis deskripsi atau sambutan singkat di bawah judul..."
+                placeholder="Add a short description or greeting below the title..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
@@ -751,7 +847,7 @@ export default function BioManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-2">Pilih Tema Warna Halaman</label>
+              <label className="block text-xs text-slate-400 mb-2">Choose a page color theme</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
                 {THEME_OPTIONS.map((theme) => {
                   const active = themeColor === theme.id;
@@ -773,7 +869,7 @@ export default function BioManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-2">Pilih Font Halaman</label>
+              <label className="block text-xs text-slate-400 mb-2">Choose a page font</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {FONT_OPTIONS.map((font) => {
                   const active = fontFamily === font.id;
@@ -798,12 +894,12 @@ export default function BioManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Foto Profil / Logo Halaman</label>
+              <label className="block text-xs text-slate-400 mb-1">Profile photo / page logo</label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 {avatarUrl && (
                   <Image
                     src={avatarUrl}
-                    alt="Preview Avatar"
+                    alt="Avatar preview"
                     width={48}
                     height={48}
                     className="w-12 h-12 rounded-full object-cover border border-slate-700 shrink-0"
@@ -824,30 +920,30 @@ export default function BioManagementPage() {
               disabled={loading || uploading}
               className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 disabled:opacity-50"
             >
-              {loading ? "Menyimpan..." : isCreatingNew ? "Buat Halaman" : "Simpan Perubahan"}
+              {loading ? "Saving..." : isCreatingNew ? "Create page" : "Save changes"}
             </button>
           </form>
         </div>
 
-        {/* Manajemen Tombol Link */}
+        {/* Link button management */}
         {selectedPage && !isCreatingNew && (
           <div className="manager-panel p-4 sm:p-6 rounded-2xl">
             <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
-              {editingLinkId ? "Edit Tombol Link" : "Tambah Tombol Link"}
+              {editingLinkId ? "Edit link button" : "Add link button"}
             </h2>
             <form onSubmit={handleSaveLink} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Ikon Tombol</label>
+                  <label className="block text-xs text-slate-400 mb-1">Button icon</label>
                   <IconSelect value={newIconType} onChange={(val) => setNewIconType(val)} />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs text-slate-400 mb-1">Judul Tombol</label>
+                  <label className="block text-xs text-slate-400 mb-1">Button title</label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: Registrasi Webinar / Whatsapp Admin"
+                    placeholder="e.g. Webinar registration / Contact us"
                     value={newLinkTitle}
                     onChange={(e) => setNewLinkTitle(e.target.value)}
                     className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
@@ -856,11 +952,11 @@ export default function BioManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">URL Tujuan</label>
+                <label className="block text-xs text-slate-400 mb-1">Destination URL</label>
                 <input
                   type="text"
                   required
-                  placeholder="https://... atau instagram.com/..."
+                  placeholder="https://... or instagram.com/..."
                   value={newLinkUrl}
                   onChange={(e) => setNewLinkUrl(e.target.value)}
                   className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
@@ -873,7 +969,7 @@ export default function BioManagementPage() {
                   className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold px-6 py-3 sm:py-2.5 rounded-xl text-sm transition-all shadow-md shadow-indigo-500/20 flex items-center justify-center gap-1.5"
                 >
                   {editingLinkId ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  <span>{editingLinkId ? "Perbarui Tombol" : "Tambahkan Tombol"}</span>
+                  <span>{editingLinkId ? "Update button" : "Add button"}</span>
                 </button>
 
                 {editingLinkId && (
@@ -882,7 +978,7 @@ export default function BioManagementPage() {
                     onClick={resetLinkForm}
                     className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-4 py-3 sm:py-2.5 rounded-xl text-sm transition-all"
                   >
-                    Batal
+                    Cancel
                   </button>
                 )}
               </div>
@@ -890,7 +986,7 @@ export default function BioManagementPage() {
 
             <div className="mt-6 space-y-3">
               <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Daftar Tombol Aktif ({links.length})
+                Link buttons ({links.length})
               </h4>
               {links.map((link) => (
                 <div
@@ -909,11 +1005,47 @@ export default function BioManagementPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
                     <span className="text-xs text-indigo-400 bg-indigo-950/40 border border-indigo-500/30 px-2.5 py-1 rounded-full font-medium">
-                      {link.clicks || 0} klik
+                      {link.clicks || 0} clicks
                     </span>
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={link.is_active !== false}
+                        aria-label={`${link.is_active === false ? "Enable" : "Disable"} ${link.title}`}
+                        onClick={() => handleToggleLink(link)}
+                        disabled={updatingLinkId === link.id}
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                          link.is_active === false
+                            ? "border-slate-700 bg-slate-900 text-slate-400 hover:text-white"
+                            : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                        }`}
+                      >
+                        <Power className="h-3.5 w-3.5" />
+                        <span>{link.is_active === false ? "Off" : "On"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveLink(link.id, -1)}
+                        disabled={reorderingLinks || links.indexOf(link) === 0}
+                        aria-label={`Move ${link.title} up`}
+                        title="Move up"
+                        className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveLink(link.id, 1)}
+                        disabled={reorderingLinks || links.indexOf(link) === links.length - 1}
+                        aria-label={`Move ${link.title} down`}
+                        title="Move down"
+                        className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handleEditLinkClick(link)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
@@ -939,8 +1071,8 @@ export default function BioManagementPage() {
           onClose={() => setIsModalOpen(false)}
           onConfirm={handleConfirmDelete}
           loading={isDeleting}
-          title="Hapus Halaman Bio"
-          message="Apakah Anda yakin ingin menghapus halaman ini? Semua link di dalamnya akan terhapus secara permanen."
+          title="Delete bio page"
+          message="Are you sure you want to delete this page? All links on it will be permanently deleted."
         />
       </main>
       <SiteFooter />

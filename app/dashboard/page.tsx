@@ -42,10 +42,10 @@ function ConfirmModal({
   isOpen,
   onClose,
   onConfirm,
-  title = "Konfirmasi Hapus",
-  message = "Apakah Anda yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan.",
-  confirmText = "Hapus",
-  cancelText = "Batal",
+  title = "Confirm deletion",
+  message = "Are you sure you want to delete this item? This action cannot be undone.",
+  confirmText = "Delete",
+  cancelText = "Cancel",
   loading = false,
 }: {
   isOpen: boolean;
@@ -152,7 +152,7 @@ export default function DashboardPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Gagal mengambil data link:", error.message);
+      console.error("Could not fetch links:", error.message);
       return;
     }
 
@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
     const formattedUrl = validateUrl(destinationUrl);
     if (!formattedUrl) {
-      setErrorMessage("Format URL tidak valid. Harap periksa kembali.");
+      setErrorMessage("Invalid URL format. Please check and try again.");
       return;
     }
 
@@ -201,9 +201,9 @@ export default function DashboardPage() {
 
     if (error) {
       if (error.code === "23505") {
-        setErrorMessage("Short code tersebut sudah digunakan, coba kode lain.");
+        setErrorMessage("That short code is already in use. Try another one.");
       } else {
-        setErrorMessage("Gagal membuat link: " + error.message);
+        setErrorMessage("Could not create link: " + error.message);
       }
     } else {
       setDestinationUrl("");
@@ -233,7 +233,7 @@ export default function DashboardPage() {
     if (!error) {
       fetchUserAndLinks();
     } else {
-      setErrorMessage("Gagal menghapus link: " + error.message);
+      setErrorMessage("Could not delete link: " + error.message);
     }
   };
 
@@ -295,9 +295,9 @@ export default function DashboardPage() {
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         loading={isDeleting}
-        title="Hapus Link"
-        message="Yakin ingin menghapus link ini? Pengunjung tidak akan dapat mengakses tautan singkat ini lagi."
-        confirmText="Hapus Link"
+        title="Delete link"
+        message="Are you sure you want to delete this link? Visitors will no longer be able to use this short URL."
+        confirmText="Delete link"
       />
 
       {/* Header Sticky */}
@@ -337,7 +337,7 @@ export default function DashboardPage() {
                 }`}
               >
                 <FileText className="w-4 h-4" />
-                <span>Kelola Halaman</span>
+                <span>Manage Pages</span>
               </Link>
               <Link
                 href="/dashboard/analytics"
@@ -367,7 +367,7 @@ export default function DashboardPage() {
               className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
             >
               <LogOut className="w-4 h-4 text-slate-400" />
-              <span>Keluar</span>
+              <span>Log out</span>
             </button>
 
             <button
@@ -406,7 +406,7 @@ export default function DashboardPage() {
               }`}
             >
               <FileText className="w-4 h-4 text-indigo-400" />
-              <span>Kelola Halaman</span>
+              <span>Manage Pages</span>
             </Link>
 
             <Link
@@ -437,17 +437,17 @@ export default function DashboardPage() {
                 className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
               >
                 <LogOut className="w-3.5 h-3.5 text-slate-300" />
-                <span>Keluar</span>
+                <span>Log out</span>
               </button>
             </div>
           </div>
         )}
       </header>)}
 
-      {/* Konten Utama */}
+      {/* Main content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
         
-        {/* Banner Welcome */}
+        {/* Welcome banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8 shadow-2xl">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -457,10 +457,10 @@ export default function DashboardPage() {
                 <span>Shortener & Bio Link Suite</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Selamat Datang Kembali! 👋
+                Welcome back! 👋
               </h1>
               <p className="text-sm text-slate-400 mt-1 max-w-lg">
-                Kelola tautan pendek, pantau performa statistik klik, dan optimalkan branding linimasa Anda dalam satu tempat.
+                Manage short links, track click performance, and strengthen your online presence in one place.
               </p>
             </div>
 
@@ -470,7 +470,7 @@ export default function DashboardPage() {
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-2xl transition-all shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 border border-indigo-400/30"
               >
                 <Layers className="w-4 h-4" />
-                <span>Kelola Halaman Bio</span>
+                <span>Manage Bio Pages</span>
               </Link>
             </div>
           </div>
@@ -482,7 +482,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TOTAL TAUTAN DIBUAT
+                TOTAL LINKS CREATED
               </span>
               <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(99,102,241,0.25)]">
                 <Link2 className="w-5 h-5" />
@@ -494,7 +494,7 @@ export default function DashboardPage() {
               </strong>
               <div className="flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-full">
                 <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-                <span>Aktif</span>
+                <span>Active</span>
               </div>
             </div>
           </div>
@@ -503,7 +503,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TOTAL KLIK DITERIMA
+                TOTAL CLICKS
               </span>
               <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(244,63,94,0.25)]">
                 <MousePointerClick className="w-5 h-5" />
@@ -515,22 +515,22 @@ export default function DashboardPage() {
               </strong>
               <div className="flex items-center text-xs font-semibold text-indigo-400 bg-indigo-950/40 border border-indigo-800/50 px-2.5 py-1 rounded-full">
                 <TrendingUp className="w-3.5 h-3.5 mr-1" />
-                <span>Realtime Log</span>
+                <span>Live tracking</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Form Buat Link Baru */}
+        {/* Create link form */}
         <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-slate-700 p-6 sm:p-8 rounded-3xl shadow-xl transition-all">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
               <Plus className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold">Buat Short Link Baru</h2>
+            <h2 className="text-xl font-bold">Create a new short link</h2>
           </div>
           <p className="text-slate-400 text-xs sm:text-sm mb-6">
-            Masukkan URL tujuan Anda dan tentukan kode kustom jika diinginkan.
+            Enter a destination URL and choose a custom code if you like.
           </p>
 
           {errorMessage && (
@@ -542,7 +542,7 @@ export default function DashboardPage() {
           <form onSubmit={handleCreateLink} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                URL ASLI (DESTINATION URL)
+                DESTINATION URL
               </label>
               <input
                 type="text"
@@ -556,7 +556,7 @@ export default function DashboardPage() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                CUSTOM SHORT CODE (OPSIONAL)
+                CUSTOM SHORT CODE (OPTIONAL)
               </label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-xs font-semibold text-slate-500 select-none">
@@ -580,20 +580,20 @@ export default function DashboardPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Memproses...</span>
+                  <span>Creating...</span>
                 </>
               ) : (
-                "Pendekkan Link"
+                "Create short link"
               )}
             </button>
           </form>
         </div>
 
-        {/* Daftar Link */}
+        {/* Link list */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold flex items-center gap-2">
-              <span>Daftar Link Anda</span>
+              <span>Your links</span>
               <span className="bg-indigo-950 border border-indigo-500/30 text-indigo-400 text-xs font-extrabold px-2.5 py-0.5 rounded-full">
                 {links.length}
               </span>
@@ -603,7 +603,7 @@ export default function DashboardPage() {
           <div className="space-y-4">
             {links.length === 0 ? (
               <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-sm">
-                Belum ada link yang dibuat. Mulai buat short link pertama Anda di atas!
+                No links yet. Create your first short link above.
               </div>
             ) : (
               links.map((item) => {
@@ -643,7 +643,7 @@ export default function DashboardPage() {
                           <ExternalLink className="w-3.5 h-3.5 text-indigo-400/70 shrink-0" />
                         </a>
                         <span className="bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                          {item.clicks || 0} Klik
+                          {item.clicks || 0} clicks
                         </span>
                       </div>
                       <p className="text-slate-400 text-xs truncate">
@@ -657,12 +657,12 @@ export default function DashboardPage() {
                         className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all"
                       >
                         <Copy className="w-3.5 h-3.5" />
-                        <span>{copiedId === item.id ? "Tersalin!" : "Salin"}</span>
+                        <span>{copiedId === item.id ? "Copied!" : "Copy"}</span>
                       </button>
                       <button
                         onClick={() => promptDeleteLink(item.id)}
                         className="inline-flex items-center justify-center p-2.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all hover:border-red-500/50 active:scale-95"
-                        title="Hapus Link"
+                        title="Delete link"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

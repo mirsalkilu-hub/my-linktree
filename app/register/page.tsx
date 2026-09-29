@@ -34,17 +34,17 @@ export default function RegisterPage() {
     setErrorMessage("");
 
     if (password !== confirmPassword) {
-      setErrorMessage("Password dan Konfirmasi Password tidak cocok.");
+      setErrorMessage("Password and confirmation do not match.");
       return;
     }
 
     if (password.length < 8) {
-      setErrorMessage("Password minimal harus 8 karakter.");
+      setErrorMessage("Password must be at least 8 characters.");
       return;
     }
 
     if (!acceptedTerms) {
-      setErrorMessage("Anda harus menyetujui Terms of Service dan Privacy Policy.");
+      setErrorMessage("You must accept the Terms of Service and Privacy Policy.");
       return;
     }
 
@@ -84,7 +84,7 @@ export default function RegisterPage() {
       urlyu<span className="text-indigo-500">.com</span>
     </span>
   </Link>
-  <h2 className="text-xl font-bold mt-4 text-slate-100">Buat Akun Anda</h2>
+  <h2 className="text-xl font-bold mt-4 text-slate-100">Create your account</h2>
 </div>
 
         {/* Error Alert */}
@@ -243,7 +243,7 @@ export default function RegisterPage() {
             disabled={loading}
             className="primary-action w-full text-white font-semibold py-3 rounded-xl transition-all active:scale-95 disabled:opacity-50 text-sm mt-2"
           >
-            {loading ? "Memproses..." : "Daftar"}
+            {loading ? "Creating account..." : "Sign up"}
           </button>
         </form>
 
@@ -253,7 +253,7 @@ export default function RegisterPage() {
             <div className="w-full border-t border-slate-800"></div>
           </div>
           <span className="relative px-3 bg-slate-900 text-slate-500 text-xs">
-            atau
+            or
           </span>
         </div>
 
@@ -280,14 +280,14 @@ export default function RegisterPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Daftar dengan Google</span>
+          <span>Sign up with Google</span>
         </button>
 
         {/* Footer Link */}
         <p className="text-center text-xs text-slate-400 mt-6">
-          Sudah punya akun?{" "}
+          Already have an account?{" "}
           <Link href="/login" className="text-indigo-400 font-semibold hover:underline">
-            Masuk
+            Sign in
           </Link>
         </p>
 
