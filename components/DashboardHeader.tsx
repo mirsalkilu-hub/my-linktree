@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   BarChart3,
+  Crown,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -28,6 +29,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/pages", label: "Manage Pages", icon: FileText },
     { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/dashboard/vip", label: "VIP", icon: Crown },
   ];
 
   const isActive = (href: string) =>

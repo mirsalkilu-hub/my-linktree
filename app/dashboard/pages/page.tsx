@@ -42,6 +42,11 @@ interface BioProfile {
   created_at: string;
 }
 
+interface VipSubscription {
+  status: string;
+  current_period_end: string | null;
+}
+
 interface BioLinkItem {
   id: string;
   title: string;
@@ -97,6 +102,7 @@ export default function BioManagementPage() {
   const [themeColor, setThemeColor] = useState("indigo");
   const [fontFamily, setFontFamily] = useState("sans");
   const [adsEnabled, setAdsEnabled] = useState(true);
+  const [isVip, setIsVip] = useState(false);
 
   // Link state
   const [links, setLinks] = useState<BioLinkItem[]>([]);
@@ -204,6 +210,24 @@ export default function BioManagementPage() {
 
     setUser(currentUser);
 
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from("vip_subscriptions")
+      .select("status, current_period_end")
+      .eq("user_id", currentUser.id)
+      .maybeSingle<VipSubscription>();
+
+    if (subscriptionError) {
+      toast.error("Could not load VIP status: " + subscriptionError.message);
+      setIsVip(false);
+    } else {
+      setIsVip(
+        !!subscription &&
+          ["active", "trialing"].includes(subscription.status) &&
+          !!subscription.current_period_end &&
+          new Date(subscription.current_period_end).getTime() > Date.now()
+      );
+    }
+
     const { data: profiles, error } = await supabase
       .from("bio_profiles")
       .select("*")
@@ -293,7 +317,7 @@ export default function BioManagementPage() {
       bio_description: description.trim(),
       avatar_url: avatarUrl,
       theme_color: `${themeColor}::${fontFamily}`,
-      ads_enabled: adsEnabled,
+      ads_enabled: isVip ? adsEnabled : true,
     };
 
     if (selectedPage) {
@@ -471,6 +495,10 @@ export default function BioManagementPage() {
 
   const handleToggleAds = async () => {
     if (!selectedPage || !user || updatingAds) return;
+    if (!isVip) {
+      toast.error("VIP membership is required to turn off Adsterra ads.");
+      return;
+    }
 
     const nextAdsEnabled = !adsEnabled;
     setUpdatingAds(true);
@@ -841,7 +869,11 @@ export default function BioManagementPage() {
           <div className="manager-panel p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4">
             <div>
               <h2 className="text-sm font-semibold text-white">Adsterra ads</h2>
-              <p className="text-xs text-slate-400 mt-1">Show or hide ads on this bio page.</p>
+              <p className="text-xs text-slate-400 mt-1">
+                {isVip
+                  ? "Show or hide ads on this bio page."
+                  : "VIP members can turn off ads. Upgrade for $20/year."}
+              </p>
             </div>
             <button
               type="button"
@@ -849,7 +881,7 @@ export default function BioManagementPage() {
               aria-checked={adsEnabled}
               aria-label={`${adsEnabled ? "Disable" : "Enable"} Adsterra ads`}
               onClick={handleToggleAds}
-              disabled={updatingAds}
+              disabled={updatingAds || !isVip}
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
                 adsEnabled
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
@@ -859,6 +891,14 @@ export default function BioManagementPage() {
               <Power className="h-3.5 w-3.5" />
               <span>{adsEnabled ? "On" : "Off"}</span>
             </button>
+            {!isVip && (
+              <Link
+                href="/dashboard/vip"
+                className="text-xs font-semibold text-amber-300 hover:text-amber-200"
+              >
+                Get VIP
+              </Link>
+            )}
           </div>
         )}
 
