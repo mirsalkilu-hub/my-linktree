@@ -78,7 +78,7 @@ const formatDateLabel = (d: Date) => {
   return `${d.getDate()} ${months[d.getMonth()]}`;
 };
 
-// Format YYYY-MM-DD berbasis zona waktu LOKAL
+// Format YYYY-MM-DD using the local time zone
 const toLocalDateKey = (d: Date) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -100,7 +100,7 @@ export default function AnalyticsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
 
-  // Mencegah masalah hydration pada Recharts
+  // Prevent hydration issues with Recharts
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -114,7 +114,7 @@ export default function AnalyticsPage() {
     setLoading(true);
 
     try {
-      // 1. Ambil data klik tombol link
+      // 1. Fetch link button click data
       const { data: links, error: linkErr } = await supabase
         .from("bio_links")
         .select("id, title, clicks")
@@ -134,7 +134,7 @@ export default function AnalyticsPage() {
       );
       setTotalClicks(sumClicks);
 
-      // 2. Ambil log analytics 7 hari terakhir
+      // 2. Fetch analytics logs for the last seven days
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
       sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
 
       if (logErr) throw logErr;
 
-      // Inisialisasi map tanggal 7 hari terakhir berbasis lokal
+      // Initialize a local-date map for the last seven days
       const daysMap: Record<string, { label: string; clicks: number }> = {};
 
       for (let i = 6; i >= 0; i--) {

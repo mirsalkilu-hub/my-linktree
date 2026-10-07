@@ -221,7 +221,7 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 mt-2">
           <span className="flex items-center space-x-1">
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-            <span>No spam ads</span>
+            <span>Free link shortening</span>
           </span>
           <span className="flex items-center space-x-1">
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -236,7 +236,24 @@ export default function HomePage() {
 
       {/* Feature Cards Section */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 py-10 w-full">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mb-6 rounded-2xl border border-amber-400/25 bg-amber-400/5 p-5 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">What&apos;s new</p>
+              <h2 className="mt-1 text-lg font-bold text-white">Introducing VIP Membership</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-300">
+                Go ad-free on your bio pages for $20 per year. VIP renews annually and can be cancelled anytime through Stripe.
+              </p>
+            </div>
+            <Link
+              href="/login"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-400 px-5 py-3 text-xs font-bold text-slate-950 transition hover:bg-amber-300"
+            >
+              Explore VIP
+            </Link>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
             <div className="w-9 h-9 bg-indigo-600/20 text-indigo-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">🔗</div>
             <h3 className="font-semibold text-sm mb-1">URL Shortener</h3>
@@ -251,6 +268,11 @@ export default function HomePage() {
             <div className="w-9 h-9 bg-pink-600/20 text-pink-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">📊</div>
             <h3 className="font-semibold text-sm mb-1">Link Analytics</h3>
             <p className="text-xs text-slate-400 leading-relaxed">Track link performance and click activity over time.</p>
+          </div>
+          <div className="bg-slate-900/50 border border-amber-500/20 p-5 rounded-2xl backdrop-blur-md">
+            <div className="w-9 h-9 bg-amber-500/10 text-amber-300 rounded-xl flex items-center justify-center font-bold text-base mb-3">👑</div>
+            <h3 className="font-semibold text-sm mb-1">VIP Membership</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">Turn off Adsterra ads on your bio pages with an annual $20 subscription.</p>
           </div>
         </div>
       </section>

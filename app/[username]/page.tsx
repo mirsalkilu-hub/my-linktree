@@ -386,7 +386,7 @@ export default function PublicBioPage({
           </svg>
         </button>
 
-        {/* Avatar Profil dengan Glow & Ring */}
+        {/* Profile avatar with glow and border */}
         <div className="mt-3 mb-4 relative group">
           <div className="absolute -inset-1 rounded-full blur-lg opacity-60 group-hover:opacity-90 transition duration-500" style={{ backgroundColor: theme.accentColor }} />
           {profile.avatar_url ? (

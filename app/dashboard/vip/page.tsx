@@ -41,7 +41,7 @@ export default function VipMembershipPage() {
 
       if (!cancelled) {
         if (error) {
-          setErrorMessage("Tidak dapat memuat status VIP: " + error.message);
+          setErrorMessage("Could not load VIP status: " + error.message);
         } else {
           setSubscription(data);
           setIsVip(
@@ -68,7 +68,7 @@ export default function VipMembershipPage() {
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session?.access_token) {
-      setErrorMessage(sessionError?.message || "Sesi login tidak ditemukan. Silakan login kembali.");
+      setErrorMessage(sessionError?.message || "Your session could not be found. Please sign in again.");
       setCheckoutLoading(false);
       return;
     }
@@ -80,13 +80,13 @@ export default function VipMembershipPage() {
       });
       const result = await response.json();
       if (!response.ok || !result.url) {
-        setErrorMessage(result.error || "Tidak dapat memulai pembayaran VIP.");
+        setErrorMessage(result.error || "Could not start VIP checkout.");
         setCheckoutLoading(false);
         return;
       }
       window.location.assign(result.url);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Tidak dapat memulai pembayaran VIP.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not start VIP checkout.");
       setCheckoutLoading(false);
     }
   };
@@ -98,7 +98,7 @@ export default function VipMembershipPage() {
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session?.access_token) {
-      setErrorMessage(sessionError?.message || "Sesi login tidak ditemukan. Silakan login kembali.");
+      setErrorMessage(sessionError?.message || "Your session could not be found. Please sign in again.");
       setCheckoutLoading(false);
       return;
     }
@@ -110,13 +110,13 @@ export default function VipMembershipPage() {
       });
       const result = await response.json();
       if (!response.ok || !result.url) {
-        setErrorMessage(result.error || "Tidak dapat membuka pengelolaan langganan.");
+        setErrorMessage(result.error || "Could not open subscription management.");
         setCheckoutLoading(false);
         return;
       }
       window.location.assign(result.url);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Tidak dapat membuka pengelolaan langganan.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not open subscription management.");
       setCheckoutLoading(false);
     }
   };
@@ -138,29 +138,29 @@ export default function VipMembershipPage() {
             <Crown className="h-7 w-7" />
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">VIP Membership</p>
-          <h1 className="mt-3 text-3xl font-black text-white">Nikmati halaman tanpa iklan</h1>
+          <h1 className="mt-3 text-3xl font-black text-white">Enjoy an ad-free bio page</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            Anggota VIP dapat mematikan iklan Adsterra pada halaman bio mereka.
+            VIP members can turn off Adsterra ads on their bio pages.
           </p>
 
           <div className="my-7 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
-            <p className="text-4xl font-black text-white">$20<span className="text-base font-semibold text-slate-400"> / tahun</span></p>
-            <p className="mt-2 text-xs text-slate-400">Langganan diperpanjang otomatis setiap tahun. Pembatalan dapat dilakukan kapan saja dari portal Stripe.</p>
+            <p className="text-4xl font-black text-white">$20<span className="text-base font-semibold text-slate-400"> / year</span></p>
+            <p className="mt-2 text-xs text-slate-400">Automatically renews annually. Cancel anytime through the Stripe customer portal.</p>
           </div>
 
           <ul className="mb-7 space-y-3 text-left text-sm text-slate-200">
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Matikan Adsterra pada halaman bio</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Pembayaran aman melalui Stripe</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Perpanjangan otomatis tahunan</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Turn off Adsterra ads on your bio pages</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Secure payments through Stripe</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Automatic annual renewal</li>
           </ul>
 
           {isVip && subscription?.current_period_end && (
             <p className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-300">
-              Akun VIP aktif sampai {new Date(subscription.current_period_end).toLocaleDateString()}.
+              VIP is active until {new Date(subscription.current_period_end).toLocaleDateString()}.
             </p>
           )}
           <p className="mb-4 text-xs text-slate-400">
-            Setelah pembayaran, Stripe akan mengirim konfirmasi dan mengaktifkan VIP secara otomatis.
+            Stripe will confirm your payment and activate VIP automatically.
           </p>
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
 
@@ -171,7 +171,7 @@ export default function VipMembershipPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:from-amber-400 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isVip ? "VIP sudah aktif" : checkoutLoading ? "Membuka pembayaran..." : "Daftar VIP — $20/tahun"}
+            {isVip ? "VIP is active" : checkoutLoading ? "Opening checkout..." : "Get VIP — $20/year"}
           </button>
           {subscription?.stripe_customer_id && (
             <button
@@ -180,7 +180,7 @@ export default function VipMembershipPage() {
               disabled={checkoutLoading}
               className="mt-3 w-full rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60"
             >
-              Kelola / batalkan langganan
+              Manage or cancel subscription
             </button>
           )}
         </section>

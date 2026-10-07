@@ -19,7 +19,7 @@ export default function RegisterPage() {
 
   const router = useRouter();
 
-  // Handle Sign Up dengan Google Redirect
+  // Handle Google sign-up redirect
   const handleGoogleSignUp = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",

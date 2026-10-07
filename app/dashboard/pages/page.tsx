@@ -732,7 +732,7 @@ export default function BioManagementPage() {
   )}
 </header>)}
 
-      {/* Main Content Area dengan Visual Effects */}
+      {/* Main content area with visual effects */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 relative z-10 space-y-6 sm:space-y-7">
         <div className="manager-hero flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-5 sm:p-7 rounded-2xl">
           <div>

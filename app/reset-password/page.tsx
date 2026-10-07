@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Memastikan sesi recovery Supabase valid dari URL hash
+    // Verify that the Supabase recovery session from the URL hash is valid
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {

@@ -13,7 +13,7 @@ export async function GET(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // 1. Cari data URL dan jumlah klik saat ini
+  // 1. Find the URL and its current click count
   const { data, error } = await supabase
     .from("links")
     .select("id, original_url, clicks")
@@ -24,7 +24,7 @@ export async function GET(
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // 2. Tambah jumlah klik (+1) di background
+  // 2. Increment the click count in the background
   await supabase
     .from("links")
     .update({ clicks: (data.clicks || 0) + 1 })

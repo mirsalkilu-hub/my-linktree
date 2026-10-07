@@ -123,7 +123,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // State untuk Custom Delete Modal
+  // Custom delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -213,13 +213,13 @@ export default function DashboardPage() {
     setLoading(false);
   };
 
-  // Triggers untuk membuka modal konfirmasi kustom
+  // Open the custom confirmation modal
   const promptDeleteLink = (id: string) => {
     setSelectedLinkId(id);
     setDeleteModalOpen(true);
   };
 
-  // Eksekusi penghapusan dari modal
+  // Execute deletion from the modal
   const handleConfirmDelete = async () => {
     if (!selectedLinkId) return;
 
