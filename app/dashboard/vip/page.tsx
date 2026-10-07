@@ -12,6 +12,8 @@ interface VipSubscription {
   status: string;
   current_period_end: string | null;
   stripe_customer_id: string | null;
+  paypal_subscription_id: string | null;
+  payment_provider: "stripe" | "paypal" | null;
 }
 
 export default function VipMembershipPage() {
@@ -21,6 +23,7 @@ export default function VipMembershipPage() {
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const [isVip, setIsVip] = useState(false);
 
   useEffect(() => {
@@ -31,11 +34,17 @@ export default function VipMembershipPage() {
         router.push("/login");
         return;
       }
+      const checkoutResult = new URLSearchParams(window.location.search).get("paypal");
+      if (checkoutResult === "success") {
+        setStatusMessage("PayPal approval received. Your VIP membership will activate after PayPal confirms the subscription.");
+      } else if (checkoutResult === "cancelled") {
+        setStatusMessage("PayPal checkout was cancelled. You have not been charged.");
+      }
       setUser(currentUser);
 
       const { data, error } = await supabase
         .from("vip_subscriptions")
-        .select("status, current_period_end, stripe_customer_id")
+        .select("status, current_period_end, stripe_customer_id, paypal_subscription_id, payment_provider")
         .eq("user_id", currentUser.id)
         .maybeSingle<VipSubscription>();
 
@@ -61,10 +70,11 @@ export default function VipMembershipPage() {
     };
   }, [router]);
 
-  const startCheckout = async () => {
+  const startCheckout = async (provider: "stripe" | "paypal") => {
     if (!user || checkoutLoading) return;
     setCheckoutLoading(true);
     setErrorMessage("");
+    setStatusMessage("");
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session?.access_token) {
@@ -74,19 +84,21 @@ export default function VipMembershipPage() {
     }
 
     try {
-      const response = await fetch("/api/vip/checkout", {
+      const checkoutEndpoint =
+        provider === "stripe" ? "/api/vip/checkout" : "/api/vip/paypal/checkout";
+      const response = await fetch(checkoutEndpoint, {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const result = await response.json();
       if (!response.ok || !result.url) {
-        setErrorMessage(result.error || "Could not start VIP checkout.");
+        setErrorMessage(result.error || `Could not start ${provider === "paypal" ? "PayPal" : "Stripe"} checkout.`);
         setCheckoutLoading(false);
         return;
       }
       window.location.assign(result.url);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not start VIP checkout.");
+      setErrorMessage(error instanceof Error ? error.message : `Could not start ${provider === "paypal" ? "PayPal" : "Stripe"} checkout.`);
       setCheckoutLoading(false);
     }
   };
@@ -121,6 +133,43 @@ export default function VipMembershipPage() {
     }
   };
 
+  const cancelPayPalSubscription = async () => {
+    if (!user || !subscription?.paypal_subscription_id || checkoutLoading) return;
+    if (!window.confirm("Cancel your PayPal VIP subscription? Ads will be re-enabled on your bio pages.")) {
+      return;
+    }
+    setCheckoutLoading(true);
+    setErrorMessage("");
+
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session?.access_token) {
+      setErrorMessage(sessionError?.message || "Your session could not be found. Please sign in again.");
+      setCheckoutLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/vip/paypal/cancel", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setErrorMessage(result.error || "Could not cancel your PayPal subscription.");
+        setCheckoutLoading(false);
+        return;
+      }
+      setIsVip(false);
+      setSubscription((current) =>
+        current ? { ...current, status: "cancelled", current_period_end: new Date().toISOString() } : current
+      );
+      setStatusMessage("Your PayPal subscription has been cancelled and ads are enabled again.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not cancel your PayPal subscription.");
+      setCheckoutLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="site-shell min-h-screen text-white flex items-center justify-center">
@@ -140,17 +189,17 @@ export default function VipMembershipPage() {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">VIP Membership</p>
           <h1 className="mt-3 text-3xl font-black text-white">Enjoy an ad-free bio page</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            VIP members can turn off Adsterra ads on their bio pages.
+            VIP members can turn off ads on their bio pages.
           </p>
 
           <div className="my-7 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
             <p className="text-4xl font-black text-white">$20<span className="text-base font-semibold text-slate-400"> / year</span></p>
-            <p className="mt-2 text-xs text-slate-400">Automatically renews annually. Cancel anytime through the Stripe customer portal.</p>
+            <p className="mt-2 text-xs text-slate-400">Automatically renews annually. Cancel anytime.</p>
           </div>
 
           <ul className="mb-7 space-y-3 text-left text-sm text-slate-200">
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Turn off Adsterra ads on your bio pages</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Secure payments through Stripe</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Turn off ads on your bio pages</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Secure payments through Stripe or PayPal</li>
             <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Automatic annual renewal</li>
           </ul>
 
@@ -160,18 +209,28 @@ export default function VipMembershipPage() {
             </p>
           )}
           <p className="mb-4 text-xs text-slate-400">
-            Stripe will confirm your payment and activate VIP automatically.
+            Choose a payment method. VIP activates automatically after your payment is confirmed.
           </p>
+          {statusMessage && <p className="mb-4 text-sm text-emerald-300">{statusMessage}</p>}
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
 
           <button
             type="button"
-            onClick={startCheckout}
+            onClick={() => startCheckout("stripe")}
             disabled={isVip || checkoutLoading}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:from-amber-400 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isVip ? "VIP is active" : checkoutLoading ? "Opening checkout..." : "Get VIP — $20/year"}
+            {isVip ? "VIP is active" : checkoutLoading ? "Opening checkout..." : "Pay with Stripe — $20/year"}
+          </button>
+          <button
+            type="button"
+            onClick={() => startCheckout("paypal")}
+            disabled={isVip || checkoutLoading}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/10 px-5 py-3.5 text-sm font-bold text-sky-200 transition hover:bg-sky-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+            Pay with PayPal — $20/year
           </button>
           {subscription?.stripe_customer_id && (
             <button
@@ -181,6 +240,16 @@ export default function VipMembershipPage() {
               className="mt-3 w-full rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60"
             >
               Manage or cancel subscription
+            </button>
+          )}
+          {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (
+            <button
+              type="button"
+              onClick={cancelPayPalSubscription}
+              disabled={checkoutLoading}
+              className="mt-3 w-full rounded-xl border border-rose-500/30 px-5 py-3 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-60"
+            >
+              Cancel PayPal subscription
             </button>
           )}
         </section>

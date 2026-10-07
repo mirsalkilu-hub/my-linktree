@@ -81,6 +81,9 @@ export async function POST(request: Request) {
       user_id: userId,
       stripe_subscription_id: subscription.id,
       stripe_customer_id: customerId,
+      paypal_subscription_id: null,
+      paypal_payer_id: null,
+      payment_provider: "stripe",
       status: subscription.status,
       current_period_end: new Date(currentPeriodEnd * 1000).toISOString(),
       updated_at: new Date().toISOString(),
@@ -103,7 +106,7 @@ export async function POST(request: Request) {
       .eq("user_id", userId);
 
     if (adsError) {
-      console.error("Could not re-enable Adsterra ads after VIP ended:", adsError.message);
+      console.error("Could not re-enable ads after VIP ended:", adsError.message);
       return NextResponse.json({ error: "Could not update page ad settings." }, { status: 500 });
     }
   }

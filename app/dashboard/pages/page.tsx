@@ -496,7 +496,7 @@ export default function BioManagementPage() {
   const handleToggleAds = async () => {
     if (!selectedPage || !user || updatingAds) return;
     if (!isVip) {
-      toast.error("VIP membership is required to turn off Adsterra ads.");
+      toast.error("VIP membership is required to turn off ads.");
       return;
     }
 
@@ -510,14 +510,14 @@ export default function BioManagementPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      toast.error("Could not update Adsterra setting: " + error.message);
+      toast.error("Could not update ads setting: " + error.message);
     } else {
       setAdsEnabled(nextAdsEnabled);
       setSelectedPage((page) => page ? { ...page, ads_enabled: nextAdsEnabled } : page);
       setPages((currentPages) => currentPages.map((page) =>
         page.id === selectedPage.id ? { ...page, ads_enabled: nextAdsEnabled } : page
       ));
-      toast.success(`Adsterra ads ${nextAdsEnabled ? "enabled" : "disabled"}.`);
+      toast.success(`Ads ${nextAdsEnabled ? "enabled" : "disabled"}.`);
     }
 
     setUpdatingAds(false);
@@ -868,7 +868,7 @@ export default function BioManagementPage() {
         {selectedPage && !isCreatingNew && (
           <div className="manager-panel p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-white">Adsterra ads</h2>
+              <h2 className="text-sm font-semibold text-white">Ads</h2>
               <p className="text-xs text-slate-400 mt-1">
                 {isVip
                   ? "Show or hide ads on this bio page."
@@ -879,7 +879,7 @@ export default function BioManagementPage() {
               type="button"
               role="switch"
               aria-checked={adsEnabled}
-              aria-label={`${adsEnabled ? "Disable" : "Enable"} Adsterra ads`}
+              aria-label={`${adsEnabled ? "Disable" : "Enable"} ads`}
               onClick={handleToggleAds}
               disabled={updatingAds || !isVip}
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
