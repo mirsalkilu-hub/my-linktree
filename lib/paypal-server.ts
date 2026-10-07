@@ -6,6 +6,38 @@ function requireEnvironmentVariable(name: string) {
   return value;
 }
 
+export class PayPalRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly stage: "authentication" | "api",
+    readonly issueCodes: string[] = []
+  ) {
+    super(message);
+    this.name = "PayPalRequestError";
+  }
+}
+
+async function readPayPalError(response: Response) {
+  let body: {
+    name?: string;
+    error?: string;
+    details?: Array<{ issue?: string }>;
+  } = {};
+  try {
+    body = await response.json();
+  } catch {
+    // The status code remains useful if PayPal returned a non-JSON error.
+  }
+
+  return {
+    name: body.name || body.error || "UNKNOWN",
+    issueCodes: (body.details || [])
+      .map((detail) => detail.issue)
+      .filter((issue): issue is string => !!issue),
+  };
+}
+
 export function getPayPalConfig() {
   const mode = process.env.PAYPAL_MODE || "sandbox";
   if (mode !== "sandbox" && mode !== "live") {
@@ -39,8 +71,16 @@ export async function getPayPalAccessToken() {
   });
 
   if (!response.ok) {
-    console.error("PayPal OAuth request failed with status:", response.status);
-    throw new Error("Could not authenticate with PayPal.");
+    const details = await readPayPalError(response);
+    console.error("PayPal OAuth request failed:", {
+      status: response.status,
+      name: details.name,
+    });
+    throw new PayPalRequestError(
+      "PayPal authentication failed.",
+      response.status,
+      "authentication"
+    );
   }
 
   const result = (await response.json()) as { access_token?: string };
@@ -67,8 +107,18 @@ export async function paypalRequest<T>(
   });
 
   if (!response.ok) {
-    console.error("PayPal API request failed with status:", response.status);
-    throw new Error("PayPal could not complete the request.");
+    const details = await readPayPalError(response);
+    console.error("PayPal API request failed:", {
+      status: response.status,
+      name: details.name,
+      issueCodes: details.issueCodes,
+    });
+    throw new PayPalRequestError(
+      "PayPal could not complete the request.",
+      response.status,
+      "api",
+      details.issueCodes
+    );
   }
   if (response.status === 204) return null as T;
   return (await response.json()) as T;

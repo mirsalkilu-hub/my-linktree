@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getPayPalAccessToken,
+  PayPalRequestError,
   paypalRequest,
 } from "@/lib/paypal-server";
 import {
@@ -95,7 +96,43 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ url: approvalUrl });
   } catch (error) {
+    if (error instanceof PayPalRequestError) {
+      if (error.stage === "authentication" || error.status === 401) {
+        return NextResponse.json(
+          {
+            error:
+              "PayPal rejected the API credentials. Make sure PAYPAL_MODE, PAYPAL_CLIENT_ID, and PAYPAL_CLIENT_SECRET are all from the same Sandbox or Live app.",
+          },
+          { status: 502 }
+        );
+      }
+
+      if (
+        error.issueCodes.includes("INVALID_RESOURCE_ID") ||
+        error.issueCodes.includes("RESOURCE_NOT_FOUND") ||
+        error.status === 404
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "PayPal could not find the subscription plan. Confirm PAYPAL_VIP_PLAN_ID is an active plan from the same Sandbox or Live account as the API app.",
+          },
+          { status: 502 }
+        );
+      }
+
+      const issue = error.issueCodes[0];
+      return NextResponse.json(
+        {
+          error: issue
+            ? `PayPal rejected the subscription request (${issue}). Check that the plan is active and configured for annual USD billing.`
+            : `PayPal could not start checkout (HTTP ${error.status}). Check the PayPal app and subscription plan configuration.`,
+        },
+        { status: 502 }
+      );
+    }
+
     console.error("Could not create PayPal VIP subscription:", error);
-    return NextResponse.json({ error: "Could not start PayPal checkout." }, { status: 502 });
+    return NextResponse.json({ error: "Could not start PayPal checkout. Check the server logs for details." }, { status: 502 });
   }
 }
