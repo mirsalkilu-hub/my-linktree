@@ -242,7 +242,7 @@ export default function HomePage() {
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">What&apos;s new</p>
               <h2 className="mt-1 text-lg font-bold text-white">Introducing VIP Membership</h2>
               <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-300">
-                Go ad-free on your bio pages for $20 per year. Pay with Stripe or PayPal, renew annually, and cancel anytime.
+                Go ad-free on your bio pages for $20 per year. Pay with Stripe, renew annually, and cancel anytime.
               </p>
             </div>
             <Link
@@ -272,7 +272,7 @@ export default function HomePage() {
           <div className="bg-slate-900/50 border border-amber-500/20 p-5 rounded-2xl backdrop-blur-md">
             <div className="w-9 h-9 bg-amber-500/10 text-amber-300 rounded-xl flex items-center justify-center font-bold text-base mb-3">👑</div>
             <h3 className="font-semibold text-sm mb-1">VIP Membership</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Turn off ads on your bio pages with a $20/year Stripe or PayPal subscription.</p>
+            <p className="text-xs text-slate-400 leading-relaxed">Turn off ads on your bio pages with a $20/year Stripe subscription.</p>
           </div>
         </div>
       </section>
