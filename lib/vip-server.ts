@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import Stripe from "stripe";
 
 function requireEnvironmentVariable(name: string) {
   const value = process.env[name];
@@ -7,10 +6,6 @@ function requireEnvironmentVariable(name: string) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
-}
-
-export function getStripeClient() {
-  return new Stripe(requireEnvironmentVariable("STRIPE_SECRET_KEY"));
 }
 
 export function getSupabaseAdminClient() {

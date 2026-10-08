@@ -11,8 +11,8 @@ import type { User } from "@supabase/supabase-js";
 interface VipSubscription {
   status: string;
   current_period_end: string | null;
-  stripe_customer_id: string | null;
-  payment_provider: "stripe" | null;
+  paypal_subscription_id: string | null;
+  payment_provider: string | null;
 }
 
 export default function VipMembershipPage() {
@@ -33,11 +33,17 @@ export default function VipMembershipPage() {
         router.push("/login");
         return;
       }
+      const checkoutResult = new URLSearchParams(window.location.search).get("paypal");
+      if (checkoutResult === "success") {
+        setStatusMessage("PayPal approval received. Your VIP membership will activate after PayPal confirms the subscription.");
+      } else if (checkoutResult === "cancelled") {
+        setStatusMessage("PayPal checkout was cancelled. You have not been charged.");
+      }
       setUser(currentUser);
 
       const { data, error } = await supabase
         .from("vip_subscriptions")
-        .select("status, current_period_end, stripe_customer_id, payment_provider")
+        .select("status, current_period_end, paypal_subscription_id, payment_provider")
         .eq("user_id", currentUser.id)
         .maybeSingle<VipSubscription>();
 
@@ -77,25 +83,28 @@ export default function VipMembershipPage() {
     }
 
     try {
-      const response = await fetch("/api/vip/checkout", {
+      const response = await fetch("/api/vip/paypal/checkout", {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const result = await response.json();
       if (!response.ok || !result.url) {
-        setErrorMessage(result.error || "Could not start Stripe checkout.");
+        setErrorMessage(result.error || "Could not start PayPal checkout.");
         setCheckoutLoading(false);
         return;
       }
       window.location.assign(result.url);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not start Stripe checkout.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not start PayPal checkout.");
       setCheckoutLoading(false);
     }
   };
 
-  const openBillingPortal = async () => {
-    if (!user || checkoutLoading) return;
+  const cancelPayPalSubscription = async () => {
+    if (!user || !subscription?.paypal_subscription_id || checkoutLoading) return;
+    if (!window.confirm("Cancel your PayPal VIP subscription? Ads will be re-enabled on your bio pages.")) {
+      return;
+    }
     setCheckoutLoading(true);
     setErrorMessage("");
 
@@ -107,19 +116,24 @@ export default function VipMembershipPage() {
     }
 
     try {
-      const response = await fetch("/api/vip/portal", {
+      const response = await fetch("/api/vip/paypal/cancel", {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const result = await response.json();
-      if (!response.ok || !result.url) {
-        setErrorMessage(result.error || "Could not open subscription management.");
+      if (!response.ok) {
+        setErrorMessage(result.error || "Could not cancel your PayPal subscription.");
         setCheckoutLoading(false);
         return;
       }
-      window.location.assign(result.url);
+      setIsVip(false);
+      setSubscription((current) =>
+        current ? { ...current, status: "cancelled", current_period_end: new Date().toISOString() } : current
+      );
+      setStatusMessage("Your PayPal subscription has been cancelled and ads are enabled again.");
+      setCheckoutLoading(false);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not open subscription management.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not cancel your PayPal subscription.");
       setCheckoutLoading(false);
     }
   };
@@ -153,7 +167,7 @@ export default function VipMembershipPage() {
 
           <ul className="mb-7 space-y-3 text-left text-sm text-slate-200">
             <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Turn off ads on your bio pages</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Secure payments through Stripe</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Secure payments through PayPal</li>
             <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Automatic annual renewal</li>
           </ul>
 
@@ -163,7 +177,7 @@ export default function VipMembershipPage() {
             </p>
           )}
           <p className="mb-4 text-xs text-slate-400">
-            Secure checkout with Stripe. VIP activates automatically after payment is confirmed.
+            Secure checkout with PayPal. VIP activates automatically after PayPal confirms your subscription.
           </p>
           {statusMessage && <p className="mb-4 text-sm text-emerald-300">{statusMessage}</p>}
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
@@ -175,16 +189,16 @@ export default function VipMembershipPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:from-amber-400 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isVip ? "VIP is active" : checkoutLoading ? "Opening checkout..." : "Pay with Stripe — $20/year"}
+            {isVip ? "VIP is active" : checkoutLoading ? "Opening checkout..." : "Pay with PayPal - $20/year"}
           </button>
-          {subscription?.stripe_customer_id && (
+          {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (
             <button
               type="button"
-              onClick={openBillingPortal}
+              onClick={cancelPayPalSubscription}
               disabled={checkoutLoading}
-              className="mt-3 w-full rounded-xl border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white disabled:opacity-60"
+              className="mt-3 w-full rounded-xl border border-rose-500/30 px-5 py-3 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-60"
             >
-              Manage or cancel subscription
+              Cancel PayPal subscription
             </button>
           )}
         </section>

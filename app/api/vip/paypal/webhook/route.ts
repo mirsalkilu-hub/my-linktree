@@ -147,8 +147,6 @@ export async function POST(request: Request) {
   const { error } = await admin.from("vip_subscriptions").upsert(
     {
       user_id: subscription.custom_id,
-      stripe_subscription_id: null,
-      stripe_customer_id: null,
       paypal_subscription_id: subscription.id,
       paypal_payer_id: subscription.subscriber?.payer_id || null,
       payment_provider: "paypal",
