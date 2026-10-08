@@ -872,7 +872,7 @@ export default function BioManagementPage() {
               <p className="text-xs text-slate-400 mt-1">
                 {isVip
                   ? "Show or hide ads on this bio page."
-                  : "VIP members can turn off ads. Upgrade for $20/year."}
+                  : "VIP members can turn off ads. Upgrade for Rp100.000/year."}
               </p>
             </div>
             <button

@@ -20,7 +20,7 @@ export default function VipMembershipPage() {
   const [user, setUser] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<VipSubscription | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isVip, setIsVip] = useState(false);
@@ -69,49 +69,18 @@ export default function VipMembershipPage() {
     };
   }, [router]);
 
-  const startCheckout = async () => {
-    if (!user || checkoutLoading) return;
-    setCheckoutLoading(true);
-    setErrorMessage("");
-    setStatusMessage("");
-
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session?.access_token) {
-      setErrorMessage(sessionError?.message || "Your session could not be found. Please sign in again.");
-      setCheckoutLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/vip/paypal/checkout", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const result = await response.json();
-      if (!response.ok || !result.url) {
-        setErrorMessage(result.error || "Could not start PayPal checkout.");
-        setCheckoutLoading(false);
-        return;
-      }
-      window.location.assign(result.url);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not start PayPal checkout.");
-      setCheckoutLoading(false);
-    }
-  };
-
   const cancelPayPalSubscription = async () => {
-    if (!user || !subscription?.paypal_subscription_id || checkoutLoading) return;
+    if (!user || !subscription?.paypal_subscription_id || actionLoading) return;
     if (!window.confirm("Cancel your PayPal VIP subscription? Ads will be re-enabled on your bio pages.")) {
       return;
     }
-    setCheckoutLoading(true);
+    setActionLoading(true);
     setErrorMessage("");
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session?.access_token) {
       setErrorMessage(sessionError?.message || "Your session could not be found. Please sign in again.");
-      setCheckoutLoading(false);
+      setActionLoading(false);
       return;
     }
 
@@ -123,7 +92,7 @@ export default function VipMembershipPage() {
       const result = await response.json();
       if (!response.ok) {
         setErrorMessage(result.error || "Could not cancel your PayPal subscription.");
-        setCheckoutLoading(false);
+        setActionLoading(false);
         return;
       }
       setIsVip(false);
@@ -131,10 +100,10 @@ export default function VipMembershipPage() {
         current ? { ...current, status: "cancelled", current_period_end: new Date().toISOString() } : current
       );
       setStatusMessage("Your PayPal subscription has been cancelled and ads are enabled again.");
-      setCheckoutLoading(false);
+      setActionLoading(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not cancel your PayPal subscription.");
-      setCheckoutLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -161,14 +130,14 @@ export default function VipMembershipPage() {
           </p>
 
           <div className="my-7 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
-            <p className="text-4xl font-black text-white">$20<span className="text-base font-semibold text-slate-400"> / year</span></p>
-            <p className="mt-2 text-xs text-slate-400">Automatically renews annually. Cancel anytime.</p>
+            <p className="text-4xl font-black text-white">Rp100.000<span className="text-base font-semibold text-slate-400"> / year</span></p>
+            <p className="mt-2 text-xs text-slate-400">Manual payment. No automatic renewal.</p>
           </div>
 
           <ul className="mb-7 space-y-3 text-left text-sm text-slate-200">
             <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Turn off ads on your bio pages</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Secure payments through PayPal</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Automatic annual renewal</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Pay by bank transfer or QRIS</li>
+            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> VIP activates after payment verification</li>
           </ul>
 
           {isVip && subscription?.current_period_end && (
@@ -176,26 +145,32 @@ export default function VipMembershipPage() {
               VIP is active until {new Date(subscription.current_period_end).toLocaleDateString()}.
             </p>
           )}
-          <p className="mb-4 text-xs text-slate-400">
-            Secure checkout with PayPal. VIP activates automatically after PayPal confirms your subscription.
-          </p>
+          {!isVip && (
+            <p className="mb-4 text-xs text-slate-400">
+              Message us on WhatsApp for bank transfer or QRIS instructions. Send your payment receipt in the chat;
+              VIP will be activated after we verify your payment.
+            </p>
+          )}
           {statusMessage && <p className="mb-4 text-sm text-emerald-300">{statusMessage}</p>}
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
 
-          <button
-            type="button"
-            onClick={startCheckout}
-            disabled={isVip || checkoutLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:from-amber-400 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {checkoutLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {isVip ? "VIP is active" : checkoutLoading ? "Opening checkout..." : "Pay with PayPal - $20/year"}
-          </button>
+          {!isVip && user && (
+            <a
+              href={`https://wa.me/6285397685933?text=${encodeURIComponent(
+                `Halo, saya ingin berlangganan VIP 1 tahun seharga Rp100.000. Email akun saya: ${user.email || "(belum tersedia)"}. Mohon kirim instruksi pembayaran bank transfer atau QRIS.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:from-amber-400 hover:to-orange-400"
+            >
+              Chat WhatsApp for payment instructions
+            </a>
+          )}
           {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (
             <button
               type="button"
               onClick={cancelPayPalSubscription}
-              disabled={checkoutLoading}
+              disabled={actionLoading}
               className="mt-3 w-full rounded-xl border border-rose-500/30 px-5 py-3 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-60"
             >
               Cancel PayPal subscription
