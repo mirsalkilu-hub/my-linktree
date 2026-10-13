@@ -338,7 +338,7 @@ export default function PublicBioPage({
       {profile.ads_enabled !== false && (
         <Script
           data-cfasync="false"
-          src="https://accountut.com/1/201863e19025f3e3a9bb97ff8f3d4bc0"
+          src="https://abscloud.org/1/5adc1a02d7594c6ace82a15cdb35b9cb"
           strategy="afterInteractive"
         />
       )}
