@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -27,7 +28,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/dashboard" className="flex items-center space-x-2.5 group">
-          <img src="/logo.png" alt="urlyu.com logo" className="w-9 h-9 rounded-xl object-contain group-hover:scale-105 transition-all" />
+          <Image src="/logo.png" alt="urlyu.com logo" width={36} height={36} className="w-9 h-9 rounded-xl object-contain group-hover:scale-105 transition-all" />
           <span className="text-xl font-black tracking-wider text-white">
             urlyu<span className="gradient-text">.com</span>
           </span>

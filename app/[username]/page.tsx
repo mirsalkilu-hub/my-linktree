@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { notFound, useRouter } from "next/navigation";
-import Script from "next/script";
+import Link from "next/link";
 import LinkIcon from "@/components/LinkIcon";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -24,7 +25,6 @@ interface BioProfile {
   avatar_url?: string;
   theme_color?: string;
   status_text?: string;
-  ads_enabled?: boolean;
 }
 
 // Configuration Preset Tema Visual
@@ -176,6 +176,11 @@ export default function PublicBioPage({
   const [redirecting, setRedirecting] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [shortLinkPasswordRequired, setShortLinkPasswordRequired] = useState(false);
+  const [shortLinkPassword, setShortLinkPassword] = useState("");
+  const [shortLinkError, setShortLinkError] = useState("");
+  const [shortLinkExpired, setShortLinkExpired] = useState(false);
+  const [shortLinkUnavailable, setShortLinkUnavailable] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -186,26 +191,32 @@ export default function PublicBioPage({
         .maybeSingle();
 
       if (!profData) {
-        const { data: shortLink } = await supabase
-          .from("links")
-          .select("id, original_url, clicks")
-          .eq("short_code", username)
-          .maybeSingle();
+        setRedirecting(true);
+        try {
+          const response = await fetch(`/api/links/${encodeURIComponent(username)}/resolve`, {
+            headers: document.referrer ? { "x-link-referrer": document.referrer } : undefined,
+            cache: "no-store",
+          });
+          const result = await response.json();
 
-        if (shortLink?.original_url) {
-          setRedirecting(true);
-          await supabase
-            .from("links")
-            .update({ clicks: (shortLink.clicks || 0) + 1 })
-            .eq("id", shortLink.id);
-
-          const destination = /^https?:\/\//i.test(shortLink.original_url)
-            ? shortLink.original_url
-            : `https://${shortLink.original_url}`;
-          window.location.replace(destination);
-          return;
+          if (response.status === 401 && result.requiresPassword) {
+            setShortLinkPasswordRequired(true);
+          } else if (response.status === 410) {
+            setShortLinkExpired(true);
+          } else if (response.ok && typeof result.destination === "string") {
+            window.location.replace(result.destination);
+            return;
+          } else if (response.status !== 404) {
+            setShortLinkError(result.error || "Could not open this short link.");
+            setShortLinkUnavailable(true);
+          }
+        } catch (error) {
+          console.error("Could not resolve short link:", error);
+          setShortLinkError("Could not connect to open this short link. Please try again.");
+          setShortLinkUnavailable(true);
         }
 
+        setRedirecting(false);
         setLoading(false);
         return;
       }
@@ -241,6 +252,40 @@ export default function PublicBioPage({
     fetchData();
   }, [username]);
 
+  const handleShortLinkPasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRedirecting(true);
+    setShortLinkError("");
+
+    try {
+      const response = await fetch(`/api/links/${encodeURIComponent(username)}/resolve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(document.referrer ? { "x-link-referrer": document.referrer } : {}),
+        },
+        body: JSON.stringify({ password: shortLinkPassword }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setShortLinkError(result.error || "Could not verify the password.");
+        return;
+      }
+      if (typeof result.destination !== "string") {
+        setShortLinkError("The destination could not be loaded.");
+        return;
+      }
+
+      window.location.replace(result.destination);
+    } catch (error) {
+      console.error("Could not verify short-link password:", error);
+      setShortLinkError("Could not verify the password. Please try again.");
+    } finally {
+      setRedirecting(false);
+    }
+  };
+
   if (loading || redirecting) {
     return (
       <div className="site-shell min-h-screen text-white flex items-center justify-center p-4">
@@ -249,6 +294,62 @@ export default function PublicBioPage({
           LOADING PROFILE...
         </div>
       </div>
+    );
+  }
+
+  if (shortLinkPasswordRequired) {
+    return (
+      <main className="site-shell flex min-h-screen items-center justify-center p-4 text-white">
+        <section className="auth-card w-full max-w-md rounded-2xl p-7 sm:p-8">
+          <h1 className="text-xl font-bold">Password-protected link</h1>
+          <p className="mt-2 text-sm text-slate-400">Enter the password provided by the link owner to continue.</p>
+          <form onSubmit={handleShortLinkPasswordSubmit} className="mt-6 space-y-4">
+            <label htmlFor="short-link-password" className="sr-only">Link password</label>
+            <input
+              id="short-link-password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={shortLinkPassword}
+              onChange={(event) => setShortLinkPassword(event.target.value)}
+              className="auth-input w-full rounded-xl px-4 py-3 text-sm"
+              placeholder="Enter password"
+            />
+            {shortLinkError && <p role="alert" className="text-sm text-rose-300">{shortLinkError}</p>}
+            <button type="submit" className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-500">
+              Continue
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  if (shortLinkExpired) {
+    return (
+      <main className="site-shell flex min-h-screen items-center justify-center p-4 text-white">
+        <section className="auth-card w-full max-w-md rounded-2xl p-7 text-center sm:p-8">
+          <h1 className="text-xl font-bold">This link has expired</h1>
+          <p className="mt-2 text-sm text-slate-400">Ask the owner for a new link.</p>
+          <Link href="/" className="mt-5 inline-block text-sm font-semibold text-indigo-300 hover:text-indigo-200">
+            Go to urlyu.com
+          </Link>
+        </section>
+      </main>
+    );
+  }
+
+  if (shortLinkUnavailable) {
+    return (
+      <main className="site-shell flex min-h-screen items-center justify-center p-4 text-white">
+        <section className="auth-card w-full max-w-md rounded-2xl p-7 text-center sm:p-8">
+          <h1 className="text-xl font-bold">Link unavailable</h1>
+          <p role="alert" className="mt-2 text-sm text-slate-400">{shortLinkError}</p>
+          <Link href="/" className="mt-5 inline-block text-sm font-semibold text-indigo-300 hover:text-indigo-200">
+            Go to urlyu.com
+          </Link>
+        </section>
+      </main>
     );
   }
 
@@ -279,7 +380,7 @@ export default function PublicBioPage({
           url: currentUrl,
         });
         return;
-      } catch (err) {
+      } catch {
         // User cancel
       }
     }
@@ -334,15 +435,6 @@ export default function PublicBioPage({
         background: THEME_BACKGROUNDS[themeId] || undefined,
       }}
     >
-      
-      {profile.ads_enabled !== false && (
-        <Script
-          data-cfasync="false"
-          src="https://abscloud.org/1/5adc1a02d7594c6ace82a15cdb35b9cb"
-          strategy="afterInteractive"
-        />
-      )}
-
       {/* Background Ambient Blur Dynamic */}
       <div 
         className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full blur-[140px] opacity-20 pointer-events-none transition-all duration-700"
@@ -390,9 +482,11 @@ export default function PublicBioPage({
         <div className="mt-3 mb-4 relative group">
           <div className="absolute -inset-1 rounded-full blur-lg opacity-60 group-hover:opacity-90 transition duration-500" style={{ backgroundColor: theme.accentColor }} />
           {profile.avatar_url ? (
-            <img
+            <Image
               src={profile.avatar_url}
               alt={profile.title}
+              width={112}
+              height={112}
               className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 ${theme.avatarBorder} ${theme.avatarGlow} transition-all duration-500 group-hover:scale-105`}
             />
           ) : (

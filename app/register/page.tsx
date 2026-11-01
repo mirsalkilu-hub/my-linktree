@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -75,9 +76,11 @@ export default function RegisterPage() {
         {/* Header Title */}
         <div className="text-center mb-8">
   <Link href="/" className="inline-flex items-center justify-center space-x-3 group">
-    <img
+    <Image
       src="/logo.png"
       alt="urlyu.com logo"
+      width={36}
+      height={36}
       className="w-9 h-9 object-contain rounded-lg transition-transform group-hover:scale-105"
     />
     <span className="text-3xl font-black tracking-wider text-white">

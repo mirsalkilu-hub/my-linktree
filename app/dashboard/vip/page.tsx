@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Crown, Loader2 } from "lucide-react";
+import { Crown, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DashboardHeader from "@/components/DashboardHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -71,7 +71,7 @@ export default function VipMembershipPage() {
 
   const cancelPayPalSubscription = async () => {
     if (!user || !subscription?.paypal_subscription_id || actionLoading) return;
-    if (!window.confirm("Cancel your PayPal VIP subscription? Ads will be re-enabled on your bio pages.")) {
+    if (!window.confirm("Cancel your PayPal VIP subscription?")) {
       return;
     }
     setActionLoading(true);
@@ -124,48 +124,24 @@ export default function VipMembershipPage() {
             <Crown className="h-7 w-7" />
           </div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">VIP Membership</p>
-          <h1 className="mt-3 text-3xl font-black text-white">Enjoy an ad-free bio page</h1>
+          <h1 className="mt-3 text-3xl font-black text-white">VIP membership</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            VIP members can turn off ads on their bio pages.
+            Ads are currently disabled across bio pages. New VIP subscriptions are paused while we prepare other membership benefits.
           </p>
 
           <div className="my-7 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
-            <p className="text-4xl font-black text-white">Rp100.000<span className="text-base font-semibold text-slate-400"> / year</span></p>
-            <p className="mt-2 text-xs text-slate-400">Manual payment. No automatic renewal.</p>
+            <p className="text-sm font-semibold text-slate-200">New memberships are temporarily unavailable.</p>
+            <p className="mt-2 text-xs text-slate-400">Existing subscription details and cancellation options remain available below.</p>
           </div>
-
-          <ul className="mb-7 space-y-3 text-left text-sm text-slate-200">
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Turn off ads on your bio pages</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> Pay by bank transfer or QRIS</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> VIP activates after payment verification</li>
-          </ul>
 
           {isVip && subscription?.current_period_end && (
             <p className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-300">
               VIP is active until {new Date(subscription.current_period_end).toLocaleDateString()}.
             </p>
           )}
-          {!isVip && (
-            <p className="mb-4 text-xs text-slate-400">
-              Message us on WhatsApp for bank transfer or QRIS instructions. Send your payment receipt in the chat;
-              VIP will be activated after we verify your payment.
-            </p>
-          )}
           {statusMessage && <p className="mb-4 text-sm text-emerald-300">{statusMessage}</p>}
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
 
-          {!isVip && user && (
-            <a
-              href={`https://wa.me/6285397685933?text=${encodeURIComponent(
-                `Halo, saya ingin berlangganan VIP 1 tahun seharga Rp100.000. Email akun saya: ${user.email || "(belum tersedia)"}. Mohon kirim instruksi pembayaran bank transfer atau QRIS.`
-              )}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:from-amber-400 hover:to-orange-400"
-            >
-              Chat WhatsApp for payment instructions
-            </a>
-          )}
           {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (
             <button
               type="button"

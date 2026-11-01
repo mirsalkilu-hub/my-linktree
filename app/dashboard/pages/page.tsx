@@ -38,13 +38,7 @@ interface BioProfile {
   bio_description?: string;
   avatar_url?: string;
   theme_color?: string;
-  ads_enabled?: boolean;
   created_at: string;
-}
-
-interface VipSubscription {
-  status: string;
-  current_period_end: string | null;
 }
 
 interface BioLinkItem {
@@ -101,8 +95,6 @@ export default function BioManagementPage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [themeColor, setThemeColor] = useState("indigo");
   const [fontFamily, setFontFamily] = useState("sans");
-  const [adsEnabled, setAdsEnabled] = useState(true);
-  const [isVip, setIsVip] = useState(false);
 
   // Link state
   const [links, setLinks] = useState<BioLinkItem[]>([]);
@@ -111,14 +103,13 @@ export default function BioManagementPage() {
   const [newIconType, setNewIconType] = useState("link");
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [updatingLinkId, setUpdatingLinkId] = useState<string | null>(null);
-  const [updatingAds, setUpdatingAds] = useState(false);
   const [reorderingLinks, setReorderingLinks] = useState(false);
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [origin, setOrigin] = useState("");
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Confirmation modal state
@@ -145,7 +136,6 @@ export default function BioManagementPage() {
     setAvatarUrl("");
     setThemeColor("indigo");
     setFontFamily("sans");
-    setAdsEnabled(true);
     setLinks([]);
     resetLinkForm();
   }, []);
@@ -193,7 +183,6 @@ export default function BioManagementPage() {
     const [savedTheme, savedFont] = (page.theme_color || "indigo").split("::");
     setThemeColor(savedTheme || "indigo");
     setFontFamily(savedFont || "sans");
-    setAdsEnabled(page.ads_enabled !== false);
     resetLinkForm();
 
     await fetchPageLinks(page.id);
@@ -209,24 +198,6 @@ export default function BioManagementPage() {
     }
 
     setUser(currentUser);
-
-    const { data: subscription, error: subscriptionError } = await supabase
-      .from("vip_subscriptions")
-      .select("status, current_period_end")
-      .eq("user_id", currentUser.id)
-      .maybeSingle<VipSubscription>();
-
-    if (subscriptionError) {
-      toast.error("Could not load VIP status: " + subscriptionError.message);
-      setIsVip(false);
-    } else {
-      setIsVip(
-        !!subscription &&
-          ["active", "trialing"].includes(subscription.status) &&
-          !!subscription.current_period_end &&
-          new Date(subscription.current_period_end).getTime() > Date.now()
-      );
-    }
 
     const { data: profiles, error } = await supabase
       .from("bio_profiles")
@@ -249,11 +220,46 @@ export default function BioManagementPage() {
   }, [router, selectedPage, handleSelectPage, resetFormToNew]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setOrigin(window.location.origin);
-    }
-    loadUserPages();
-  }, []);
+    let isMounted = true;
+
+    const initializePage = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser) {
+        router.push("/login");
+        return;
+      }
+
+      if (!isMounted) return;
+      setUser(currentUser);
+
+      const { data: profiles, error } = await supabase
+        .from("bio_profiles")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+      if (error) {
+        toast.error("Could not load your pages.");
+      } else if (profiles && profiles.length > 0) {
+        setPages(profiles);
+        if (!selectedPage || !profiles.some((p) => p.id === selectedPage.id)) {
+          await handleSelectPage(profiles[0]);
+        }
+      } else {
+        setPages([]);
+        resetFormToNew();
+      }
+      setPageLoading(false);
+    };
+
+    void initializePage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [handleSelectPage, resetFormToNew, router, selectedPage]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -317,7 +323,6 @@ export default function BioManagementPage() {
       bio_description: description.trim(),
       avatar_url: avatarUrl,
       theme_color: `${themeColor}::${fontFamily}`,
-      ads_enabled: isVip ? adsEnabled : true,
     };
 
     if (selectedPage) {
@@ -493,36 +498,6 @@ export default function BioManagementPage() {
     setUpdatingLinkId(null);
   };
 
-  const handleToggleAds = async () => {
-    if (!selectedPage || !user || updatingAds) return;
-    if (!isVip) {
-      toast.error("VIP membership is required to turn off ads.");
-      return;
-    }
-
-    const nextAdsEnabled = !adsEnabled;
-    setUpdatingAds(true);
-
-    const { error } = await supabase
-      .from("bio_profiles")
-      .update({ ads_enabled: nextAdsEnabled })
-      .eq("id", selectedPage.id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      toast.error("Could not update ads setting: " + error.message);
-    } else {
-      setAdsEnabled(nextAdsEnabled);
-      setSelectedPage((page) => page ? { ...page, ads_enabled: nextAdsEnabled } : page);
-      setPages((currentPages) => currentPages.map((page) =>
-        page.id === selectedPage.id ? { ...page, ads_enabled: nextAdsEnabled } : page
-      ));
-      toast.success(`Ads ${nextAdsEnabled ? "enabled" : "disabled"}.`);
-    }
-
-    setUpdatingAds(false);
-  };
-
   const handleMoveLink = async (linkId: string, direction: -1 | 1) => {
     if (!selectedPage || reorderingLinks) return;
 
@@ -592,9 +567,11 @@ export default function BioManagementPage() {
     <div className="flex items-center space-x-6 h-full">
       {/* Brand Logo & Title */}
       <Link href="/dashboard" className="flex items-center space-x-3">
-        <img
+        <Image
           src="/logo.png"
           alt="urlyu.com logo"
+          width={32}
+          height={32}
           className="w-8 h-8 object-contain rounded-lg"
         />
         <span className="text-2xl font-black tracking-wider text-white">
@@ -862,43 +839,6 @@ export default function BioManagementPage() {
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
-          </div>
-        )}
-
-        {selectedPage && !isCreatingNew && (
-          <div className="manager-panel p-4 sm:p-5 rounded-2xl flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-white">Ads</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                {isVip
-                  ? "Show or hide ads on this bio page."
-                  : "VIP members can turn off ads. Upgrade for Rp100.000/year."}
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={adsEnabled}
-              aria-label={`${adsEnabled ? "Disable" : "Enable"} ads`}
-              onClick={handleToggleAds}
-              disabled={updatingAds || !isVip}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                adsEnabled
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
-                  : "border-slate-700 bg-slate-900 text-slate-400 hover:text-white"
-              }`}
-            >
-              <Power className="h-3.5 w-3.5" />
-              <span>{adsEnabled ? "On" : "Off"}</span>
-            </button>
-            {!isVip && (
-              <Link
-                href="/dashboard/vip"
-                className="text-xs font-semibold text-amber-300 hover:text-amber-200"
-              >
-                Get VIP
-              </Link>
-            )}
           </div>
         )}
 

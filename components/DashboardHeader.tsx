@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import {
   BarChart3,
   Crown,
   FileText,
+  Globe,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -29,6 +31,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/pages", label: "Manage Pages", icon: FileText },
     { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/dashboard/domains", label: "Domains", icon: Globe },
     { href: "/dashboard/vip", label: "VIP", icon: Crown },
   ];
 
@@ -40,9 +43,11 @@ export default function DashboardHeader({ user }: { user: User | null }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
         <div className="flex items-center space-x-3">
           <Link href="/dashboard" className="flex items-center space-x-3">
-            <img
+            <Image
               src="/logo.png"
               alt="urlyu.com logo"
+              width={32}
+              height={32}
               className="w-8 h-8 object-contain rounded-lg"
             />
             <span className="text-2xl font-black tracking-wider text-white">

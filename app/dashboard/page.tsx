@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -35,6 +36,18 @@ interface LinkItem {
   short_code: string;
   clicks: number;
   created_at: string;
+  expires_at: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  custom_domain_id: string | null;
+  password_protected: boolean;
+}
+
+interface CustomDomain {
+  id: string;
+  domain: string;
+  verified_at: string | null;
 }
 
 // Custom Modal Component Bergaya Bio Page
@@ -113,11 +126,20 @@ export default function DashboardPage() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [destinationUrl, setDestinationUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
+  const [linkPassword, setLinkPassword] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [utmSource, setUtmSource] = useState("");
+  const [utmMedium, setUtmMedium] = useState("");
+  const [utmCampaign, setUtmCampaign] = useState("");
+  const [utmContent, setUtmContent] = useState("");
+  const [utmTerm, setUtmTerm] = useState("");
+  const [customDomainId, setCustomDomainId] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("");
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const router = useRouter();
@@ -128,13 +150,7 @@ export default function DashboardPage() {
   const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setOrigin(window.location.origin);
-    }
-  }, []);
-
-  const fetchUserAndLinks = useCallback(async () => {
+  const refreshLinks = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -143,11 +159,10 @@ export default function DashboardPage() {
       router.push("/login");
       return;
     }
-    setUser(user);
 
     const { data, error } = await supabase
       .from("links")
-      .select("*")
+      .select("id, original_url, short_code, clicks, created_at, expires_at, utm_source, utm_medium, utm_campaign, custom_domain_id, password_protected")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -156,12 +171,63 @@ export default function DashboardPage() {
       return;
     }
 
+    setUser(user);
     if (data) setLinks(data);
   }, [router]);
 
   useEffect(() => {
-    fetchUserAndLinks();
-  }, [fetchUserAndLinks]);
+    let isMounted = true;
+
+    const loadLinks = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      if (!isMounted) return;
+      setUser(user);
+
+      const { data, error } = await supabase
+        .from("links")
+        .select("id, original_url, short_code, clicks, created_at, expires_at, utm_source, utm_medium, utm_campaign, custom_domain_id, password_protected")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+      if (error) {
+        console.error("Could not fetch links:", error.message);
+        return;
+      }
+
+      if (data) setLinks(data);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const domainResponse = await fetch("/api/custom-domains", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store",
+        });
+        const domainResult = await domainResponse.json();
+        if (!domainResponse.ok) {
+          console.error("Could not load custom domains:", domainResult.error);
+        } else if (isMounted) {
+          setCustomDomains((domainResult.domains || []).filter(
+            (domain: CustomDomain) => !!domain.verified_at
+          ));
+        }
+      }
+    };
+
+    void loadLinks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const validateUrl = (url: string) => {
     try {
@@ -185,32 +251,66 @@ export default function DashboardPage() {
       return;
     }
 
-    setLoading(true);
+    const slug = customCode.trim().toLowerCase() || Math.random().toString(36).substring(2, 7);
+    if (!/^[a-z0-9_-]{3,48}$/.test(slug)) {
+      setErrorMessage("Short codes must be 3–48 letters, numbers, dashes, or underscores.");
+      return;
+    }
 
-    const slug =
-      customCode.trim().toLowerCase().replace(/\s+/g, "-") ||
-      Math.random().toString(36).substring(2, 7);
-
-    const { error } = await supabase.from("links").insert([
-      {
-        original_url: formattedUrl,
-        short_code: slug,
-        user_id: user?.id,
-      },
-    ]);
-
-    if (error) {
-      if (error.code === "23505") {
-        setErrorMessage("That short code is already in use. Try another one.");
-      } else {
-        setErrorMessage("Could not create link: " + error.message);
+    let expiryIso: string | null = null;
+    if (expiresAt) {
+      const expiryDate = new Date(expiresAt);
+      if (Number.isNaN(expiryDate.getTime()) || expiryDate.getTime() <= Date.now()) {
+        setErrorMessage("Choose an expiration date in the future.");
+        return;
       }
-    } else {
+      expiryIso = expiryDate.toISOString();
+    }
+
+    setLoading(true);
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw new Error(sessionError.message);
+      if (!session?.access_token) throw new Error("Please sign in again before creating a link.");
+
+      const response = await fetch("/api/links", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          original_url: formattedUrl,
+          short_code: slug,
+          password: linkPassword,
+          expires_at: expiryIso,
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+          utm_content: utmContent,
+          utm_term: utmTerm,
+          custom_domain_id: customDomainId || null,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not create the short link.");
+
       setDestinationUrl("");
       setCustomCode("");
-      fetchUserAndLinks();
+      setLinkPassword("");
+      setExpiresAt("");
+      setUtmSource("");
+      setUtmMedium("");
+      setUtmCampaign("");
+      setUtmContent("");
+      setUtmTerm("");
+      setCustomDomainId("");
+      void refreshLinks();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not create the short link.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Open the custom confirmation modal
@@ -231,7 +331,7 @@ export default function DashboardPage() {
     setSelectedLinkId(null);
 
     if (!error) {
-      fetchUserAndLinks();
+      void refreshLinks();
     } else {
       setErrorMessage("Could not delete link: " + error.message);
     }
@@ -256,7 +356,7 @@ export default function DashboardPage() {
     const URLObject = window.URL || window.webkitURL;
     const blobURL = URLObject.createObjectURL(svgBlob);
 
-    const image = new Image();
+    const image = new window.Image();
     image.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 256;
@@ -306,9 +406,11 @@ export default function DashboardPage() {
       <header className="app-header sticky top-0 z-40 border-b transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
           <div className="flex items-center space-x-3">
-      <img
+      <NextImage
         src="/logo.png"
         alt="urlyu.com logo"
+        width={32}
+        height={32}
         className="w-8 h-8 object-contain rounded-lg"
       />
       <span className="text-2xl font-black tracking-wider text-white">
@@ -572,6 +674,125 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            <details className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+              <summary className="cursor-pointer text-xs font-semibold text-slate-300">
+                Security, campaign, and domain options
+              </summary>
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    PASSWORD (OPTIONAL)
+                  </label>
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    maxLength={128}
+                    value={linkPassword}
+                    onChange={(event) => setLinkPassword(event.target.value)}
+                    placeholder="Visitors must enter this password"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    UTM CONTENT (OPTIONAL)
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={utmContent}
+                    onChange={(event) => setUtmContent(event.target.value)}
+                    placeholder="e.g. hero-button"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    UTM TERM (OPTIONAL)
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={utmTerm}
+                    onChange={(event) => setUtmTerm(event.target.value)}
+                    placeholder="e.g. brand-keyword"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    EXPIRATION (OPTIONAL)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={expiresAt}
+                    onChange={(event) => setExpiresAt(event.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    UTM SOURCE
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={utmSource}
+                    onChange={(event) => setUtmSource(event.target.value)}
+                    placeholder="e.g. newsletter"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    UTM MEDIUM
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={utmMedium}
+                    onChange={(event) => setUtmMedium(event.target.value)}
+                    placeholder="e.g. email"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    UTM CAMPAIGN
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={100}
+                    value={utmCampaign}
+                    onChange={(event) => setUtmCampaign(event.target.value)}
+                    placeholder="e.g. product-launch"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+                    SHORT-LINK DOMAIN
+                  </label>
+                  <select
+                    value={customDomainId}
+                    onChange={(event) => setCustomDomainId(event.target.value)}
+                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  >
+                    <option value="">urlyu.com</option>
+                    {customDomains.map((domain) => (
+                      <option key={domain.id} value={domain.id}>{domain.domain}</option>
+                    ))}
+                  </select>
+                  <Link href="/dashboard/domains" className="mt-1.5 inline-block text-[11px] text-indigo-300 hover:text-indigo-200">
+                    Manage custom domains
+                  </Link>
+                </div>
+              </div>
+              <p className="mt-4 text-[11px] leading-5 text-slate-500">
+                UTM values are added to the destination and recorded with clicks. Passwords are stored as salted hashes.
+              </p>
+            </details>
+
             <button
               type="submit"
               disabled={loading}
@@ -599,7 +820,6 @@ export default function DashboardPage() {
               </span>
             </h3>
           </div>
-
           <div className="space-y-4">
             {links.length === 0 ? (
               <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-sm">
@@ -607,7 +827,10 @@ export default function DashboardPage() {
               </div>
             ) : (
               links.map((item) => {
-                const shortUrl = `${origin}/${item.short_code}`;
+                const customDomain = customDomains.find(
+                  (domain) => domain.id === item.custom_domain_id
+                );
+                const shortUrl = `${customDomain ? `https://${customDomain.domain}` : origin}/${item.short_code}`;
 
                 return (
                   <div
@@ -645,10 +868,27 @@ export default function DashboardPage() {
                         <span className="bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap">
                           {item.clicks || 0} clicks
                         </span>
+                        {item.password_protected && (
+                          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-200">
+                            Password protected
+                          </span>
+                        )}
+                        {item.expires_at && (
+                          <span className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-0.5 text-[10px] text-slate-300">
+                            Expires {new Date(item.expires_at).toLocaleString()}
+                          </span>
+                        )}
                       </div>
                       <p className="text-slate-400 text-xs truncate">
                         {item.original_url}
                       </p>
+                      {item.utm_campaign && (
+                        <p className="text-[11px] text-indigo-300">
+                          Campaign: {item.utm_campaign}
+                          {item.utm_source ? ` · ${item.utm_source}` : ""}
+                          {item.utm_medium ? ` / ${item.utm_medium}` : ""}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto justify-end">

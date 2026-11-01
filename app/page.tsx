@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -73,7 +74,7 @@ export default function HomePage() {
     const URLObject = window.URL || window.webkitURL || window;
     const blobURL = URLObject.createObjectURL(svgBlob);
 
-    const image = new Image();
+    const image = new window.Image();
     image.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 256;
@@ -108,9 +109,11 @@ export default function HomePage() {
     
     {/* Align the logo and brand name */}
     <div className="flex items-center space-x-3">
-      <img
+      <NextImage
         src="/logo.png"
         alt="urlyu.com logo"
+        width={32}
+        height={32}
         className="w-8 h-8 object-contain rounded-lg"
       />
       <span className="text-2xl font-black tracking-wider text-white">
