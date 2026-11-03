@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getPayPalAccessToken,
+  PayPalRequestError,
   paypalRequest,
 } from "@/lib/paypal-server";
 import {
@@ -97,18 +98,29 @@ export async function POST(request: Request) {
       currentSubscription.status === "approval_pending" &&
       currentSubscription.paypal_subscription_id
     ) {
-      const pending = await paypalRequest<PayPalSubscription>(
-        config.apiBaseUrl,
-        accessToken,
-        `/v1/billing/subscriptions/${encodeURIComponent(currentSubscription.paypal_subscription_id)}`
-      );
-      if (pending.status === "APPROVAL_PENDING") {
-        const approvalUrl = getApprovalUrl(pending);
-        if (!approvalUrl) {
-          console.error("PayPal pending subscription did not include a valid approval URL.");
-          return NextResponse.json({ error: "Could not resume PayPal approval." }, { status: 502 });
+      try {
+        const pending = await paypalRequest<PayPalSubscription>(
+          config.apiBaseUrl,
+          accessToken,
+          `/v1/billing/subscriptions/${encodeURIComponent(currentSubscription.paypal_subscription_id)}`
+        );
+        if (pending.status === "APPROVAL_PENDING") {
+          const approvalUrl = getApprovalUrl(pending);
+          if (!approvalUrl) {
+            console.error("PayPal pending subscription did not include a valid approval URL.");
+            return NextResponse.json({ error: "Could not resume PayPal approval." }, { status: 502 });
+          }
+          return NextResponse.json({ approvalUrl });
         }
-        return NextResponse.json({ approvalUrl });
+      } catch (error) {
+        if (
+          !(error instanceof PayPalRequestError) ||
+          error.status !== 404 ||
+          !error.issueCodes.includes("INVALID_RESOURCE_ID")
+        ) {
+          throw error;
+        }
+        console.warn("PayPal no longer recognizes the pending VIP subscription; creating a new checkout.");
       }
     }
 
@@ -194,6 +206,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ approvalUrl });
   } catch (error) {
     console.error("Could not create PayPal VIP subscription:", error);
+    if (
+      error instanceof PayPalRequestError &&
+      error.status === 404 &&
+      error.issueCodes.includes("INVALID_RESOURCE_ID")
+    ) {
+      return NextResponse.json(
+        { error: "PayPal could not find this subscription plan. Check the selected plan ID and PayPal mode." },
+        { status: 502 }
+      );
+    }
     return NextResponse.json({ error: "Could not start PayPal checkout." }, { status: 502 });
   }
 }
