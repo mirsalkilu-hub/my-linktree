@@ -15,6 +15,8 @@ interface VipSubscription {
   payment_provider: string | null;
 }
 
+type VipPlan = "monthly" | "annual";
+
 export default function VipMembershipPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -24,6 +26,7 @@ export default function VipMembershipPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isVip, setIsVip] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<VipPlan>("monthly");
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +110,37 @@ export default function VipMembershipPage() {
     }
   };
 
+  const startPayPalSubscription = async () => {
+    if (!user || actionLoading || isVip) return;
+
+    setActionLoading(true);
+    setErrorMessage("");
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error(sessionError?.message || "Your session could not be found. Please sign in again.");
+      }
+
+      const response = await fetch("/api/vip/paypal/create", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan: selectedPlan }),
+      });
+      const result = await response.json() as { approvalUrl?: string; error?: string };
+      if (!response.ok || !result.approvalUrl) {
+        throw new Error(result.error || "Could not start PayPal checkout.");
+      }
+
+      window.location.assign(result.approvalUrl);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not start PayPal checkout.");
+      setActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="site-shell min-h-screen text-white flex items-center justify-center">
@@ -126,21 +160,68 @@ export default function VipMembershipPage() {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">VIP Membership</p>
           <h1 className="mt-3 text-3xl font-black text-white">VIP membership</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            Ads are currently disabled across bio pages. New VIP subscriptions are paused while we prepare other membership benefits.
+            Enjoy an ad-free experience on your bio pages with a secure PayPal subscription.
           </p>
 
-          <div className="my-7 rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
-            <p className="text-sm font-semibold text-slate-200">New memberships are temporarily unavailable.</p>
-            <p className="mt-2 text-xs text-slate-400">Existing subscription details and cancellation options remain available below.</p>
+          <div
+            role="radiogroup"
+            aria-label="VIP billing frequency"
+            className="my-7 grid gap-3 sm:grid-cols-2"
+          >
+            {([
+              { id: "monthly", price: "$5", term: "per month", detail: "Billed monthly" },
+              { id: "annual", price: "$50", term: "per year", detail: "Save $10 per year" },
+            ] as const).map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                role="radio"
+                aria-checked={selectedPlan === plan.id}
+                onClick={() => setSelectedPlan(plan.id)}
+                disabled={actionLoading || isVip}
+                className={`rounded-2xl border p-5 text-left transition ${
+                  selectedPlan === plan.id
+                    ? "border-indigo-400 bg-indigo-500/10 ring-1 ring-indigo-400/40"
+                    : "border-slate-700 bg-slate-950/50 hover:border-slate-500"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span className="block text-2xl font-black text-white">{plan.price}</span>
+                <span className="mt-1 block text-sm font-semibold text-slate-200">{plan.term}</span>
+                <span className="mt-2 block text-xs text-slate-400">{plan.detail}</span>
+              </button>
+            ))}
           </div>
 
+          <p className="mb-4 text-xs leading-5 text-slate-400">
+            Subscriptions renew automatically until cancelled. Payment and billing are handled securely by PayPal.
+          </p>
           {isVip && subscription?.current_period_end && (
             <p className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-300">
               VIP is active until {new Date(subscription.current_period_end).toLocaleDateString()}.
             </p>
           )}
+          {subscription?.status === "approval_pending" && (
+            <p className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200">
+              Your PayPal subscription is awaiting approval. Continue to PayPal to complete checkout.
+            </p>
+          )}
           {statusMessage && <p className="mb-4 text-sm text-emerald-300">{statusMessage}</p>}
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
+
+          {!isVip && (
+            <button
+              type="button"
+              onClick={startPayPalSubscription}
+              disabled={actionLoading}
+              className="w-full rounded-xl bg-[#0070ba] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#005ea6] disabled:cursor-wait disabled:opacity-60"
+            >
+              {actionLoading
+                ? "Connecting to PayPal..."
+                : subscription?.status === "approval_pending"
+                  ? "Continue with PayPal"
+                  : `Subscribe for ${selectedPlan === "monthly" ? "$5/month" : "$50/year"} with PayPal`}
+            </button>
+          )}
 
           {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (
             <button

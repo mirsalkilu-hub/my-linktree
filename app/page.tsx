@@ -275,7 +275,7 @@ export default function HomePage() {
           <div className="bg-slate-900/50 border border-amber-500/20 p-5 rounded-2xl backdrop-blur-md">
             <div className="w-9 h-9 bg-amber-500/10 text-amber-300 rounded-xl flex items-center justify-center font-bold text-base mb-3">👑</div>
             <h3 className="font-semibold text-sm mb-1">VIP Membership</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Turn off ads on your bio pages for Rp100.000/year with manual bank transfer or QRIS payment.</p>
+            <p className="text-xs text-slate-400 leading-relaxed">Enjoy ad-free bio pages with PayPal subscriptions from $5/month or $50/year.</p>
           </div>
         </div>
       </section>

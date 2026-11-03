@@ -582,7 +582,7 @@ export default function PublicBioPage({
         </div>
 
         {/* Footer */}
-        <SiteFooter compact />
+        <SiteFooter compact brandOnly />
 
       </div>
 

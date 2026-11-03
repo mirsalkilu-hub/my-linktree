@@ -112,7 +112,12 @@ export async function POST(request: Request) {
 
   if (
     !subscription.id ||
-    subscription.plan_id !== config.planId ||
+    !subscription.plan_id ||
+    ![
+      config.monthlyPlanId,
+      config.annualPlanId,
+      config.legacyPlanId,
+    ].includes(subscription.plan_id) ||
     !subscription.custom_id
   ) {
     console.error("PayPal subscription is missing valid VIP metadata.");
@@ -144,6 +149,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "VIP webhook is not configured." }, { status: 500 });
   }
 
+  const { data: currentSubscription, error: currentSubscriptionError } = await admin
+    .from("vip_subscriptions")
+    .select("paypal_subscription_id, payment_provider")
+    .eq("user_id", subscription.custom_id)
+    .maybeSingle();
+
+  if (currentSubscriptionError) {
+    console.error("Could not check current PayPal VIP subscription:", currentSubscriptionError.message);
+    return NextResponse.json({ error: "Could not check VIP subscription." }, { status: 500 });
+  }
+  if (
+    currentSubscription &&
+    (currentSubscription.payment_provider !== "paypal" ||
+      currentSubscription.paypal_subscription_id !== subscription.id)
+  ) {
+    return NextResponse.json({ received: true });
+  }
+
   const { error } = await admin.from("vip_subscriptions").upsert(
     {
       user_id: subscription.custom_id,
@@ -162,16 +185,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not update VIP subscription." }, { status: 500 });
   }
 
-  if (!["active", "trialing"].includes(status)) {
-    const { error: adsError } = await admin
-      .from("bio_profiles")
-      .update({ ads_enabled: true })
-      .eq("user_id", subscription.custom_id);
+  const { error: adsError } = await admin
+    .from("bio_profiles")
+    .update({ ads_enabled: !["active", "trialing"].includes(status) })
+    .eq("user_id", subscription.custom_id);
 
-    if (adsError) {
-      console.error("Could not re-enable ads after VIP ended:", adsError.message);
-      return NextResponse.json({ error: "Could not update page ad settings." }, { status: 500 });
-    }
+  if (adsError) {
+    console.error("Could not update page ad settings after VIP change:", adsError.message);
+    return NextResponse.json({ error: "Could not update page ad settings." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

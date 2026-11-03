@@ -51,7 +51,9 @@ export function getPayPalConfig() {
         : "https://api-m.sandbox.paypal.com",
     clientId: requireEnvironmentVariable("PAYPAL_CLIENT_ID"),
     clientSecret: requireEnvironmentVariable("PAYPAL_CLIENT_SECRET"),
-    planId: requireEnvironmentVariable("PAYPAL_VIP_PLAN_ID"),
+    monthlyPlanId: process.env.PAYPAL_VIP_MONTHLY_PLAN_ID || null,
+    annualPlanId: process.env.PAYPAL_VIP_ANNUAL_PLAN_ID || null,
+    legacyPlanId: process.env.PAYPAL_VIP_PLAN_ID || null,
   };
 }
 
