@@ -1312,44 +1312,56 @@ export default function BioManagementPage() {
       {/* Main content area with visual effects */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 relative z-10 space-y-6 sm:space-y-7">
         {isPagesListView ? (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Pages</h1>
-              <p className="text-xs sm:text-sm text-slate-300/80 mt-2 max-w-2xl">
-                Create beautiful bio pages and mini websites.
-              </p>
+          <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
+            <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                  <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
+                  Bio page management
+                </span>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">Pages</h1>
+                <p className="mt-2 text-sm text-slate-300 sm:text-base">
+                  Create beautiful bio pages and mini websites.
+                </p>
+              </div>
+              <button
+                onClick={resetFormToNew}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition-all hover:-translate-y-0.5 hover:bg-indigo-500 active:scale-[0.98] md:w-auto"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Page</span>
+              </button>
             </div>
-            <button
-              onClick={resetFormToNew}
-              className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-[0.98] sm:w-auto sm:text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Page</span>
-            </button>
-          </div>
+          </section>
         ) : (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-                {isCreatingNew ? "Create new page" : `Edit ${selectedPage?.title || "page"}`}
-              </h1>
-              <p className="mt-2 text-xs text-slate-300/80 sm:text-sm">
-                Customize your page and its links.
-              </p>
+          <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
+            <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                  <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
+                  Bio page management
+                </span>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  {isCreatingNew ? "Create new page" : `Edit ${selectedPage?.title || "page"}`}
+                </h1>
+                <p className="mt-2 text-sm text-slate-300 sm:text-base">
+                  Customize your page and its links.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTemplateGalleryOpen(false);
+                  setIsCreatingNew(false);
+                  setIsEditingPage(false);
+                  router.push("/dashboard/pages");
+                }}
+                className="w-full shrink-0 rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:w-auto"
+              >
+                Back to pages
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setIsTemplateGalleryOpen(false);
-                setIsCreatingNew(false);
-                setIsEditingPage(false);
-                router.push("/dashboard/pages");
-              }}
-              className="w-full shrink-0 rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-xs font-semibold text-slate-200 transition hover:border-indigo-400/40 hover:bg-indigo-500/10 sm:w-auto sm:text-sm"
-            >
-              Back to pages
-            </button>
-          </div>
+          </section>
         )}
 
         {isPagesListView && pages.length > 0 && (

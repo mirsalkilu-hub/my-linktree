@@ -30,6 +30,7 @@ import {
   Filter,
   Search,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -629,20 +630,25 @@ export default function DashboardPage() {
 
       {/* Main content */}
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-8 sm:px-6 lg:px-8">
-        <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">Link management</p>
-            <h1 className="text-3xl font-bold tracking-tight text-white">My Links</h1>
-            <p className="mt-1 text-sm text-slate-400">Create, organize, and track your short links.</p>
+        <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
+          <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                <Sparkles className="h-3.5 w-3.5" />
+                Link management
+              </span>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">My Links</h1>
+              <p className="mt-2 text-sm text-slate-300 sm:text-base">Create, organize, and track your short links.</p>
+            </div>
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:self-center"
+            >
+              <Plus className="h-4 w-4" />
+              Create Link
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-950/30 transition hover:bg-indigo-500"
-          >
-            <Plus className="h-4 w-4" />
-            Create Link
-          </button>
         </section>
 
         <section aria-label="Link statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

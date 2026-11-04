@@ -76,13 +76,7 @@ body {
     backdrop-filter: blur(16px);
   }
 
-  .dashboard-hero {
-    background:
-      radial-gradient(circle at 90% 10%, var(--dashboard-accent-soft), transparent 20rem),
-      linear-gradient(110deg, rgba(30, 27, 75, 0.74), rgba(15, 23, 42, 0.92) 68%);
-    border: 1px solid color-mix(in srgb, var(--dashboard-accent) 32%, transparent);
-  }
-
+  .dashboard-hero,
   .analytics-hero {
     background:
       radial-gradient(circle at 90% 20%, rgba(99, 102, 241, 0.18), transparent 24rem),

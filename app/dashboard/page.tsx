@@ -6,6 +6,7 @@ import {
   ArrowRight,
   BarChart3,
   Copy,
+  Crown,
   ExternalLink,
   FileText,
   Globe,
@@ -51,6 +52,11 @@ interface CustomDomain {
   verified_at: string | null;
 }
 
+interface VipSubscription {
+  status: string;
+  current_period_end: string | null;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -58,6 +64,7 @@ export default function DashboardPage() {
   const [pages, setPages] = useState<BioProfile[]>([]);
   const [bioLinks, setBioLinks] = useState<BioLink[]>([]);
   const [domains, setDomains] = useState<CustomDomain[]>([]);
+  const [vipSubscription, setVipSubscription] = useState<VipSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [copied, setCopied] = useState(false);
@@ -82,7 +89,7 @@ export default function DashboardPage() {
       }
       if (authError) throw authError;
 
-      const [linksResult, pagesResult, bioLinksResult, domainsResult] = await Promise.all([
+      const [linksResult, pagesResult, bioLinksResult, domainsResult, vipResult] = await Promise.all([
         supabase
           .from("links")
           .select("id, original_url, short_code, clicks, created_at, expires_at, custom_domain_id")
@@ -100,12 +107,18 @@ export default function DashboardPage() {
           .from("custom_domains")
           .select("id, domain, verified_at")
           .eq("user_id", userData.user.id),
+        supabase
+          .from("vip_subscriptions")
+          .select("status, current_period_end")
+          .eq("user_id", userData.user.id)
+          .maybeSingle<VipSubscription>(),
       ]);
 
       if (linksResult.error) throw linksResult.error;
       if (pagesResult.error) throw pagesResult.error;
       if (bioLinksResult.error) throw bioLinksResult.error;
       if (domainsResult.error) throw domainsResult.error;
+      if (vipResult.error) throw vipResult.error;
       if (!isMounted) return;
 
       setUser(userData.user);
@@ -113,6 +126,7 @@ export default function DashboardPage() {
       setPages(pagesResult.data || []);
       setBioLinks(bioLinksResult.data || []);
       setDomains(domainsResult.data || []);
+      setVipSubscription(vipResult.data);
     };
 
     void loadDashboard()
@@ -145,6 +159,10 @@ export default function DashboardPage() {
     .filter((link) => link.is_active)
     .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
   const memberName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
+  const isVip = !!vipSubscription &&
+    ["active", "trialing"].includes(vipSubscription.status) &&
+    !!vipSubscription.current_period_end &&
+    new Date(vipSubscription.current_period_end).getTime() > currentTime;
 
   const getShortUrl = (link: ShortLink) => {
     const domain = domains.find((item) => item.id === link.custom_domain_id);
@@ -167,14 +185,22 @@ export default function DashboardPage() {
     { label: "Bio pages", value: pages.length, detail: "Published pages", href: "/dashboard/pages", icon: FileText },
     { label: "Total clicks", value: totalClicks + totalBioClicks, detail: "Across tracked links", href: "/dashboard/analytics", icon: MousePointerClick },
     { label: "Custom domains", value: domains.filter((domain) => !!domain.verified_at).length, detail: "Verified domains", href: "/dashboard/domains", icon: Globe },
+    {
+      label: "VIP status",
+      value: isVip ? "Active" : "Inactive",
+      detail: isVip && vipSubscription?.current_period_end
+        ? `Until ${new Date(vipSubscription.current_period_end).toLocaleDateString()}`
+        : "View membership",
+      href: "/dashboard/vip",
+      icon: Crown,
+    },
   ];
 
   return (
     <div className="site-shell flex min-h-screen flex-col text-white">
       <DashboardHeader user={user} />
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-8 sm:px-6 sm:py-10">
-        <section className="relative overflow-hidden rounded-3xl border border-indigo-500/25 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-violet-950/70 px-6 py-8 shadow-xl shadow-indigo-950/20 sm:px-10 sm:py-10">
-          <div className="pointer-events-none absolute -right-10 -top-24 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl" />
+        <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
           <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
@@ -209,19 +235,27 @@ export default function DashboardPage() {
           </div>
         ) : !errorMessage && (
           <>
-            <section aria-label="Workspace statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section aria-label="Workspace statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {stats.map(({ label, value, detail, href, icon: Icon }) => (
                 <Link
                   key={label}
                   href={href}
                   className="group relative rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-indigo-950/10 transition hover:-translate-y-1 hover:border-indigo-500/40"
                 >
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-300 shadow-lg shadow-indigo-950/20 transition group-hover:bg-indigo-500/15">
+                  <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl border shadow-lg shadow-indigo-950/20 transition ${
+                    label === "VIP status"
+                      ? isVip
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300 group-hover:bg-amber-500/15"
+                        : "border-slate-700 bg-slate-800/70 text-slate-400 group-hover:border-amber-500/30 group-hover:text-amber-300"
+                      : "border-indigo-500/20 bg-indigo-500/10 text-indigo-300 group-hover:bg-indigo-500/15"
+                  }`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <p className="text-sm font-medium text-slate-400">{label}</p>
                   <div className="mt-1 flex items-end justify-between gap-3">
-                    <strong className="text-3xl font-bold text-white">{value.toLocaleString()}</strong>
+                    <strong className={`text-3xl font-bold ${label === "VIP status" && isVip ? "text-amber-300" : "text-white"}`}>
+                      {typeof value === "number" ? value.toLocaleString() : value}
+                    </strong>
                     <span className="text-xs text-slate-500">{detail}</span>
                   </div>
                 </Link>

@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Globe, Loader2, Plus, Trash2 } from "lucide-react";
+import { Copy, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DashboardHeader from "@/components/DashboardHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -177,23 +177,30 @@ export default function CustomDomainsPage() {
   return (
     <div className="site-shell flex min-h-screen flex-col text-white">
       <DashboardHeader user={user} />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-8 sm:px-6 sm:py-10">
-        <section className="manager-hero rounded-2xl p-6 sm:p-8">
-          <div className="flex items-center gap-3">
-            <span className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-2 text-indigo-300">
-              <Globe className="h-5 w-5" />
-            </span>
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-8 sm:px-6 lg:px-8">
+        <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
+          <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-300">Link settings</p>
-              <h1 className="mt-1 text-2xl font-black text-white sm:text-3xl">Custom domains</h1>
+              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                <Sparkles className="h-3.5 w-3.5" />
+                Link settings
+              </span>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">Custom domains</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
+                Connect a domain you own and use it for new short links. Add the domain to your Vercel project and configure the DNS records Vercel provides before verifying it here.
+              </p>
             </div>
+            <a
+              href="#add-domain"
+              className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:self-center"
+            >
+              <Plus className="h-4 w-4" />
+              Add domain
+            </a>
           </div>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-            Connect a domain you own and use it for new short links. Add the domain to your Vercel project and configure the DNS records Vercel provides before verifying it here.
-          </p>
         </section>
 
-        <section className="manager-panel rounded-2xl p-5 sm:p-7">
+        <section id="add-domain" className="manager-panel rounded-2xl p-5 sm:p-7">
           <h2 className="text-base font-bold text-white">Add a domain</h2>
           <form onSubmit={handleAddDomain} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input

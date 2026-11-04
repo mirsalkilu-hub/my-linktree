@@ -390,49 +390,51 @@ export default function AnalyticsPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 space-y-6 sm:space-y-7">
         {/* Banner Title & Dropdown Filter */}
-        <div className="analytics-hero flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-5 sm:p-7 rounded-2xl">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-[11px] font-bold uppercase tracking-[0.16em] mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Realtime Traffic Insights</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-400/20">
-                <TrendingUp className="w-5 h-5" />
+        <section className="analytics-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
+          <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                <Sparkles className="w-3.5 h-3.5" />
+                Realtime Traffic Insights
               </span>
-              <span>Performance & Click Analytics</span>
-            </h1>
-            <p className="text-sm text-slate-400 mt-2 max-w-xl">
-              Track traffic trends and button performance across your bio pages.
-            </p>
-            <Link
-              href="/dashboard/analytics/short-links"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-200 transition hover:bg-indigo-500/20"
-            >
-              View short-link analytics
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Performance &amp; Click Analytics
+              </h1>
+              <p className="mt-2 max-w-xl text-sm text-slate-300 sm:text-base">
+                Track traffic trends and button performance across your bio pages.
+              </p>
+            </div>
 
-          {pages.length > 0 && (
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-xs font-semibold text-slate-400 whitespace-nowrap hidden sm:inline">
-                Select a page:
-              </span>
-              <select
-                value={selectedPageId}
-                onChange={(e) => setSelectedPageId(e.target.value)}
-                className="analytics-select text-white font-semibold text-xs sm:text-sm px-4 py-3 rounded-xl transition-all shadow-lg w-full sm:w-auto"
+            <div className="flex flex-col gap-3 md:min-w-56 md:items-end">
+              <Link
+                href="/dashboard/analytics/short-links"
+                className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:self-end"
               >
-                {pages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title} (/{p.username})
-                  </option>
-                ))}
-              </select>
+                View short-link analytics
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              {pages.length > 0 && (
+                <div className="flex w-full flex-col gap-2 md:items-end">
+                  <label htmlFor="analytics-page-select" className="text-xs font-semibold text-slate-400">
+                    Select a page
+                  </label>
+                  <select
+                    id="analytics-page-select"
+                    value={selectedPageId}
+                    onChange={(e) => setSelectedPageId(e.target.value)}
+                    className="analytics-select w-full rounded-xl px-4 py-3 text-xs font-semibold text-white shadow-lg transition-all sm:text-sm md:w-auto"
+                  >
+                    {pages.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title} (/{p.username})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
 
         {/* Ringkasan Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
