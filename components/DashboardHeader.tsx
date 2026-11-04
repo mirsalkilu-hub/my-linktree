@@ -11,6 +11,7 @@ import {
   FileText,
   Globe,
   LayoutDashboard,
+  Link2,
   LogOut,
   Menu,
   X,
@@ -29,6 +30,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/links", label: "Links", icon: Link2 },
     { href: "/dashboard/pages", label: "Manage Pages", icon: FileText },
     { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/dashboard/domains", label: "Domains", icon: Globe },

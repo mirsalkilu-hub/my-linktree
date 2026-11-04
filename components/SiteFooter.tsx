@@ -2,10 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 
 const productLinks = [
-  { label: "Link shortener", href: "/dashboard" },
+  { label: "Link shortener", href: "/dashboard/links" },
   { label: "Bio pages", href: "/dashboard/pages" },
   { label: "Click analytics", href: "/dashboard/analytics" },
-  { label: "QR codes", href: "/dashboard" },
+  { label: "QR codes", href: "/dashboard/links" },
 ];
 
 const accountLinks = [
@@ -17,15 +17,20 @@ const accountLinks = [
 export default function SiteFooter({
   compact = false,
   brandOnly = false,
+  footerBackground,
+  brandBackground,
 }: {
   compact?: boolean;
   brandOnly?: boolean;
+  footerBackground?: string;
+  brandBackground?: string;
 }) {
   return (
     <footer
       className={`site-footer relative z-10 w-full ${
         brandOnly ? "py-5" : compact ? "py-6" : "py-10 sm:py-12"
       }`}
+      style={footerBackground ? { background: footerBackground } : undefined}
     >
       {brandOnly ? (
         <div className="flex justify-center px-5">
@@ -33,6 +38,7 @@ export default function SiteFooter({
             href="/"
             aria-label="urlyu.com homepage"
             className="group inline-flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 shadow-lg shadow-black/10 transition-all hover:border-indigo-400/30 hover:bg-white/[0.06]"
+            style={brandBackground ? { backgroundColor: brandBackground } : undefined}
           >
             <Image
               src="/logo.png"
@@ -41,7 +47,10 @@ export default function SiteFooter({
               height={32}
               className="h-8 w-8 shrink-0 rounded-lg object-contain transition-transform group-hover:scale-105"
             />
-            <span className="text-sm font-black tracking-wide text-white">
+            <span
+              className="text-sm font-black tracking-wide text-white"
+              style={{ fontFamily: '"Trebuchet MS", "Segoe UI", sans-serif' }}
+            >
               urlyu<span className="text-indigo-400">.com</span>
             </span>
           </Link>

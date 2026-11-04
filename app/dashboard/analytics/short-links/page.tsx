@@ -114,7 +114,7 @@ export default function ShortLinkAnalyticsPage() {
             </div>
             <p className="mt-2 text-sm text-slate-400">Campaigns and referring sites for the last 30 days.</p>
           </div>
-          <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-slate-200 transition hover:border-indigo-500/50 hover:text-white">
+          <Link href="/dashboard/links" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-slate-200 transition hover:border-indigo-500/50 hover:text-white">
             Manage links
             <ExternalLink className="h-3.5 w-3.5" />
           </Link>

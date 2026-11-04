@@ -181,3 +181,34 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.template-gallery-scroll,
+.template-category-scroll {
+  scrollbar-color: rgba(129, 140, 248, 0.62) rgba(148, 163, 184, 0.08);
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.template-gallery-scroll::-webkit-scrollbar,
+.template-category-scroll::-webkit-scrollbar {
+  width: 9px;
+  height: 6px;
+}
+
+.template-gallery-scroll::-webkit-scrollbar-track,
+.template-category-scroll::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.template-gallery-scroll::-webkit-scrollbar-thumb,
+.template-category-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid #101426;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6366f1, #818cf8);
+}
+
+.template-gallery-scroll::-webkit-scrollbar-thumb:hover,
+.template-category-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #818cf8, #a5b4fc);
+}

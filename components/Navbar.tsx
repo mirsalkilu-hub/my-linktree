@@ -18,7 +18,7 @@ export default function Navbar() {
   };
 
   const navItems = [
-    { label: "Shortener Link", href: "/dashboard", icon: Link2 },
+    { label: "Shortener Link", href: "/dashboard/links", icon: Link2 },
     { label: "Manage Pages", href: "/dashboard/bio", icon: LayoutGrid },
     { label: "Analytics Grafik", href: "/dashboard/analytics", icon: BarChart2 },
   ];

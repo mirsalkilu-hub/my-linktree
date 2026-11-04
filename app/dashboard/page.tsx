@@ -1,47 +1,48 @@
 "use client";
 
-import NextImage from "next/image";
-import { QRCodeSVG } from "qrcode.react";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import {
+  ArrowRight,
+  BarChart3,
+  Copy,
+  ExternalLink,
+  FileText,
+  Globe,
+  Link2,
+  Loader2,
+  MousePointerClick,
+  Plus,
+  Sparkles,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import DashboardHeader from "@/components/DashboardHeader";
 import SiteFooter from "@/components/SiteFooter";
-import {
-  LogOut,
-  Menu,
-  X,
-  Link2,
-  MousePointerClick,
-  ArrowUpRight,
-  TrendingUp,
-  Sparkles,
-  Copy,
-  Trash2,
-  Download,
-  ExternalLink,
-  Plus,
-  Layers,
-  Loader2,
-  LayoutDashboard,
-  FileText,
-  BarChart3,
-} from "lucide-react";
-import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
-interface LinkItem {
+interface ShortLink {
   id: string;
   original_url: string;
   short_code: string;
-  clicks: number;
+  clicks: number | null;
   created_at: string;
   expires_at: string | null;
-  utm_source: string | null;
-  utm_medium: string | null;
-  utm_campaign: string | null;
   custom_domain_id: string | null;
-  password_protected: boolean;
+}
+
+interface BioProfile {
+  id: string;
+  title: string;
+  username: string;
+}
+
+interface BioLink {
+  id: string;
+  bio_id: string;
+  title: string;
+  clicks: number | null;
+  is_active: boolean;
 }
 
 interface CustomDomain {
@@ -50,872 +51,324 @@ interface CustomDomain {
   verified_at: string | null;
 }
 
-// Custom Modal Component Bergaya Bio Page
-function ConfirmModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  title = "Confirm deletion",
-  message = "Are you sure you want to delete this item? This action cannot be undone.",
-  confirmText = "Delete",
-  cancelText = "Cancel",
-  loading = false,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void | Promise<void>;
-  title?: string;
-  message?: string;
-  confirmText?: string;
-  cancelText?: string;
-  loading?: boolean;
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="bg-slate-900/90 border border-white/10 rounded-3xl p-6 w-full max-w-sm text-center relative shadow-2xl backdrop-blur-2xl transition-all scale-100">
-        
-        {/* Top Accent Line */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent rounded-full" />
-
-        {/* Warning Icon Container */}
-        <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-4 shadow-inner">
-          <Trash2 className="w-6 h-6" />
-        </div>
-
-        {/* Title & Description */}
-        <h3 className="text-base font-extrabold text-white mb-1 tracking-wider uppercase">
-          {title}
-        </h3>
-        <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-          {message}
-        </p>
-
-        {/* Action Buttons */}
-        <div className="flex items-center space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="w-1/2 py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all active:scale-95 disabled:opacity-50"
-          >
-            {cancelText}
-          </button>
-
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className="w-1/2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-xs font-black text-white shadow-lg shadow-rose-600/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-1.5"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <span>{confirmText}</span>
-            )}
-          </button>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
-  const [links, setLinks] = useState<LinkItem[]>([]);
-  const [destinationUrl, setDestinationUrl] = useState("");
-  const [customCode, setCustomCode] = useState("");
-  const [linkPassword, setLinkPassword] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
-  const [utmSource, setUtmSource] = useState("");
-  const [utmMedium, setUtmMedium] = useState("");
-  const [utmCampaign, setUtmCampaign] = useState("");
-  const [utmContent, setUtmContent] = useState("");
-  const [utmTerm, setUtmTerm] = useState("");
-  const [customDomainId, setCustomDomainId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [customDomains, setCustomDomains] = useState<CustomDomain[]>([]);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const router = useRouter();
-  const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [links, setLinks] = useState<ShortLink[]>([]);
+  const [pages, setPages] = useState<BioProfile[]>([]);
+  const [bioLinks, setBioLinks] = useState<BioLink[]>([]);
+  const [domains, setDomains] = useState<CustomDomain[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-  // Custom delete modal state
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const refreshLinks = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("links")
-      .select("id, original_url, short_code, clicks, created_at, expires_at, utm_source, utm_medium, utm_campaign, custom_domain_id, password_protected")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Could not fetch links:", error.message);
-      return;
-    }
-
-    setUser(user);
-    if (data) setLinks(data);
-  }, [router]);
+  useEffect(() => {
+    const updateTime = () => setCurrentTime(Date.now());
+    updateTime();
+    const intervalId = window.setInterval(updateTime, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
-    const loadLinks = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
+    const loadDashboard = async () => {
+      const { data: userData, error: authError } = await supabase.auth.getUser();
+      if (!userData.user) {
         router.push("/login");
         return;
       }
+      if (authError) throw authError;
 
+      const [linksResult, pagesResult, bioLinksResult, domainsResult] = await Promise.all([
+        supabase
+          .from("links")
+          .select("id, original_url, short_code, clicks, created_at, expires_at, custom_domain_id")
+          .eq("user_id", userData.user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("bio_profiles")
+          .select("id, title, username")
+          .eq("user_id", userData.user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("bio_links")
+          .select("id, bio_id, title, clicks, is_active"),
+        supabase
+          .from("custom_domains")
+          .select("id, domain, verified_at")
+          .eq("user_id", userData.user.id),
+      ]);
+
+      if (linksResult.error) throw linksResult.error;
+      if (pagesResult.error) throw pagesResult.error;
+      if (bioLinksResult.error) throw bioLinksResult.error;
+      if (domainsResult.error) throw domainsResult.error;
       if (!isMounted) return;
-      setUser(user);
 
-      const { data, error } = await supabase
-        .from("links")
-        .select("id, original_url, short_code, clicks, created_at, expires_at, utm_source, utm_medium, utm_campaign, custom_domain_id, password_protected")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (!isMounted) return;
-      if (error) {
-        console.error("Could not fetch links:", error.message);
-        return;
-      }
-
-      if (data) setLinks(data);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        const domainResponse = await fetch("/api/custom-domains", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: "no-store",
-        });
-        const domainResult = await domainResponse.json();
-        if (!domainResponse.ok) {
-          console.error("Could not load custom domains:", domainResult.error);
-        } else if (isMounted) {
-          setCustomDomains((domainResult.domains || []).filter(
-            (domain: CustomDomain) => !!domain.verified_at
-          ));
-        }
-      }
+      setUser(userData.user);
+      setLinks(linksResult.data || []);
+      setPages(pagesResult.data || []);
+      setBioLinks(bioLinksResult.data || []);
+      setDomains(domainsResult.data || []);
     };
 
-    void loadLinks();
+    void loadDashboard()
+      .catch((error: unknown) => {
+        console.error("Could not load dashboard:", error);
+        if (isMounted) {
+          setErrorMessage(error instanceof Error ? error.message : "Could not load dashboard data.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
 
     return () => {
       isMounted = false;
     };
   }, [router]);
 
-  const validateUrl = (url: string) => {
-    try {
-      const formatted = url.startsWith("http://") || url.startsWith("https://")
-        ? url
-        : `https://${url}`;
-      new URL(formatted);
-      return formatted;
-    } catch {
-      return null;
-    }
+  const totalClicks = useMemo(
+    () => links.reduce((total, link) => total + (link.clicks || 0), 0),
+    [links]
+  );
+  const totalBioClicks = useMemo(
+    () => bioLinks.reduce((total, link) => total + (link.clicks || 0), 0),
+    [bioLinks]
+  );
+  const recentLinks = links.slice(0, 5);
+  const mostClickedLink = [...links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
+  const mostClickedBioLink = [...bioLinks]
+    .filter((link) => link.is_active)
+    .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
+  const memberName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
+
+  const getShortUrl = (link: ShortLink) => {
+    const domain = domains.find((item) => item.id === link.custom_domain_id);
+    return `${domain ? `https://${domain.domain}` : origin}/${link.short_code}`;
   };
 
-  const handleCreateLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-
-    const formattedUrl = validateUrl(destinationUrl);
-    if (!formattedUrl) {
-      setErrorMessage("Invalid URL format. Please check and try again.");
-      return;
-    }
-
-    const slug = customCode.trim().toLowerCase() || Math.random().toString(36).substring(2, 7);
-    if (!/^[a-z0-9_-]{3,48}$/.test(slug)) {
-      setErrorMessage("Short codes must be 3–48 letters, numbers, dashes, or underscores.");
-      return;
-    }
-
-    let expiryIso: string | null = null;
-    if (expiresAt) {
-      const expiryDate = new Date(expiresAt);
-      if (Number.isNaN(expiryDate.getTime()) || expiryDate.getTime() <= Date.now()) {
-        setErrorMessage("Choose an expiration date in the future.");
-        return;
-      }
-      expiryIso = expiryDate.toISOString();
-    }
-
-    setLoading(true);
+  const copyShortUrl = async (link: ShortLink) => {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw new Error(sessionError.message);
-      if (!session?.access_token) throw new Error("Please sign in again before creating a link.");
-
-      const response = await fetch("/api/links", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          original_url: formattedUrl,
-          short_code: slug,
-          password: linkPassword,
-          expires_at: expiryIso,
-          utm_source: utmSource,
-          utm_medium: utmMedium,
-          utm_campaign: utmCampaign,
-          utm_content: utmContent,
-          utm_term: utmTerm,
-          custom_domain_id: customDomainId || null,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not create the short link.");
-
-      setDestinationUrl("");
-      setCustomCode("");
-      setLinkPassword("");
-      setExpiresAt("");
-      setUtmSource("");
-      setUtmMedium("");
-      setUtmCampaign("");
-      setUtmContent("");
-      setUtmTerm("");
-      setCustomDomainId("");
-      void refreshLinks();
+      await navigator.clipboard.writeText(getShortUrl(link));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not create the short link.");
-    } finally {
-      setLoading(false);
+      console.error("Could not copy short link:", error);
+      setErrorMessage("Could not copy the short link to clipboard.");
     }
   };
 
-  // Open the custom confirmation modal
-  const promptDeleteLink = (id: string) => {
-    setSelectedLinkId(id);
-    setDeleteModalOpen(true);
-  };
-
-  // Execute deletion from the modal
-  const handleConfirmDelete = async () => {
-    if (!selectedLinkId) return;
-
-    setIsDeleting(true);
-    const { error } = await supabase.from("links").delete().eq("id", selectedLinkId);
-    
-    setIsDeleting(false);
-    setDeleteModalOpen(false);
-    setSelectedLinkId(null);
-
-    if (!error) {
-      void refreshLinks();
-    } else {
-      setErrorMessage("Could not delete link: " + error.message);
-    }
-  };
-
-  const copyToClipboard = (id: string, url: string) => {
-    navigator.clipboard.writeText(url);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const downloadQRCode = (id: string, shortCode: string) => {
-    const svgElement = document.getElementById(
-      `qr-${id}`
-    ) as SVGSVGElement | null;
-    if (!svgElement) return;
-
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const svgBlob = new Blob([svgData], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const URLObject = window.URL || window.webkitURL;
-    const blobURL = URLObject.createObjectURL(svgBlob);
-
-    const image = new window.Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 256;
-      canvas.height = 256;
-      const context = canvas.getContext("2d");
-      if (context) {
-        context.fillStyle = "#FFFFFF";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-        const png = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.href = png;
-        downloadLink.download = `qrcode-${shortCode}.png`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-      }
-    };
-    image.src = blobURL;
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
-
-  const totalClicks = links.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
+  const stats = [
+    { label: "Short links", value: links.length, detail: "Created links", href: "/dashboard/links", icon: Link2 },
+    { label: "Bio pages", value: pages.length, detail: "Published pages", href: "/dashboard/pages", icon: FileText },
+    { label: "Total clicks", value: totalClicks + totalBioClicks, detail: "Across tracked links", href: "/dashboard/analytics", icon: MousePointerClick },
+    { label: "Custom domains", value: domains.filter((domain) => !!domain.verified_at).length, detail: "Verified domains", href: "/dashboard/domains", icon: Globe },
+  ];
 
   return (
-    <div className="site-shell min-h-screen text-white font-sans flex flex-col justify-between relative">
-      
-      {/* Custom Confirm Modal */}
-      <ConfirmModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        loading={isDeleting}
-        title="Delete link"
-        message="Are you sure you want to delete this link? Visitors will no longer be able to use this short URL."
-        confirmText="Delete link"
-      />
-
-      {/* Header Sticky */}
+    <div className="site-shell flex min-h-screen flex-col text-white">
       <DashboardHeader user={user} />
-      {false && (
-      <header className="app-header sticky top-0 z-40 border-b transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
-      <NextImage
-        src="/logo.png"
-        alt="urlyu.com logo"
-        width={32}
-        height={32}
-        className="w-8 h-8 object-contain rounded-lg"
-      />
-      <span className="text-2xl font-black tracking-wider text-white">
-        urlyu<span className="text-indigo-500">.com</span>
-      </span>
-
-            {/* Navigasi Desktop */}
-            <nav className="hidden md:flex items-center space-x-6 h-full text-sm font-semibold">
-              <Link
-                href="/dashboard"
-                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
-                  pathname === "/dashboard"
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
-              </Link>
-              <Link
-                href="/dashboard/pages"
-                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
-                  pathname.startsWith("/dashboard/pages")
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>Manage Pages</span>
-              </Link>
-              <Link
-                href="/dashboard/analytics"
-                className={`flex items-center gap-2 h-full border-b-2 transition-all ${
-                  pathname.startsWith("/dashboard/analytics")
-                    ? "border-indigo-500 text-indigo-400 font-bold"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Analytics</span>
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            {user && (
-              <div className="hidden sm:flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0 shadow-md shadow-indigo-500/20">
-                  {user?.email?.[0] || "M"}
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
-            >
-              <LogOut className="w-4 h-4 text-slate-400" />
-              <span>Log out</span>
-            </button>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
-              aria-label="Toggle Menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[#0a0d18] border-b border-slate-800/80 px-4 pt-4 pb-6 space-y-2 font-sans">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                pathname === "/dashboard"
-                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-              <span>Dashboard</span>
-            </Link>
-
-            <Link
-              href="/dashboard/pages"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                pathname.startsWith("/dashboard/pages")
-                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
-              }`}
-            >
-              <FileText className="w-4 h-4 text-indigo-400" />
-              <span>Manage Pages</span>
-            </Link>
-
-            <Link
-              href="/dashboard/analytics"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                pathname.startsWith("/dashboard/analytics")
-                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
-              }`}
-            >
-              <BarChart3 className="w-4 h-4 text-indigo-400" />
-              <span>Analytics</span>
-            </Link>
-
-            <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between">
-              <div className="flex items-center space-x-3 overflow-hidden pr-2">
-                <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shrink-0">
-                  {user?.email?.[0]?.toUpperCase() || "R"}
-                </div>
-                <span className="text-sm font-medium text-slate-200 truncate">
-                  {user?.email || "rrhmii@yahoo.co.id"}
-                </span>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
-              >
-                <LogOut className="w-3.5 h-3.5 text-slate-300" />
-                <span>Log out</span>
-              </button>
+      <main className="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-8 sm:px-6 sm:py-10">
+        <section className="relative overflow-hidden rounded-3xl border border-indigo-500/25 bg-gradient-to-r from-indigo-950/80 via-slate-900 to-violet-950/70 px-6 py-8 shadow-xl shadow-indigo-950/20 sm:px-10 sm:py-10">
+          <div className="pointer-events-none absolute -right-10 -top-24 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl" />
+          <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
+                <Sparkles className="h-3.5 w-3.5" />
+                Your Urlyu workspace
+              </span>
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Hello, {memberName}!
+              </h1>
+              <p className="mt-2 text-sm text-slate-300 sm:text-base">Welcome back to your dashboard.</p>
             </div>
+            <Link
+              href="/dashboard/links"
+              className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:self-center"
+            >
+              <Plus className="h-4 w-4" />
+              Create Link
+            </Link>
+          </div>
+        </section>
+
+        {errorMessage && (
+          <div role="alert" className="rounded-2xl border border-rose-500/30 bg-rose-950/30 p-4 text-sm text-rose-200">
+            {errorMessage}
           </div>
         )}
-      </header>)}
 
-      {/* Main content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full flex-1 space-y-8">
-        
-        {/* Welcome banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8 shadow-2xl">
-          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Shortener & Bio Link Suite</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Welcome back! 👋
-              </h1>
-              <p className="text-sm text-slate-400 mt-1 max-w-lg">
-                Manage short links, track click performance, and strengthen your online presence in one place.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <Link
-                href="/dashboard/pages"
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs sm:text-sm px-5 py-3 rounded-2xl transition-all shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 border border-indigo-400/30"
-              >
-                <Layers className="w-4 h-4" />
-                <span>Manage Bio Pages</span>
-              </Link>
-            </div>
+        {loading ? (
+          <div className="analytics-panel flex items-center justify-center gap-3 rounded-2xl p-14 text-sm text-slate-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading your workspace...
           </div>
-        </div>
+        ) : !errorMessage && (
+          <>
+            <section aria-label="Workspace statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {stats.map(({ label, value, detail, href, icon: Icon }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="group relative rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-indigo-950/10 transition hover:-translate-y-1 hover:border-indigo-500/40"
+                >
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-300 shadow-lg shadow-indigo-950/20 transition group-hover:bg-indigo-500/15">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-400">{label}</p>
+                  <div className="mt-1 flex items-end justify-between gap-3">
+                    <strong className="text-3xl font-bold text-white">{value.toLocaleString()}</strong>
+                    <span className="text-xs text-slate-500">{detail}</span>
+                  </div>
+                </Link>
+              ))}
+            </section>
 
-        {/* Ringkasan Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-indigo-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-indigo-950/10">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TOTAL LINKS CREATED
-              </span>
-              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(99,102,241,0.25)]">
-                <Link2 className="w-5 h-5" />
+            <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6 lg:col-span-2">
+                <div className="mb-5">
+                  <h2 className="text-lg font-bold text-white">Workspace overview</h2>
+                  <p className="mt-1 text-sm text-slate-400">Your links and pages at a glance.</p>
+                </div>
+                <div className="space-y-5">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Link href="/dashboard/links" className="rounded-xl border border-slate-800 bg-slate-950/50 p-4 transition hover:border-indigo-500/40">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-200">Short links</span>
+                        <Link2 className="h-4 w-4 text-indigo-300" />
+                      </div>
+                      <strong className="mt-3 block text-2xl text-white">{links.length.toLocaleString()}</strong>
+                      <span className="mt-1 block text-xs text-slate-500">{totalClicks.toLocaleString()} clicks recorded</span>
+                    </Link>
+                    <Link href="/dashboard/pages" className="rounded-xl border border-slate-800 bg-slate-950/50 p-4 transition hover:border-violet-500/40">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-200">Bio pages</span>
+                        <FileText className="h-4 w-4 text-violet-300" />
+                      </div>
+                      <strong className="mt-3 block text-2xl text-white">{pages.length.toLocaleString()}</strong>
+                      <span className="mt-1 block text-xs text-slate-500">{totalBioClicks.toLocaleString()} clicks on page links</span>
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap gap-3 pt-1">
+                    <Link href="/dashboard/links" className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200">
+                      Manage links <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                    <Link href="/dashboard/pages" className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200">
+                      Manage pages <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <strong className="text-3xl font-black text-white tracking-tight">
-                {links.length}
-              </strong>
-              <div className="flex items-center text-xs font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2.5 py-1 rounded-full">
-                <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-                <span>Active</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="relative overflow-hidden bg-slate-900/80 backdrop-blur-xl border border-slate-800 hover:border-rose-500/40 p-6 rounded-2xl transition-all duration-300 group shadow-lg shadow-rose-950/10">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                TOTAL CLICKS
-              </span>
-              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(244,63,94,0.25)]">
-                <MousePointerClick className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <strong className="text-3xl font-black text-white tracking-tight">
-                {totalClicks}
-              </strong>
-              <div className="flex items-center text-xs font-semibold text-indigo-400 bg-indigo-950/40 border border-indigo-800/50 px-2.5 py-1 rounded-full">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" />
-                <span>Live tracking</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Create link form */}
-        <div className="relative overflow-hidden bg-slate-900/90 border border-slate-800 hover:border-slate-700 p-6 sm:p-8 rounded-3xl shadow-xl transition-all">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
-              <Plus className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl font-bold">Create a new short link</h2>
-          </div>
-          <p className="text-slate-400 text-xs sm:text-sm mb-6">
-            Enter a destination URL and choose a custom code if you like.
-          </p>
-
-          {errorMessage && (
-            <div className="mb-4 p-3 bg-red-950/50 border border-red-500/40 text-red-400 text-xs rounded-xl font-medium">
-              {errorMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleCreateLink} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                DESTINATION URL
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Paste url here... (https://mywebsite.com)"
-                value={destinationUrl}
-                onChange={(e) => setDestinationUrl(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
-                CUSTOM SHORT CODE (OPTIONAL)
-              </label>
-              <div className="relative flex items-center">
-                <span className="absolute left-4 text-xs font-semibold text-slate-500 select-none">
-                  /
-                </span>
-                <input
-                  type="text"
-                  placeholder="custom-url"
-                  value={customCode}
-                  onChange={(e) => setCustomCode(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-8 pr-4 py-3 text-sm focus:outline-none transition-all placeholder:text-slate-600"
-                />
-              </div>
-            </div>
-
-            <details className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
-              <summary className="cursor-pointer text-xs font-semibold text-slate-300">
-                Security, campaign, and domain options
-              </summary>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    PASSWORD (OPTIONAL)
-                  </label>
-                  <input
-                    type="password"
-                    autoComplete="new-password"
-                    maxLength={128}
-                    value={linkPassword}
-                    onChange={(event) => setLinkPassword(event.target.value)}
-                    placeholder="Visitors must enter this password"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    UTM CONTENT (OPTIONAL)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={utmContent}
-                    onChange={(event) => setUtmContent(event.target.value)}
-                    placeholder="e.g. hero-button"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    UTM TERM (OPTIONAL)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={utmTerm}
-                    onChange={(event) => setUtmTerm(event.target.value)}
-                    placeholder="e.g. brand-keyword"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    EXPIRATION (OPTIONAL)
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={expiresAt}
-                    onChange={(event) => setExpiresAt(event.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    UTM SOURCE
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={utmSource}
-                    onChange={(event) => setUtmSource(event.target.value)}
-                    placeholder="e.g. newsletter"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    UTM MEDIUM
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={utmMedium}
-                    onChange={(event) => setUtmMedium(event.target.value)}
-                    placeholder="e.g. email"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    UTM CAMPAIGN
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={100}
-                    value={utmCampaign}
-                    onChange={(event) => setUtmCampaign(event.target.value)}
-                    placeholder="e.g. product-launch"
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold text-slate-300">
-                    SHORT-LINK DOMAIN
-                  </label>
-                  <select
-                    value={customDomainId}
-                    onChange={(event) => setCustomDomainId(event.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
-                  >
-                    <option value="">urlyu.com</option>
-                    {customDomains.map((domain) => (
-                      <option key={domain.id} value={domain.id}>{domain.domain}</option>
-                    ))}
-                  </select>
-                  <Link href="/dashboard/domains" className="mt-1.5 inline-block text-[11px] text-indigo-300 hover:text-indigo-200">
-                    Manage custom domains
+              <div>
+                <h2 className="mb-3 text-lg font-bold text-white">Quick actions</h2>
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  <Link href="/dashboard/links" className="group flex items-center gap-4 rounded-2xl border border-indigo-400/20 bg-gradient-to-r from-indigo-600 to-indigo-500 p-4 text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:from-indigo-500 hover:to-indigo-400">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15"><Link2 className="h-5 w-5" /></span>
+                    <span><strong className="block text-sm">Create Link</strong><small className="text-xs text-white/75">Shorten a new URL</small></span>
+                    <ArrowRight className="ml-auto h-4 w-4 opacity-70 transition group-hover:translate-x-1" />
+                  </Link>
+                  <Link href="/dashboard/pages" className="group flex items-center gap-4 rounded-2xl border border-violet-400/20 bg-gradient-to-r from-violet-700 to-indigo-600 p-4 text-white shadow-lg shadow-violet-950/30 transition hover:-translate-y-0.5 hover:from-violet-600 hover:to-indigo-500">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15"><FileText className="h-5 w-5" /></span>
+                    <span><strong className="block text-sm">Create Bio Page</strong><small className="text-xs text-white/75">Share your profile</small></span>
+                    <ArrowRight className="ml-auto h-4 w-4 opacity-70 transition group-hover:translate-x-1" />
+                  </Link>
+                  <Link href="/dashboard/analytics" className="group flex items-center gap-4 rounded-2xl border border-indigo-400/20 bg-gradient-to-r from-indigo-700 to-violet-600 p-4 text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:from-indigo-600 hover:to-violet-500">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15"><BarChart3 className="h-5 w-5" /></span>
+                    <span><strong className="block text-sm">Analytics</strong><small className="text-xs text-white/75">View click insights</small></span>
+                    <ArrowRight className="ml-auto h-4 w-4 opacity-70 transition group-hover:translate-x-1" />
                   </Link>
                 </div>
               </div>
-              <p className="mt-4 text-[11px] leading-5 text-slate-500">
-                UTM values are added to the destination and recorded with clicks. Passwords are stored as salted hashes.
-              </p>
-            </details>
+            </section>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.99] disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Creating...</span>
-                </>
-              ) : (
-                "Create short link"
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Link list */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <span>Your links</span>
-              <span className="bg-indigo-950 border border-indigo-500/30 text-indigo-400 text-xs font-extrabold px-2.5 py-0.5 rounded-full">
-                {links.length}
-              </span>
-            </h3>
-          </div>
-          <div className="space-y-4">
-            {links.length === 0 ? (
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-10 text-center text-slate-500 text-sm">
-                No links yet. Create your first short link above.
-              </div>
-            ) : (
-              links.map((item) => {
-                const customDomain = customDomains.find(
-                  (domain) => domain.id === item.custom_domain_id
-                );
-                const shortUrl = `${customDomain ? `https://${customDomain.domain}` : origin}/${item.short_code}`;
-
-                return (
-                  <div
-                    key={item.id}
-                    className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-5 transition-all shadow-md hover:shadow-indigo-950/10"
-                  >
-                    <div className="flex sm:flex-col items-center gap-2 shrink-0">
-                      <div className="bg-white p-2 rounded-xl shadow-sm">
-                        <QRCodeSVG
-                          id={`qr-${item.id}`}
-                          value={shortUrl}
-                          size={64}
-                        />
-                      </div>
-                      <button
-                        onClick={() => downloadQRCode(item.id, item.short_code)}
-                        className="inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
-                      >
-                        <Download className="w-3 h-3" />
-                        <span>PNG</span>
-                      </button>
-                    </div>
-
-                    <div className="flex-1 w-full overflow-hidden text-left space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <a
-                          href={shortUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-indigo-400 font-bold hover:underline text-base truncate flex items-center gap-1.5 max-w-full"
-                        >
-                          <span className="truncate">{shortUrl}</span>
-                          <ExternalLink className="w-3.5 h-3.5 text-indigo-400/70 shrink-0" />
-                        </a>
-                        <span className="bg-indigo-950/80 border border-indigo-500/30 text-indigo-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                          {item.clicks || 0} clicks
-                        </span>
-                        {item.password_protected && (
-                          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-200">
-                            Password protected
-                          </span>
-                        )}
-                        {item.expires_at && (
-                          <span className="rounded-full border border-slate-700 bg-slate-800 px-2.5 py-0.5 text-[10px] text-slate-300">
-                            Expires {new Date(item.expires_at).toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-slate-400 text-xs truncate">
-                        {item.original_url}
-                      </p>
-                      {item.utm_campaign && (
-                        <p className="text-[11px] text-indigo-300">
-                          Campaign: {item.utm_campaign}
-                          {item.utm_source ? ` · ${item.utm_source}` : ""}
-                          {item.utm_medium ? ` / ${item.utm_medium}` : ""}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto justify-end">
-                      <button
-                        onClick={() => copyToClipboard(item.id, shortUrl)}
-                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>{copiedId === item.id ? "Copied!" : "Copy"}</span>
-                      </button>
-                      <button
-                        onClick={() => promptDeleteLink(item.id)}
-                        className="inline-flex items-center justify-center p-2.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-500/20 rounded-xl text-xs font-semibold transition-all hover:border-red-500/50 active:scale-95"
-                        title="Delete link"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+            <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+                <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+                  <div>
+                    <h2 className="font-bold text-white">Recent Links</h2>
+                    <p className="mt-1 text-xs text-slate-500">Your latest short links</p>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </main>
+                  <Link href="/dashboard/links" className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-300 hover:text-indigo-200">
+                    View all <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+                {recentLinks.length ? (
+                  <ul className="divide-y divide-slate-800/80">
+                    {recentLinks.map((link) => {
+                      const shortUrl = getShortUrl(link);
+                      const expired = !!link.expires_at && new Date(link.expires_at).getTime() <= currentTime;
+                      return (
+                        <li key={link.id} className="flex items-center gap-3 px-5 py-4">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-300"><Link2 className="h-4 w-4" /></span>
+                          <div className="min-w-0 flex-1">
+                            <a href={shortUrl} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1 text-sm font-semibold text-slate-100 hover:text-indigo-300">
+                              <span className="truncate">{link.short_code}</span><ExternalLink className="h-3 w-3 shrink-0" />
+                            </a>
+                            <p className="truncate text-xs text-slate-500">{link.original_url}</p>
+                          </div>
+                          <div className="hidden text-right sm:block">
+                            <p className="text-xs font-semibold text-slate-200">{(link.clicks || 0).toLocaleString()} clicks</p>
+                            <p className={`mt-1 text-[10px] ${expired ? "text-slate-500" : "text-emerald-300"}`}>{expired ? "Expired" : "Active"}</p>
+                          </div>
+                          <button type="button" onClick={() => void copyShortUrl(link)} aria-label="Copy short link" className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white">
+                            <Copy className="h-4 w-4" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="px-5 py-10 text-center">
+                    <Link2 className="mx-auto h-7 w-7 text-slate-600" />
+                    <p className="mt-2 text-sm text-slate-400">No short links yet.</p>
+                    <Link href="/dashboard/links" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-indigo-300 hover:text-indigo-200">Create your first link <ArrowRight className="h-3.5 w-3.5" /></Link>
+                  </div>
+                )}
+                {copied && <p role="status" className="border-t border-slate-800 px-5 py-2 text-xs text-emerald-300">Short link copied.</p>}
+              </div>
 
-      {/* Footer */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6">
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    <h2 className="font-bold text-white">Performance Insights</h2>
+                    <p className="mt-1 text-xs text-slate-500">Your top-performing links</p>
+                  </div>
+                  <Link href="/dashboard/analytics" className="text-xs font-semibold text-indigo-300 hover:text-indigo-200">View details</Link>
+                </div>
+                <div className="space-y-4">
+                  <div className="border-l-2 border-blue-500 pl-3">
+                    <p className="text-xs font-semibold text-slate-300">Most clicked short link</p>
+                    {mostClickedLink ? (
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <Link href="/dashboard/links" className="truncate text-xs text-slate-500 hover:text-indigo-300">{mostClickedLink.short_code}</Link>
+                        <span className="shrink-0 text-xs font-semibold text-slate-300">{(mostClickedLink.clicks || 0).toLocaleString()} clicks</span>
+                      </div>
+                    ) : <p className="mt-1 text-xs text-slate-500">Create a short link to see its performance.</p>}
+                  </div>
+                  <div className="border-l-2 border-emerald-500 pl-3">
+                    <p className="text-xs font-semibold text-slate-300">Most clicked bio page link</p>
+                    {mostClickedBioLink ? (
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <span className="truncate text-xs text-slate-500">{mostClickedBioLink.title}</span>
+                        <span className="shrink-0 text-xs font-semibold text-slate-300">{(mostClickedBioLink.clicks || 0).toLocaleString()} clicks</span>
+                      </div>
+                    ) : <p className="mt-1 text-xs text-slate-500">No bio page link clicks recorded yet.</p>}
+                  </div>
+                  <div className="border-l-2 border-violet-500 pl-3">
+                    <p className="text-xs font-semibold text-slate-300">Total clicks</p>
+                    <p className="mt-1 text-xs text-slate-500">{(totalClicks + totalBioClicks).toLocaleString()} clicks across your tracked links.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+      </main>
       <SiteFooter />
     </div>
   );

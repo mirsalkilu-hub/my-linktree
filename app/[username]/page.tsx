@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { useEffect, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
-import { notFound, useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import LinkIcon from "@/components/LinkIcon";
 import SiteFooter from "@/components/SiteFooter";
+import { BIO_TEMPLATES } from "@/lib/bio-templates";
 
 // Interface Data
 interface LinkItem {
@@ -122,6 +123,7 @@ const THEME_PRESETS: Record<
 };
 
 const THEME_ALIASES: Record<string, string> = {
+  blank: "indigo",
   cyan: "blue",
   fuchsia: "rose",
   teal: "emerald",
@@ -132,6 +134,23 @@ const THEME_ALIASES: Record<string, string> = {
   ocean: "blue",
   neon: "emerald",
   lavender: "indigo",
+  creator: "rose",
+  business: "blue",
+  "flash-sale": "rose",
+  "indie-tour": "fuchsia",
+  "sugar-atelier": "rose",
+  "olivia-bloom": "rose",
+  newsroom: "blue",
+  "learning-hub": "blue",
+  "good-cause": "emerald",
+  "matcha-studio": "emerald",
+  "coastal-notes": "blue",
+  "pixel-arcade": "emerald",
+  "velvet-noir": "amber",
+  "terracotta-table": "amber",
+  "studio-grid": "indigo",
+  wildflower: "rose",
+  "alpine-air": "emerald",
 };
 
 const THEME_ACCENTS: Record<string, string> = {
@@ -153,6 +172,12 @@ const THEME_BACKGROUNDS: Record<string, string> = {
   ocean: "#061725",
   neon: "#101a12",
   lavender: "#151022",
+  music: "#140b21",
+  creator: "#160e24",
+  business: "#081321",
+  shop: "#21120f",
+  editorial: "#151421",
+  streamer: "#101a12",
 };
 
 const FONT_FAMILIES: Record<string, string> = {
@@ -168,7 +193,6 @@ export default function PublicBioPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = use(params);
-  const router = useRouter();
 
   const [profile, setProfile] = useState<BioProfile | null>(null);
   const [links, setLinks] = useState<LinkItem[]>([]);
@@ -358,11 +382,28 @@ export default function PublicBioPage({
   }
 
   const [themeId, fontId] = (profile.theme_color || "indigo::sans").split("::");
+  const selectedTemplate = BIO_TEMPLATES.find((template) => template.id === themeId);
   const baseTheme = THEME_PRESETS[THEME_ALIASES[themeId] || themeId] || THEME_PRESETS.indigo;
   const theme = {
     ...baseTheme,
-    accentColor: THEME_ACCENTS[themeId] || baseTheme.accentColor,
+    accentColor:
+      selectedTemplate?.accent ||
+      THEME_ACCENTS[themeId] ||
+      baseTheme.accentColor,
   };
+  const templateLayout = selectedTemplate?.layout || "classic";
+  const isBusinessTemplate = templateLayout === "business";
+  const isLightTemplate =
+    selectedTemplate?.isLight ??
+    [
+      "blank",
+      "flash-sale",
+      "sugar-atelier",
+      "olivia-bloom",
+      "newsroom",
+      "learning-hub",
+      "good-cause",
+    ].includes(themeId);
   const profileFont = FONT_FAMILIES[fontId] || FONT_FAMILIES.sans;
   const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -432,7 +473,10 @@ export default function PublicBioPage({
       className="site-shell min-h-screen text-white flex items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden selection:bg-indigo-500 selection:text-white"
       style={{
         fontFamily: profileFont,
-        background: THEME_BACKGROUNDS[themeId] || undefined,
+        background:
+          selectedTemplate?.background ||
+          THEME_BACKGROUNDS[themeId] ||
+          undefined,
       }}
     >
       {/* Background Ambient Blur Dynamic */}
@@ -451,26 +495,49 @@ export default function PublicBioPage({
       </div>
 
       {/* Main Container Card */}
-      <div className={`profile-card w-full max-w-md border ${theme.cardBorder} rounded-[32px] p-6 sm:p-8 relative flex flex-col items-center text-center transition-all duration-500 z-10`}>
+      <div
+        className={`profile-card w-full ${
+          isBusinessTemplate ? "max-w-2xl" : "max-w-md"
+        } border ${theme.cardBorder} ${
+          templateLayout === "business"
+            ? "rounded-2xl"
+            : templateLayout === "music"
+              ? "rounded-[2.5rem]"
+              : templateLayout === "creator"
+                ? "rounded-[2.25rem]"
+                : "rounded-[32px]"
+        } p-6 sm:p-8 relative flex flex-col ${
+          isBusinessTemplate ? "items-start text-left" : "items-center text-center"
+        } transition-all duration-500 z-10`}
+        style={
+          selectedTemplate
+            ? {
+                background: selectedTemplate.cardBackground,
+                color: isLightTemplate ? "#1e293b" : "#f8fafc",
+                borderColor: `${theme.accentColor}55`,
+                boxShadow: `0 24px 80px -30px ${theme.accentColor}55`,
+              }
+            : undefined
+        }
+      >
         
-        {/* Top Glow Border Light */}
-        <div className="absolute inset-x-12 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-
-        {/* Home Button */}
-        <button
-          onClick={() => router.push("/")}
-          className="absolute top-6 left-6 w-11 h-11 rounded-2xl bg-slate-950/60 hover:bg-white/10 border border-white/10 hover:border-white/30 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md backdrop-blur-md group"
-          title="Home"
-        >
-          <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </button>
+        <div
+          className="absolute inset-x-8 top-0 h-1 rounded-t-full opacity-90"
+          style={{
+            background: selectedTemplate
+              ? `linear-gradient(90deg, transparent, ${theme.accentColor}, transparent)`
+              : "linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent)",
+          }}
+        />
 
         {/* Share Button */}
         <button
           onClick={handleShareClick}
           className="absolute top-6 right-6 w-11 h-11 rounded-2xl bg-slate-950/60 hover:bg-white/10 border border-white/10 hover:border-white/30 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md backdrop-blur-md group"
+          style={{
+            backgroundColor: `${theme.accentColor}20`,
+            borderColor: `${theme.accentColor}55`,
+          }}
           title="Share page"
         >
           <svg className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,7 +546,7 @@ export default function PublicBioPage({
         </button>
 
         {/* Profile avatar with glow and border */}
-        <div className="mt-3 mb-4 relative group">
+        <div className={`mt-3 mb-4 relative group ${isBusinessTemplate ? "self-start" : ""}`}>
           <div className="absolute -inset-1 rounded-full blur-lg opacity-60 group-hover:opacity-90 transition duration-500" style={{ backgroundColor: theme.accentColor }} />
           {profile.avatar_url ? (
             <Image
@@ -487,18 +554,33 @@ export default function PublicBioPage({
               alt={profile.title}
               width={112}
               height={112}
-              className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 ${theme.avatarBorder} ${theme.avatarGlow} transition-all duration-500 group-hover:scale-105`}
+              className={`relative w-24 h-24 sm:w-28 sm:h-28 ${
+                templateLayout === "business" ? "rounded-2xl" : "rounded-full"
+              } object-cover border-2 ${theme.avatarBorder} ${theme.avatarGlow} transition-all duration-500 group-hover:scale-105`}
             />
           ) : (
-            <div className={`relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-slate-950 border-2 ${theme.avatarBorder} ${theme.avatarGlow} flex items-center justify-center text-3xl font-black text-white transition-all duration-500 group-hover:scale-105`}>
+            <div className={`relative w-24 h-24 sm:w-28 sm:h-28 ${
+              templateLayout === "business" ? "rounded-2xl" : "rounded-full"
+            } bg-slate-950 border-2 ${theme.avatarBorder} ${theme.avatarGlow} flex items-center justify-center text-3xl font-black text-white transition-all duration-500 group-hover:scale-105`}>
               {profile.title[0]?.toUpperCase()}
             </div>
           )}
         </div>
 
         {/* Live Status Indicator & Badge Username */}
-        <div className="flex flex-col items-center gap-2 mb-3">
-          <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-[11px] font-semibold border backdrop-blur-md ${theme.badgeBg} ${theme.badgeText} shadow-sm`}>
+        <div className={`flex flex-col ${isBusinessTemplate ? "items-start" : "items-center"} gap-2 mb-3`}>
+          <div
+            className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-[11px] font-semibold border backdrop-blur-md ${theme.badgeBg} ${theme.badgeText} shadow-sm`}
+            style={
+              isLightTemplate
+                ? {
+                    color: theme.accentColor,
+                    borderColor: `${theme.accentColor}55`,
+                    backgroundColor: `${theme.accentColor}12`,
+                  }
+                : undefined
+            }
+          >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -514,19 +596,25 @@ export default function PublicBioPage({
         </div>
 
         {/* Title / Name */}
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-2 leading-snug break-words max-w-xs">
+        <h1 className={`text-xl sm:text-2xl font-black tracking-tight mb-2 leading-snug break-words ${
+          isBusinessTemplate ? "max-w-full" : "max-w-xs"
+        } ${isLightTemplate ? "text-slate-900" : "text-white"}`}>
           {profile.title}
         </h1>
 
         {/* Bio Description */}
         {profile.bio_description && (
-          <p className="text-xs sm:text-sm text-slate-400 mb-7 font-medium max-w-sm leading-relaxed">
+          <p className={`text-xs sm:text-sm mb-7 font-medium max-w-sm leading-relaxed ${
+            isBusinessTemplate ? "text-left" : ""
+          } ${isLightTemplate ? "text-slate-600" : "text-slate-400"}`}>
             {profile.bio_description}
           </p>
         )}
 
         {/* List Link Buttons */}
-        <div className="w-full space-y-3 mb-8">
+        <div className={`w-full ${
+          isBusinessTemplate ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "space-y-3"
+        } mb-8`}>
           {links && links.length > 0 ? (
             links.map((link) => {
               const isFeatured = link.is_featured;
@@ -538,12 +626,39 @@ export default function PublicBioPage({
                   onClick={() => trackLinkClick(link.id)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={isFeatured ? { borderColor: theme.accentColor } : theme.buttonStyle}
-                  className={`profile-link w-full py-3.5 px-4 rounded-2xl border flex items-center justify-between transition-all duration-300 hover:-translate-y-1 active:translate-y-0 group relative overflow-hidden backdrop-blur-xl ${
+                  className={`profile-link w-full py-3.5 px-4 ${
+                    templateLayout === "business"
+                      ? "rounded-xl hover:-translate-y-0.5"
+                      : templateLayout === "creator"
+                        ? "rounded-full hover:-translate-y-1"
+                        : templateLayout === "music"
+                          ? "rounded-xl hover:-translate-y-1"
+                          : templateLayout === "shop"
+                            ? "rounded-xl hover:-translate-y-1"
+                            : "rounded-2xl hover:-translate-y-1"
+                  } border flex items-center justify-between transition-all duration-300 active:translate-y-0 group relative overflow-hidden backdrop-blur-xl ${
                     isFeatured
-                      ? "bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 shadow-[0_0_25px_-5px_rgba(99,102,241,0.4)]"
+                      ? "bg-gradient-to-r from-slate-900 to-slate-900/80 shadow-[0_0_25px_-5px_rgba(99,102,241,0.4)]"
                       : theme.buttonHoverClass
                   }`}
+                  style={{
+                    ...(isFeatured
+                      ? {
+                          borderColor: theme.accentColor,
+                          background: isLightTemplate
+                            ? `linear-gradient(100deg,${theme.accentColor},${theme.accentColor}cc)`
+                            : `linear-gradient(100deg,${theme.accentColor}36,${theme.accentColor}18)`,
+                        }
+                      : {
+                          ...theme.buttonStyle,
+                          ...(isLightTemplate
+                            ? { backgroundColor: "rgba(255,255,255,.82)" }
+                            : { backgroundColor: `${theme.accentColor}20` }),
+                        }),
+                    ...(selectedTemplate && !isFeatured
+                      ? { borderColor: `${theme.accentColor}55` }
+                      : {}),
+                  }}
                 >
                   {/* Light Sweep Animation */}
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out pointer-events-none" />
@@ -556,12 +671,20 @@ export default function PublicBioPage({
                   )}
 
                   {/* Icon Left */}
-                  <div className="w-10 h-10 rounded-xl bg-slate-950 border border-white/10 flex items-center justify-center shrink-0 text-slate-300 group-hover:text-white group-hover:border-white/30 group-hover:scale-105 transition-all duration-300 z-10">
+                  <div className={`w-10 h-10 rounded-xl ${
+                    isLightTemplate ? "bg-white border-slate-200 text-slate-600" : "bg-slate-950 border-white/10 text-slate-300"
+                  } border flex items-center justify-center shrink-0 group-hover:text-white group-hover:border-white/30 group-hover:scale-105 transition-all duration-300 z-10`}
+                  style={!isLightTemplate ? {
+                    backgroundColor: `${theme.accentColor}18`,
+                    borderColor: `${theme.accentColor}35`,
+                  } : undefined}>
                     <LinkIcon type={link.icon_type} className="w-5 h-5" />
                   </div>
 
                   {/* Title Button */}
-                  <span className="font-bold text-xs sm:text-sm text-slate-200 group-hover:text-white truncate mx-3 transition-colors z-10">
+                  <span className={`font-bold text-xs sm:text-sm ${
+                    isLightTemplate ? "text-slate-900" : "text-slate-200"
+                  } ${isLightTemplate ? "" : "group-hover:text-white"} truncate mx-3 transition-colors z-10`}>
                     {link.title}
                   </span>
 
@@ -582,7 +705,16 @@ export default function PublicBioPage({
         </div>
 
         {/* Footer */}
-        <SiteFooter compact brandOnly />
+        <SiteFooter
+          compact
+          brandOnly
+          footerBackground="transparent"
+          brandBackground={
+            isLightTemplate
+              ? `color-mix(in srgb, ${theme.accentColor} 35%, #1e293b)`
+              : undefined
+          }
+        />
 
       </div>
 
