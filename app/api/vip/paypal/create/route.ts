@@ -13,6 +13,7 @@ type VipPlan = "monthly" | "annual";
 
 interface PayPalSubscription {
   id?: string;
+  plan_id?: string;
   status?: string;
   links?: Array<{ href?: string; rel?: string }>;
 }
@@ -104,13 +105,24 @@ export async function POST(request: Request) {
           accessToken,
           `/v1/billing/subscriptions/${encodeURIComponent(currentSubscription.paypal_subscription_id)}`
         );
-        if (pending.status === "APPROVAL_PENDING") {
+        if (pending.status === "APPROVAL_PENDING" && pending.plan_id === planId) {
           const approvalUrl = getApprovalUrl(pending);
           if (!approvalUrl) {
             console.error("PayPal pending subscription did not include a valid approval URL.");
             return NextResponse.json({ error: "Could not resume PayPal approval." }, { status: 502 });
           }
           return NextResponse.json({ approvalUrl });
+        }
+        if (pending.status === "APPROVAL_PENDING") {
+          await paypalRequest<null>(
+            config.apiBaseUrl,
+            accessToken,
+            `/v1/billing/subscriptions/${encodeURIComponent(currentSubscription.paypal_subscription_id)}/cancel`,
+            {
+              method: "POST",
+              body: JSON.stringify({ reason: "The customer selected a different VIP plan" }),
+            }
+          );
         }
       } catch (error) {
         if (
