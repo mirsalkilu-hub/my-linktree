@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
+import { ArrowRight, BarChart3, Crown, Globe2, Link2, PanelsTopLeft, QrCode, Sparkles } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -237,46 +238,97 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Feature Cards Section */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 py-10 w-full">
-        <div className="mb-6 rounded-2xl border border-amber-400/25 bg-amber-400/5 p-5 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">What&apos;s new</p>
-              <h2 className="mt-1 text-lg font-bold text-white">Introducing VIP Membership</h2>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-300">
-                Go ad-free on your bio pages for Rp100.000 per year. Pay by bank transfer or QRIS; renewal is manual.
-              </p>
-            </div>
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-14 sm:py-16">
+        <div className="mx-auto mb-8 max-w-2xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[11px] font-semibold text-indigo-300">
+            <Sparkles className="h-3.5 w-3.5" />
+            One platform, more ways to share
+          </span>
+          <h2 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Everything you need to make links work harder
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-slate-400 sm:text-base">
+            Organize your online presence, share it anywhere, and understand how people engage.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              title: "Short links",
+              description: "Turn long URLs into concise links that are easy to share and manage.",
+              icon: Link2,
+              color: "border-indigo-500/20 bg-indigo-500/10 text-indigo-300",
+            },
+            {
+              title: "Bio pages",
+              description: "Bring your profiles, content, and important links together on one page.",
+              icon: PanelsTopLeft,
+              color: "border-violet-500/20 bg-violet-500/10 text-violet-300",
+            },
+            {
+              title: "Click analytics",
+              description: "Review click activity for your short links and bio page buttons.",
+              icon: BarChart3,
+              color: "border-sky-500/20 bg-sky-500/10 text-sky-300",
+            },
+            {
+              title: "Custom domains",
+              description: "Use a verified domain you own for branded short links.",
+              icon: Globe2,
+              color: "border-cyan-500/20 bg-cyan-500/10 text-cyan-300",
+            },
+            {
+              title: "QR codes",
+              description: "Create a scannable QR code for your short link and download it as a PNG.",
+              icon: QrCode,
+              color: "border-pink-500/20 bg-pink-500/10 text-pink-300",
+            },
+            {
+              title: "VIP membership",
+              description: "Enjoy an ad-free experience on your bio pages with an active VIP subscription.",
+              icon: Crown,
+              color: "border-amber-500/20 bg-amber-500/10 text-amber-300",
+            },
+          ].map(({ title, description, icon: Icon, color }) => (
+            <article key={title} className="rounded-2xl border border-slate-800/80 bg-slate-900/55 p-5 backdrop-blur-md transition hover:-translate-y-0.5 hover:border-indigo-500/30">
+              <span className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl border ${color}`}>
+                <Icon aria-hidden="true" className="h-5 w-5" />
+              </span>
+              <h3 className="text-sm font-semibold text-white">{title}</h3>
+              <p className="mt-2 text-xs leading-5 text-slate-400">{description}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-14 grid gap-8 rounded-3xl border border-indigo-500/20 bg-gradient-to-br from-indigo-950/45 via-slate-900/80 to-violet-950/35 p-6 sm:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-300">Get started</p>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">From setup to sharing in a few steps</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Create a free account to manage your links, publish a bio page, and follow engagement from one workspace.
+            </p>
             <Link
-              href="/login"
-              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-400 px-5 py-3 text-xs font-bold text-slate-950 transition hover:bg-amber-300"
+              href="/register"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-950/30 transition hover:bg-indigo-500"
             >
-              Explore VIP
+              Create your free account
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
-            <div className="w-9 h-9 bg-indigo-600/20 text-indigo-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">🔗</div>
-            <h3 className="font-semibold text-sm mb-1">URL Shortener</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Turn long, complicated URLs into short links that are easy to remember.</p>
-          </div>
-          <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
-            <div className="w-9 h-9 bg-purple-600/20 text-purple-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">📱</div>
-            <h3 className="font-semibold text-sm mb-1">Bio Page Manager</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Create a personal bio page to bring all your social profiles together.</p>
-          </div>
-          <div className="bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-md">
-            <div className="w-9 h-9 bg-pink-600/20 text-pink-400 rounded-xl flex items-center justify-center font-bold text-base mb-3">📊</div>
-            <h3 className="font-semibold text-sm mb-1">Link Analytics</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Track link performance and click activity over time.</p>
-          </div>
-          <div className="bg-slate-900/50 border border-amber-500/20 p-5 rounded-2xl backdrop-blur-md">
-            <div className="w-9 h-9 bg-amber-500/10 text-amber-300 rounded-xl flex items-center justify-center font-bold text-base mb-3">👑</div>
-            <h3 className="font-semibold text-sm mb-1">VIP Membership</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Enjoy ad-free bio pages with PayPal subscriptions from $5/month or $50/year.</p>
-          </div>
+          <ol className="grid gap-3 sm:grid-cols-3">
+            {[
+              { step: "01", title: "Create", description: "Sign up and set up your workspace." },
+              { step: "02", title: "Customize", description: "Shorten a link or build your bio page." },
+              { step: "03", title: "Share", description: "Share your URL or QR code and track clicks." },
+            ].map(({ step, title, description }) => (
+              <li key={step} className="rounded-2xl border border-slate-700/70 bg-slate-950/45 p-4">
+                <span className="text-xs font-bold tracking-widest text-indigo-300">{step}</span>
+                <h3 className="mt-3 text-sm font-semibold text-white">{title}</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-400">{description}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
