@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 
 const productLinks = [
   { label: "Link shortener", href: "/dashboard/links" },
@@ -12,6 +13,13 @@ const accountLinks = [
   { label: "Create an account", href: "/register" },
   { label: "Sign in", href: "/login" },
   { label: "VIP membership", href: "/dashboard/vip" },
+];
+
+const companyLinks = [
+  { label: "About us", href: "/about" },
+  { label: "Articles and guides", href: "/blog" },
+  { label: "Contact", href: "/contact" },
+  { label: "Privacy policy", href: "/privacy" },
 ];
 
 export default function SiteFooter({
@@ -57,8 +65,8 @@ export default function SiteFooter({
         </div>
       ) : (
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-4">
-            <div className="col-span-2 sm:col-span-1 lg:col-span-2">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
+            <div className="col-span-2 sm:col-span-4 lg:col-span-2">
               <Link href="/" className="inline-flex items-center gap-3">
                 <Image
                   src="/logo.png"
@@ -107,6 +115,25 @@ export default function SiteFooter({
                       className="text-xs text-slate-400 transition-colors hover:text-indigo-300"
                     >
                       {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <nav aria-label="Company links" className="rounded-2xl border border-slate-800/80 bg-slate-950/25 p-4">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-200">
+                Information
+              </h2>
+              <ul className="space-y-1">
+                {companyLinks.map(({ label, href }) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-xs text-slate-400 transition hover:bg-indigo-500/10 hover:text-indigo-200"
+                    >
+                      {label}
+                      <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5 text-slate-600" />
                     </Link>
                   </li>
                 ))}

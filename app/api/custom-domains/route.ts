@@ -75,6 +75,29 @@ export async function POST(request: Request) {
 
   try {
     const supabase = getSupabaseAdminClient();
+    const { data: subscription, error: vipError } = await supabase
+      .from("vip_subscriptions")
+      .select("status, current_period_end")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (vipError) {
+      console.error("Could not check VIP status before custom domain registration:", vipError.message);
+      return NextResponse.json({ error: "Could not verify your VIP membership." }, { status: 500 });
+    }
+
+    if (
+      !subscription ||
+      !["active", "trialing"].includes(subscription.status) ||
+      !subscription.current_period_end ||
+      new Date(subscription.current_period_end).getTime() <= Date.now()
+    ) {
+      return NextResponse.json(
+        { error: "An active VIP membership is required to add a custom domain." },
+        { status: 403 }
+      );
+    }
+
     const { data, error } = await supabase
       .from("custom_domains")
       .insert({

@@ -1699,14 +1699,18 @@ export default function BioManagementPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Short description (optional)</label>
+              <label className="block text-xs text-slate-400 mb-1">Profile introduction (recommended)</label>
               <textarea
-                placeholder="Add a short description or greeting below the title..."
+                placeholder="Tell visitors who you are, what you do, and what they can find in your links..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={2}
+                rows={3}
                 className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500/80 transition-colors"
               />
+              <p className="mt-2 flex items-start gap-2 rounded-xl border border-indigo-400/15 bg-indigo-500/[0.05] px-3 py-2.5 text-[11px] leading-5 text-slate-400">
+                <Sparkles aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-300" />
+                <span>A specific introduction helps visitors understand the profile before opening its links.</span>
+              </p>
             </div>
 
             <section

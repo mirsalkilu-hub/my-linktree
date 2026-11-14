@@ -610,6 +610,25 @@ export default function PublicBioPage({
             {profile.bio_description}
           </p>
         )}
+        {!profile.bio_description && (
+          <div
+            className={`mb-7 max-w-sm rounded-2xl border px-4 py-3 ${
+              isBusinessTemplate ? "text-left" : "text-center"
+            } ${isLightTemplate ? "text-slate-600" : "text-slate-300"}`}
+            style={{
+              borderColor: `${theme.accentColor}35`,
+              backgroundColor: `${theme.accentColor}10`,
+            }}
+          >
+            <p className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: theme.accentColor }}>
+              About this page
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed">
+              This page brings {profile.title}&apos;s links and channels together in one place. Choose
+              a link below to explore more or contact the profile owner.
+            </p>
+          </div>
+        )}
 
         {/* List Link Buttons */}
         <div className={`w-full ${

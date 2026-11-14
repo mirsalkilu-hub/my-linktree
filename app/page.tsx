@@ -332,6 +332,62 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-14 sm:pb-16">
+        <div className="relative grid gap-8 overflow-hidden rounded-[2rem] border border-indigo-400/20 bg-gradient-to-br from-indigo-950/70 via-slate-900/95 to-violet-950/45 p-6 shadow-2xl shadow-indigo-950/20 sm:p-9 lg:grid-cols-[1.2fr_0.8fr] lg:p-10">
+          <div className="pointer-events-none absolute -right-20 -top-28 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-200">
+              <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
+              About urlyu.com
+            </span>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              One place to organize your links and online presence
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              urlyu.com helps creators, professionals, and businesses share links more easily.
+              Shorten long web addresses, bring your profile and important channels together on a
+              bio page, and use QR codes to make links easy to open from digital or printed materials.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-slate-400">
+              The dashboard provides basic click statistics to help you review engagement. These
+              numbers show link activity, not the identity or intent of each visitor. Custom domains
+              are available to members with an active VIP subscription.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["Short links", "Bio pages", "QR codes", "Click insights"].map((feature) => (
+                <span key={feature} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-slate-300">
+                  {feature}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="relative flex flex-col justify-center gap-3">
+            <h3 className="mb-1 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Explore urlyu</h3>
+            <Link href="/about" className="group flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/45 p-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-indigo-400/40 hover:bg-slate-950/70">
+              <span>
+                <span className="block">About urlyu.com</span>
+                <span className="mt-1 block text-xs font-normal text-slate-400">Meet the service and its tools</span>
+              </span>
+              <ArrowRight aria-hidden="true" className="h-4 w-4 text-indigo-300 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link href="/blog" className="group flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/45 p-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-indigo-400/40 hover:bg-slate-950/70">
+              <span>
+                <span className="block">Articles and guides</span>
+                <span className="mt-1 block text-xs font-normal text-slate-400">Ideas for better link sharing</span>
+              </span>
+              <ArrowRight aria-hidden="true" className="h-4 w-4 text-indigo-300 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link href="/contact" className="group flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/45 p-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-indigo-400/40 hover:bg-slate-950/70">
+              <span>
+                <span className="block">Contact the team</span>
+                <span className="mt-1 block text-xs font-normal text-slate-400">Get help or send a report</span>
+              </span>
+              <ArrowRight aria-hidden="true" className="h-4 w-4 text-indigo-300 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <SiteFooter />
     </div>

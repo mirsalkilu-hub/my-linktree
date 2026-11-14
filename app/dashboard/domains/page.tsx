@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -16,10 +17,16 @@ interface CustomDomain {
   created_at: string;
 }
 
+interface VipSubscription {
+  status: string;
+  current_period_end: string | null;
+}
+
 export default function CustomDomainsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [domains, setDomains] = useState<CustomDomain[]>([]);
+  const [isVip, setIsVip] = useState(false);
   const [domainInput, setDomainInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,7 +71,24 @@ export default function CustomDomainsPage() {
 
       try {
         const accessToken = await getAccessToken();
+        const vipResultPromise = supabase
+          .from("vip_subscriptions")
+          .select("status, current_period_end")
+          .eq("user_id", data.user.id)
+          .maybeSingle<VipSubscription>();
         await loadDomains(accessToken);
+        const vipResult = await vipResultPromise;
+        if (vipResult.error) throw new Error(`Could not load VIP status: ${vipResult.error.message}`);
+
+        if (isMounted) {
+          const subscription = vipResult.data;
+          setIsVip(
+            !!subscription &&
+              ["active", "trialing"].includes(subscription.status) &&
+              !!subscription.current_period_end &&
+              new Date(subscription.current_period_end).getTime() > Date.now()
+          );
+        }
       } catch (error) {
         if (isMounted) {
           setErrorMessage(error instanceof Error ? error.message : "Could not load custom domains.");
@@ -190,42 +214,60 @@ export default function CustomDomainsPage() {
                 Connect a domain you own and use it for new short links. Add the domain to your Vercel project and configure the DNS records Vercel provides before verifying it here.
               </p>
             </div>
-            <a
-              href="#add-domain"
-              className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:self-center"
-            >
-              <Plus className="h-4 w-4" />
-              Add domain
-            </a>
+            {isVip ? (
+              <a
+                href="#add-domain"
+                className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-indigo-400/30 bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-950/30 transition hover:-translate-y-0.5 hover:bg-indigo-500 md:self-center"
+              >
+                <Plus className="h-4 w-4" />
+                Add domain
+              </a>
+            ) : (
+              <Link
+                href="/dashboard/vip"
+                className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-amber-400/30 bg-amber-500/10 px-5 py-3 text-sm font-bold text-amber-200 transition hover:bg-amber-500/20 md:self-center"
+              >
+                <Sparkles className="h-4 w-4" />
+                Unlock with VIP
+              </Link>
+            )}
           </div>
         </section>
 
-        <section id="add-domain" className="manager-panel rounded-2xl p-5 sm:p-7">
-          <h2 className="text-base font-bold text-white">Add a domain</h2>
-          <form onSubmit={handleAddDomain} className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              required
-              value={domainInput}
-              onChange={(event) => setDomainInput(event.target.value)}
-              placeholder="go.example.com"
-              aria-label="Custom domain"
-              className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Add domain
-            </button>
-          </form>
-          {errorMessage && <p role="alert" className="mt-4 text-sm text-rose-300">{errorMessage}</p>}
-          {successMessage && <p role="status" className="mt-4 text-sm text-emerald-300">{successMessage}</p>}
-        </section>
+        {isVip && (
+          <section id="add-domain" className="manager-panel rounded-2xl p-5 sm:p-7">
+            <h2 className="text-base font-bold text-white">Add a domain</h2>
+            <form onSubmit={handleAddDomain} className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                required
+                value={domainInput}
+                onChange={(event) => setDomainInput(event.target.value)}
+                placeholder="go.example.com"
+                aria-label="Custom domain"
+                className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-indigo-500 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Add domain
+              </button>
+            </form>
+            {errorMessage && <p role="alert" className="mt-4 text-sm text-rose-300">{errorMessage}</p>}
+            {successMessage && <p role="status" className="mt-4 text-sm text-emerald-300">{successMessage}</p>}
+          </section>
+        )}
 
         <section className="space-y-4">
+          {!isVip && (errorMessage || successMessage) && (
+            <div className="manager-panel rounded-2xl p-5">
+              {errorMessage && <p role="alert" className="text-sm text-rose-300">{errorMessage}</p>}
+              {successMessage && <p role="status" className="text-sm text-emerald-300">{successMessage}</p>}
+            </div>
+          )}
           {domains.length === 0 ? (
             <div className="manager-panel rounded-2xl p-8 text-center text-sm text-slate-400">
               No custom domains yet.
