@@ -12,7 +12,8 @@ QRIS payments are verified manually and do not renew automatically.
 1. Apply `supabase/migrations/20261008_add_vip_subscriptions.sql`,
    `supabase/migrations/20261009_add_paypal_vip.sql`,
    `supabase/migrations/20261114_add_qris_payment_submissions.sql`, and
-   `supabase/migrations/20261114_add_vip_admin_search.sql` to the Supabase project.
+   `supabase/migrations/20261114_add_vip_admin_search.sql`, and
+   `supabase/migrations/20261114_sync_bio_ads_with_vip.sql` to the Supabase project.
 2. In PayPal, create two subscription plans in USD: **$5 monthly** and **$50 yearly**.
    Add their plan IDs as `PAYPAL_VIP_MONTHLY_PLAN_ID` and
    `PAYPAL_VIP_ANNUAL_PLAN_ID`.

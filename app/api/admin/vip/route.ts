@@ -127,6 +127,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Could not activate VIP for this account." }, { status: 500 });
     }
 
+    const { error: adsError } = await context.admin
+      .from("bio_profiles")
+      .update({ ads_enabled: false })
+      .eq("user_id", userId);
+    if (adsError) {
+      console.error("Could not disable bio page ads after granting VIP:", adsError.message);
+      return NextResponse.json(
+        { error: "VIP was activated, but the bio page ad setting could not be updated." },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ currentPeriodEnd: periodEnd });
   }
 

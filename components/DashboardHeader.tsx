@@ -27,6 +27,7 @@ export default function DashboardHeader({ user }: { user: User | null }) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setMobileMenuOpen(false);
     router.push("/");
   };
 
@@ -47,99 +48,112 @@ export default function DashboardHeader({ user }: { user: User | null }) {
 
   return (
     <header className="app-header sticky top-0 z-50 border-b transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between h-16">
-        <div className="flex items-center space-x-3">
-          <Link href="/dashboard" className="flex items-center space-x-3">
-            <Image
-              src="/logo.png"
-              alt="urlyu.com logo"
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain rounded-lg"
-            />
-            <span className="text-2xl font-black tracking-wider text-white">
-              urlyu<span className="text-indigo-500">.com</span>
-            </span>
-          </Link>
+      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
+          <Image
+            src="/logo.png"
+            alt="urlyu.com logo"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-lg object-contain"
+          />
+          <span className="text-xl font-black tracking-wider text-white sm:text-2xl">
+            urlyu<span className="text-indigo-500">.com</span>
+          </span>
+        </Link>
 
-          <nav className="hidden md:flex items-center space-x-2 h-full py-3">
-            {navItems.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                  isActive(href)
-                    ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                    : "text-slate-400 hover:text-white hover:bg-slate-900"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <nav aria-label="Dashboard" className="hidden min-w-0 flex-1 items-center justify-center gap-1 xl:flex">
+          {navItems.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isActive(href) ? "page" : undefined}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-2.5 py-2 text-[11px] font-semibold transition-colors ${
+                isActive(href)
+                  ? "border-indigo-500/30 bg-indigo-500/15 text-indigo-300"
+                  : "border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-900 hover:text-white"
+              }`}
+            >
+              <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-end gap-2">
           {user && (
-            <div className="hidden sm:flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs uppercase text-white shrink-0 shadow-md shadow-indigo-500/20">
-                {user.email?.[0] || "M"}
-              </div>
+            <div
+              title={user.email || undefined}
+              className="hidden h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 text-xs font-bold uppercase text-white shadow-md shadow-indigo-500/20 sm:flex"
+              aria-label={user.email ? `Signed in as ${user.email}` : "Signed in"}
+              role="img"
+            >
+              {user.email?.[0] || "M"}
             </div>
           )}
 
           <button
+            type="button"
             onClick={handleLogout}
-            className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-full transition-all duration-200"
+            className="hidden items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-200 transition-colors hover:border-slate-600 hover:bg-slate-800 hover:text-white xl:inline-flex"
           >
-            <LogOut className="w-4 h-4 text-slate-400" />
+            <LogOut aria-hidden="true" className="h-4 w-4 text-slate-400" />
             <span>Log out</span>
           </button>
 
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-all"
-            aria-label="Toggle Menu"
+            type="button"
+            onClick={() => setMobileMenuOpen((isOpen) => !isOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls={mobileMenuOpen ? "dashboard-mobile-menu" : undefined}
+            aria-label={mobileMenuOpen ? "Close dashboard menu" : "Open dashboard menu"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/70 text-slate-300 transition-colors hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white xl:hidden"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X aria-hidden="true" className="h-5 w-5" />
+            ) : (
+              <Menu aria-hidden="true" className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#0a0d18] border-b border-slate-800/80 px-4 pt-4 pb-6 space-y-2 font-sans">
-          {navItems.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                isActive(href)
-                  ? "bg-[#181c42] text-indigo-300 border border-indigo-500/40"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
-            </Link>
-          ))}
+        <div id="dashboard-mobile-menu" className="border-t border-slate-800/80 bg-[#0a0d18] px-4 py-4 font-sans sm:px-6 xl:hidden">
+          <nav aria-label="Dashboard" className="mx-auto grid max-w-7xl grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {navItems.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                aria-current={isActive(href) ? "page" : undefined}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex min-w-0 items-center gap-3 rounded-xl border px-3.5 py-3 text-sm font-semibold transition-colors ${
+                  isActive(href)
+                    ? "border-indigo-500/40 bg-indigo-500/15 text-indigo-200"
+                    : "border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:bg-slate-900 hover:text-white"
+                }`}
+              >
+                <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                <span className="truncate">{label}</span>
+              </Link>
+            ))}
+          </nav>
 
-          <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between">
-            <div className="flex items-center space-x-3 overflow-hidden pr-2">
-              <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shrink-0">
+          <div className="mx-auto mt-4 flex max-w-7xl items-center justify-between gap-3 border-t border-slate-800 pt-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
                 {user?.email?.[0]?.toUpperCase() || "M"}
               </div>
-              <span className="text-sm font-medium text-slate-200 truncate">
+              <span className="truncate text-sm font-medium text-slate-300">
                 {user?.email || ""}
               </span>
             </div>
-
             <button
+              type="button"
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-800 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs font-semibold shrink-0 transition-all"
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-xs font-semibold text-slate-200 transition-colors hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-200"
             >
-              <LogOut className="w-3.5 h-3.5 text-slate-300" />
+              <LogOut aria-hidden="true" className="h-3.5 w-3.5" />
               <span>Log out</span>
             </button>
           </div>

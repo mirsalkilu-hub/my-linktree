@@ -410,9 +410,10 @@ export default function VipAdminPage() {
                             {account.usernames.length ? account.usernames.map((name) => `@${name}`).join(", ") : "No bio username"}
                           </p>
                           <p className="mt-2 text-xs text-slate-400">
-                            Status: <span className={isActive ? "text-emerald-300" : "text-slate-300"}>
-                              {account.status || "No VIP membership"}
+                            Account: <span className={isActive ? "text-emerald-300" : "text-slate-300"}>
+                              {isActive ? "VIP" : "Non-VIP"}
                             </span>
+                            {" · "}Status: {account.status || "No membership"}
                             {" · "}Provider: {account.payment_provider || "—"}
                             {" · "}Expires: {periodEnd ? periodEnd.toLocaleDateString("id-ID") : "—"}
                           </p>

@@ -262,6 +262,31 @@ export default function VipMembershipPage() {
             Enjoy an ad-free experience on your bio pages with PayPal or a one-time QRIS payment.
           </p>
 
+          <section aria-label="Free and VIP feature comparison" className="my-7 grid gap-3 text-left sm:grid-cols-2">
+            <article className="rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Free · Non-VIP</p>
+              <h2 className="mt-2 text-lg font-bold text-white">Core link-in-bio tools</h2>
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-300">
+                <li>Create bio pages and short links</li>
+                <li>View link and page click analytics</li>
+                <li>Custom domains are not available</li>
+                <li>Bio page ad setting stays enabled</li>
+              </ul>
+            </article>
+            <article className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-300">VIP Membership</p>
+              <h2 className="mt-2 text-lg font-bold text-white">More control for your links</h2>
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-200">
+                <li>Everything included with Free</li>
+                <li>Connect your own domain to short links</li>
+                <li>Disable the ad setting on your bio pages while VIP is active</li>
+              </ul>
+            </article>
+          </section>
+          <p className="-mt-4 mb-6 text-left text-xs leading-5 text-slate-500">
+            The app currently does not display ads from a third-party advertising network.
+          </p>
+
           <div
             role="radiogroup"
             aria-label="VIP billing frequency"
@@ -299,7 +324,12 @@ export default function VipMembershipPage() {
           </p>
           {isVip && subscription?.current_period_end && (
             <p className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-300">
-              VIP is active until {new Date(subscription.current_period_end).toLocaleDateString()}.
+              Current plan: VIP · Active until {new Date(subscription.current_period_end).toLocaleDateString()}.
+            </p>
+          )}
+          {!isVip && subscription?.status !== "approval_pending" && (
+            <p className="mb-5 rounded-xl border border-slate-700 bg-slate-950/50 p-3 text-sm font-semibold text-slate-300">
+              Current plan: Free · Non-VIP
             </p>
           )}
           {subscription?.status === "approval_pending" && (
