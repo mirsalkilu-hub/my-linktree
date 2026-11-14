@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, ChangeEvent, FormEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+  ChangeEvent,
+  FormEvent,
+} from "react";
+import { createPortal } from "react-dom";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -80,6 +88,10 @@ const sanitizeUrl = (inputUrl: string) => {
   if (!formatted) return "";
   return /^https?:\/\//i.test(formatted) ? formatted : `https://${formatted}`;
 };
+
+const subscribeToHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
 
 function TemplateArtwork({ template }: { template: BioTemplate }) {
   const isLight = template.isLight === true;
@@ -485,6 +497,12 @@ export default function BioManagementPage() {
 
   const router = useRouter();
   const pathname = usePathname();
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
+  );
+  const portalTarget = isHydrated ? document.body : null;
 
   const resetLinkForm = () => {
     setNewLinkTitle("");
@@ -1957,7 +1975,7 @@ export default function BioManagementPage() {
         />
       </main>
 
-      {isTemplateGalleryOpen && (
+      {portalTarget && isTemplateGalleryOpen && createPortal(
         <div
           className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-[#050711]/85 p-2 pt-3 backdrop-blur-xl sm:p-5"
           onMouseDown={(event) => {
@@ -2097,10 +2115,11 @@ export default function BioManagementPage() {
               )}
             </div>
           </section>
-        </div>
+        </div>,
+        portalTarget
       )}
 
-      {previewTemplate && (
+      {portalTarget && previewTemplate && createPortal(
         <div
           className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm"
           onMouseDown={(event) => {
@@ -2155,7 +2174,8 @@ export default function BioManagementPage() {
               </button>
             </div>
           </section>
-        </div>
+        </div>,
+        portalTarget
       )}
       <SiteFooter />
     </div>
