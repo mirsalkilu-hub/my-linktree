@@ -1310,9 +1310,7 @@ export default function BioManagementPage() {
 </header>)}
 
       {/* Main content area with visual effects */}
-      <main className={`max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 relative z-10 ${
-        isCreatingNew ? "space-y-4 sm:space-y-5" : "space-y-6 sm:space-y-7"
-      }`}>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-7 sm:py-9 w-full flex-1 relative z-10 space-y-6 sm:space-y-7">
         {isPagesListView ? (
           <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
             <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
@@ -1336,21 +1334,17 @@ export default function BioManagementPage() {
             </div>
           </section>
         ) : (
-          <section className={`dashboard-hero relative overflow-hidden rounded-3xl ${
-            isCreatingNew ? "px-5 py-5 sm:px-8 sm:py-7" : "px-6 py-8 sm:px-10 sm:py-10"
-          }`}>
-            <div className={`relative flex flex-col ${
-              isCreatingNew ? "gap-4 md:gap-6" : "gap-7"
-            } md:flex-row md:items-center md:justify-between`}>
+          <section className="dashboard-hero relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10">
+            <div className="relative flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200">
                   <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
                   Bio page management
                 </span>
-                <h1 className={`${isCreatingNew ? "mt-3" : "mt-4"} text-3xl font-bold tracking-tight text-white sm:text-4xl`}>
+                <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                   {isCreatingNew ? "Create new page" : `Edit ${selectedPage?.title || "page"}`}
                 </h1>
-                <p className={`${isCreatingNew ? "mt-1" : "mt-2"} text-sm text-slate-300 sm:text-base`}>
+                <p className="mt-2 text-sm text-slate-300 sm:text-base">
                   Customize your page and its links.
                 </p>
               </div>
@@ -1675,14 +1669,11 @@ export default function BioManagementPage() {
         )}
 
         {/* Form Setting Utama */}
-        <div className={`manager-panel rounded-2xl ${isCreatingNew ? "p-3 sm:p-5" : "p-4 sm:p-6"}`}>
-          <h2 className={`text-base sm:text-lg font-bold ${isCreatingNew ? "mb-3" : "mb-4"} text-white`}>
+        <div className="manager-panel p-4 sm:p-6 rounded-2xl">
+          <h2 className="text-base sm:text-lg font-bold mb-4 text-white">
             {isCreatingNew ? "Create new page" : `Edit page: ${selectedPage?.title}`}
           </h2>
-          <form
-            onSubmit={handleSavePage}
-            className={isCreatingNew ? "space-y-3 sm:space-y-4" : "space-y-4 sm:space-y-5"}
-          >
+          <form onSubmit={handleSavePage} className="space-y-4 sm:space-y-5">
             <div>
               <label className="block text-xs text-slate-400 mb-1">/URL (unique)</label>
               <input
@@ -1783,7 +1774,7 @@ export default function BioManagementPage() {
 
             <div>
               <label className="block text-xs text-slate-400 mb-1">Profile photo / page logo</label>
-              <div className={`flex flex-col sm:flex-row items-start sm:items-center ${isCreatingNew ? "gap-2" : "gap-3"}`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 {avatarUrl && (
                   <Image
                     src={avatarUrl}
@@ -1968,7 +1959,7 @@ export default function BioManagementPage() {
 
       {isTemplateGalleryOpen && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-[#050711]/85 p-2 backdrop-blur-xl sm:p-5"
+          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-[#050711]/85 p-2 pt-3 backdrop-blur-xl sm:p-5"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               setIsTemplateGalleryOpen(false);
@@ -1979,7 +1970,7 @@ export default function BioManagementPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="template-gallery-title"
-            className="flex max-h-[94vh] w-full max-w-7xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0c1020] shadow-[0_32px_120px_-30px_rgba(0,0,0,.9)]"
+            className="flex h-[calc(100vh-1.5rem)] max-h-[94vh] w-full max-w-7xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0c1020] shadow-[0_32px_120px_-30px_rgba(0,0,0,.9)] sm:h-[calc(100vh-2.5rem)]"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <header className="flex shrink-0 items-center justify-between gap-4 border-b border-indigo-400/15 bg-gradient-to-r from-[#11152d] via-[#20234b] to-[#312e81] px-5 py-4 sm:px-7">
