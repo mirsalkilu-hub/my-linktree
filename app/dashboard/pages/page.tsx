@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   useSyncExternalStore,
   ChangeEvent,
   FormEvent,
@@ -87,6 +88,50 @@ const sanitizeUrl = (inputUrl: string) => {
   const formatted = inputUrl.trim();
   if (!formatted) return "";
   return /^https?:\/\//i.test(formatted) ? formatted : `https://${formatted}`;
+};
+
+const AVATAR_CROP_SIZE = 512;
+
+const clampCropOffset = (
+  image: HTMLImageElement,
+  zoom: number,
+  offset: { x: number; y: number }
+) => {
+  const scale = Math.max(
+    AVATAR_CROP_SIZE / image.naturalWidth,
+    AVATAR_CROP_SIZE / image.naturalHeight
+  ) * zoom;
+  const maxX = Math.max(0, (image.naturalWidth * scale - AVATAR_CROP_SIZE) / 2);
+  const maxY = Math.max(0, (image.naturalHeight * scale - AVATAR_CROP_SIZE) / 2);
+
+  return {
+    x: Math.min(maxX, Math.max(-maxX, offset.x)),
+    y: Math.min(maxY, Math.max(-maxY, offset.y)),
+  };
+};
+
+const drawAvatarCrop = (
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  zoom: number,
+  offset: { x: number; y: number }
+) => {
+  const scale = Math.max(
+    AVATAR_CROP_SIZE / image.naturalWidth,
+    AVATAR_CROP_SIZE / image.naturalHeight
+  ) * zoom;
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  const clampedOffset = clampCropOffset(image, zoom, offset);
+
+  context.clearRect(0, 0, AVATAR_CROP_SIZE, AVATAR_CROP_SIZE);
+  context.drawImage(
+    image,
+    (AVATAR_CROP_SIZE - width) / 2 + clampedOffset.x,
+    (AVATAR_CROP_SIZE - height) / 2 + clampedOffset.y,
+    width,
+    height
+  );
 };
 
 const subscribeToHydration = () => () => {};
@@ -472,6 +517,14 @@ export default function BioManagementPage() {
   const [templateCategory, setTemplateCategory] = useState<string>("All");
   const [isTemplateGalleryOpen, setIsTemplateGalleryOpen] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<BioTemplate | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [cropImage, setCropImage] = useState<HTMLImageElement | null>(null);
+  const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cropDragRef = useRef<{ x: number; y: number } | null>(null);
 
   // Link state
   const [links, setLinks] = useState<BioLinkItem[]>([]);
@@ -503,6 +556,16 @@ export default function BioManagementPage() {
     getServerHydrationSnapshot
   );
   const portalTarget = isHydrated ? document.body : null;
+
+  const closeCropEditor = useCallback(() => {
+    setIsCropEditorOpen(false);
+    setCropFile(null);
+    setCropImageUrl(null);
+    setCropImage(null);
+    setCropZoom(1);
+    setCropOffset({ x: 0, y: 0 });
+    cropDragRef.current = null;
+  }, []);
 
   const resetLinkForm = () => {
     setNewLinkTitle("");
@@ -735,13 +798,58 @@ export default function BioManagementPage() {
   }, [fetchPageStats, handleSelectPage, isCreatingNew, isEditingPage, pathname, resetFormToNew, router, selectedPage]);
 
   useEffect(() => {
-    if (!isTemplateGalleryOpen && !previewTemplate) return;
+    if (!cropImageUrl) return;
+
+    const image = new window.Image();
+    image.onload = () => {
+      if (!image.naturalWidth || !image.naturalHeight) {
+        toast.error("Could not read the selected image.");
+        setCropFile(null);
+        setCropImageUrl(null);
+        setIsCropEditorOpen(false);
+        return;
+      }
+      setCropImage(image);
+    };
+    image.onerror = () => {
+      toast.error("Could not read the selected image.");
+      setCropFile(null);
+      setCropImageUrl(null);
+      setIsCropEditorOpen(false);
+    };
+    image.src = cropImageUrl;
+
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+      URL.revokeObjectURL(cropImageUrl);
+    };
+  }, [cropImageUrl]);
+
+  useEffect(() => {
+    if (!cropImage) return;
+
+    const canvas = cropCanvasRef.current;
+    if (!canvas) return;
+    canvas.width = AVATAR_CROP_SIZE;
+    canvas.height = AVATAR_CROP_SIZE;
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    drawAvatarCrop(context, cropImage, cropZoom, cropOffset);
+  }, [cropImage, cropOffset, cropZoom]);
+
+  useEffect(() => {
+    if (!isTemplateGalleryOpen && !previewTemplate && !isCropEditorOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (previewTemplate) {
+        if (isCropEditorOpen) {
+          closeCropEditor();
+        } else if (previewTemplate) {
           setPreviewTemplate(null);
         } else {
           setIsTemplateGalleryOpen(false);
@@ -754,7 +862,7 @@ export default function BioManagementPage() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isTemplateGalleryOpen, previewTemplate]);
+  }, [closeCropEditor, isCropEditorOpen, isTemplateGalleryOpen, previewTemplate]);
 
   const applyTemplate = (template: BioTemplate) => {
     setThemeColor(template.id);
@@ -767,41 +875,91 @@ export default function BioManagementPage() {
     router.push("/");
   };
 
-  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("File must be a PNG, JPG, JPEG, or WEBP image.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size must be 2 MB or smaller.");
+      return;
+    }
+
+    setCropImage(null);
+    setCropFile(file);
+    setCropImageUrl(URL.createObjectURL(file));
+    setCropZoom(1);
+    setCropOffset({ x: 0, y: 0 });
+    cropDragRef.current = null;
+    setIsCropEditorOpen(true);
+  };
+
+  const handleSaveCroppedImage = async () => {
+    const canvas = cropCanvasRef.current;
+    if (!canvas || !cropFile || !cropImage) return;
+    canvas.width = AVATAR_CROP_SIZE;
+    canvas.height = AVATAR_CROP_SIZE;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      toast.error("Your browser does not support image editing.");
+      return;
+    }
+    drawAvatarCrop(context, cropImage, cropZoom, cropOffset);
+
+    setUploading(true);
     try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
+      const outputType = cropFile.type === "image/jpg" ? "image/jpeg" : cropFile.type;
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (result) => {
+            if (!result) {
+              reject(new Error("Could not process the selected image."));
+            } else {
+              resolve(result);
+            }
+          },
+          outputType,
+          outputType === "image/png" ? undefined : 0.92
+        );
+      });
 
-      const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-      if (!validTypes.includes(file.type)) {
-        toast.error("File must be a PNG, JPG, JPEG, or WEBP image.");
-        return;
+      const extensionByType: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+      };
+      const fileExtension = extensionByType[blob.type];
+      if (!fileExtension) {
+        throw new Error("The browser returned an unsupported image format.");
       }
 
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("File size must be 2 MB or smaller.");
-        return;
-      }
-
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { cacheControl: "3600", upsert: false });
+        .upload(fileName, blob, {
+          cacheControl: "3600",
+          contentType: blob.type,
+          upsert: false,
+        });
 
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
       toast.success("Image uploaded successfully.");
+      closeCropEditor();
     } catch (error) {
-      const err = error as Error;
-      toast.error("Could not upload image: " + err.message);
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error("Could not upload image: " + message);
     } finally {
       setUploading(false);
-      event.target.value = "";
     }
   };
 
@@ -1805,7 +1963,7 @@ export default function BioManagementPage() {
                 <input
                   type="file"
                   accept="image/png, image/jpeg, image/jpg, image/webp"
-                  onChange={handleFileUpload}
+                  onChange={handleFileSelect}
                   disabled={uploading}
                   className="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700 file:cursor-pointer disabled:opacity-50"
                 />
@@ -2173,6 +2331,126 @@ export default function BioManagementPage() {
                 Use this template
               </button>
             </div>
+          </section>
+        </div>,
+        portalTarget
+      )}
+
+      {portalTarget && isCropEditorOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[#050711]/85 p-4 backdrop-blur-md"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !uploading) closeCropEditor();
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-image-editor-title"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#0c1020] shadow-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div>
+                <h2 id="profile-image-editor-title" className="text-sm font-bold text-white">
+                  Edit profile photo / page logo
+                </h2>
+                <p className="mt-1 text-xs text-slate-400">
+                  Drag to reposition, then adjust the zoom.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCropEditor}
+                disabled={uploading}
+                aria-label="Cancel image editing"
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+              >
+                <X aria-hidden="true" className="h-5 w-5" />
+              </button>
+            </header>
+
+            <div className="flex flex-col items-center p-5">
+              <div className="w-full max-w-[320px] overflow-hidden rounded-full border border-white/15 bg-slate-900 shadow-inner">
+                <canvas
+                  ref={cropCanvasRef}
+                  width={AVATAR_CROP_SIZE}
+                  height={AVATAR_CROP_SIZE}
+                  aria-label="Adjustable square crop preview"
+                  className="block h-auto w-full touch-none cursor-grab active:cursor-grabbing"
+                  onPointerDown={(event) => {
+                    if (!cropImage) return;
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    cropDragRef.current = { x: event.clientX, y: event.clientY };
+                  }}
+                  onPointerMove={(event) => {
+                    const previousPointer = cropDragRef.current;
+                    if (!previousPointer || !cropImage) return;
+
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const scale = AVATAR_CROP_SIZE / rect.width;
+                    const deltaX = (event.clientX - previousPointer.x) * scale;
+                    const deltaY = (event.clientY - previousPointer.y) * scale;
+                    cropDragRef.current = { x: event.clientX, y: event.clientY };
+                    setCropOffset((offset) =>
+                      clampCropOffset(cropImage, cropZoom, {
+                        x: offset.x + deltaX,
+                        y: offset.y + deltaY,
+                      })
+                    );
+                  }}
+                  onPointerUp={(event) => {
+                    cropDragRef.current = null;
+                    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                      event.currentTarget.releasePointerCapture(event.pointerId);
+                    }
+                  }}
+                  onPointerCancel={() => {
+                    cropDragRef.current = null;
+                  }}
+                />
+              </div>
+
+              <div className="mt-5 w-full max-w-[320px]">
+                <label
+                  htmlFor="profile-image-zoom"
+                  className="flex items-center justify-between text-xs font-medium text-slate-300"
+                >
+                  <span>Zoom</span>
+                  <span>{Math.round(cropZoom * 100)}%</span>
+                </label>
+                <input
+                  id="profile-image-zoom"
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.01"
+                  value={cropZoom}
+                  onChange={(event) => setCropZoom(Number(event.target.value))}
+                  disabled={!cropImage || uploading}
+                  className="mt-2 w-full accent-indigo-500 disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <footer className="grid grid-cols-2 gap-3 border-t border-white/10 p-4">
+              <button
+                type="button"
+                onClick={closeCropEditor}
+                disabled={uploading}
+                className="rounded-xl border border-slate-700 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveCroppedImage()}
+                disabled={!cropImage || uploading}
+                className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110 disabled:opacity-50"
+              >
+                {uploading ? "Uploading..." : "Crop & upload"}
+              </button>
+            </footer>
           </section>
         </div>,
         portalTarget
