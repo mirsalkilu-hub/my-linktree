@@ -4,6 +4,8 @@ VIP membership removes ads from a user's bio pages and is available through PayP
 **$5/month** or **$50/year**. Both plans renew automatically until cancelled.
 PayPal handles the billing approval and recurring payments; VIP access is granted
 only after a verified PayPal webhook confirms the subscription.
+Customers can also pay once by QRIS: **Rp50,000/month** or **Rp500,000/year**.
+QRIS payments are verified manually and do not renew automatically.
 
 ## Setup
 
@@ -23,7 +25,9 @@ only after a verified PayPal webhook confirms the subscription.
    Keep `PAYPAL_VIP_PLAN_ID` configured only if old subscriptions on the previous
    PayPal plan still need webhook updates.
 5. Deploy the app. Users can select either plan from Dashboard → VIP membership and
-   complete approval on PayPal.
+   complete approval on PayPal or scan the displayed QRIS code. For QRIS, customers
+   must enter the exact amount, then contact the team with their account email and
+   payment receipt. Activate VIP only after verifying the payment.
 
 ## Activate a verified manual payment
 
@@ -37,7 +41,9 @@ record to manual payment.
 DO $$
 DECLARE
   target_user uuid;
+  payment_period interval := interval '1 month';
 BEGIN
+  -- Set to interval '1 year' for an annual QRIS payment.
   SELECT id INTO target_user
   FROM auth.users
   WHERE email = 'customer@example.com';
@@ -59,7 +65,7 @@ BEGIN
     target_user,
     'active',
     'manual',
-    now() + interval '1 year',
+    now() + payment_period,
     now(),
     NULL,
     NULL
@@ -70,7 +76,7 @@ BEGIN
       current_period_end = GREATEST(
         COALESCE(vip_subscriptions.current_period_end, now()),
         now()
-      ) + interval '1 year',
+      ) + payment_period,
       updated_at = now(),
       paypal_subscription_id = NULL,
       paypal_payer_id = NULL;

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Crown, Loader2 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { Crown, Loader2, QrCode } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DashboardHeader from "@/components/DashboardHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -27,6 +29,7 @@ export default function VipMembershipPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isVip, setIsVip] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<VipPlan>("monthly");
+  const [showQris, setShowQris] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -160,7 +163,7 @@ export default function VipMembershipPage() {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">VIP Membership</p>
           <h1 className="mt-3 text-3xl font-black text-white">VIP membership</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            Enjoy an ad-free experience on your bio pages with a secure PayPal subscription.
+            Enjoy an ad-free experience on your bio pages with PayPal or a one-time QRIS payment.
           </p>
 
           <div
@@ -169,8 +172,8 @@ export default function VipMembershipPage() {
             className="my-7 grid gap-3 sm:grid-cols-2"
           >
             {([
-              { id: "monthly", price: "$5", term: "per month", detail: "Billed monthly" },
-              { id: "annual", price: "$50", term: "per year", detail: "Save $10 per year" },
+              { id: "monthly", price: "$5", qrisPrice: "Rp50.000", term: "per month", detail: "Billed monthly" },
+              { id: "annual", price: "$50", qrisPrice: "Rp500.000", term: "per year", detail: "Save $10 per year" },
             ] as const).map((plan) => (
               <button
                 key={plan.id}
@@ -188,12 +191,15 @@ export default function VipMembershipPage() {
                 <span className="block text-2xl font-black text-white">{plan.price}</span>
                 <span className="mt-1 block text-sm font-semibold text-slate-200">{plan.term}</span>
                 <span className="mt-2 block text-xs text-slate-400">{plan.detail}</span>
+                <span className="mt-2 block text-xs font-semibold text-emerald-300">
+                  QRIS {plan.qrisPrice} / {plan.id === "monthly" ? "month" : "year"}
+                </span>
               </button>
             ))}
           </div>
 
           <p className="mb-4 text-xs leading-5 text-slate-400">
-            Subscriptions renew automatically until cancelled. Payment and billing are handled securely by PayPal.
+            PayPal subscriptions renew automatically until cancelled. QRIS is a one-time payment and does not renew automatically.
           </p>
           {isVip && subscription?.current_period_end && (
             <p className="mb-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-300">
@@ -209,18 +215,53 @@ export default function VipMembershipPage() {
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
 
           {!isVip && (
-            <button
-              type="button"
-              onClick={startPayPalSubscription}
-              disabled={actionLoading}
-              className="w-full rounded-xl bg-[#0070ba] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#005ea6] disabled:cursor-wait disabled:opacity-60"
-            >
-              {actionLoading
-                ? "Connecting to PayPal..."
-                : subscription?.status === "approval_pending"
-                  ? "Continue with PayPal"
-                  : `Subscribe for ${selectedPlan === "monthly" ? "$5/month" : "$50/year"} with PayPal`}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={startPayPalSubscription}
+                disabled={actionLoading}
+                className="w-full rounded-xl bg-[#0070ba] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#005ea6] disabled:cursor-wait disabled:opacity-60"
+              >
+                {actionLoading
+                  ? "Connecting to PayPal..."
+                  : subscription?.status === "approval_pending"
+                    ? "Continue with PayPal"
+                    : `Subscribe for ${selectedPlan === "monthly" ? "$5/month" : "$50/year"} with PayPal`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQris((visible) => !visible)}
+                aria-expanded={showQris}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-500/10"
+              >
+                <QrCode aria-hidden="true" className="h-4 w-4" />
+                {showQris ? "Hide QRIS payment" : `Pay ${selectedPlan === "monthly" ? "Rp50.000/month" : "Rp500.000/year"} with QRIS`}
+              </button>
+              {showQris && (
+                <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-950/60 p-4 text-left">
+                  <p className="text-center text-lg font-bold text-white">
+                    Scan to pay {selectedPlan === "monthly" ? "Rp50.000" : "Rp500.000"}
+                  </p>
+                  <p className="mt-2 text-center text-xs leading-5 text-slate-300">
+                    Enter the exact amount in your QRIS app. This static QR code does not set the payment amount automatically.
+                  </p>
+                  <Image
+                    src="/qris-gopay-merchant.jpeg"
+                    alt="GoPay merchant QRIS for URLYU.COM, DIGITAL & KREA"
+                    width={768}
+                    height={1024}
+                    className="mx-auto mt-4 h-auto w-full max-w-xs rounded-xl"
+                  />
+                  <p className="mt-4 text-center text-sm leading-6 text-slate-300">
+                    After paying,{" "}
+                    <Link href="/contact" className="font-semibold text-indigo-300 underline hover:text-indigo-200">
+                      contact the team
+                    </Link>{" "}
+                    with your account email and payment receipt. VIP access is activated after manual verification.
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (
