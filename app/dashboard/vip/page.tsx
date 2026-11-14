@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Crown, Loader2, QrCode } from "lucide-react";
+import { Crown, Loader2, QrCode, Upload } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import DashboardHeader from "@/components/DashboardHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -19,6 +19,17 @@ interface VipSubscription {
 
 type VipPlan = "monthly" | "annual";
 
+interface QrisPaymentSubmission {
+  id: string;
+  plan: VipPlan;
+  amount_idr: number;
+  paid_at: string;
+  transaction_reference: string;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  created_at: string;
+}
+
 export default function VipMembershipPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -30,6 +41,11 @@ export default function VipMembershipPage() {
   const [isVip, setIsVip] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<VipPlan>("monthly");
   const [showQris, setShowQris] = useState(false);
+  const [paidAt, setPaidAt] = useState("");
+  const [transactionReference, setTransactionReference] = useState("");
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [qrisSubmitting, setQrisSubmitting] = useState(false);
+  const [qrisSubmissions, setQrisSubmissions] = useState<QrisPaymentSubmission[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,6 +68,26 @@ export default function VipMembershipPage() {
         .select("status, current_period_end, paypal_subscription_id, payment_provider")
         .eq("user_id", currentUser.id)
         .maybeSingle<VipSubscription>();
+
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (!sessionError && session?.access_token) {
+        try {
+          const response = await fetch("/api/qris/submissions", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          const result = await response.json() as { submissions?: QrisPaymentSubmission[]; error?: string };
+          if (!response.ok) {
+            throw new Error(result.error || "Could not load QRIS payment submissions.");
+          }
+          if (!cancelled) setQrisSubmissions(result.submissions || []);
+        } catch (error) {
+          if (!cancelled) {
+            setErrorMessage(error instanceof Error ? error.message : "Could not load QRIS payment submissions.");
+          }
+        }
+      } else if (sessionError) {
+        setErrorMessage(sessionError.message);
+      }
 
       if (!cancelled) {
         if (error) {
@@ -144,6 +180,66 @@ export default function VipMembershipPage() {
     }
   };
 
+  const submitQrisPayment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user || qrisSubmitting) return;
+
+    if (evidenceFile && evidenceFile.size > 5 * 1024 * 1024) {
+      setErrorMessage("Payment evidence must be 5 MB or smaller.");
+      return;
+    }
+
+    const formElement = event.currentTarget;
+    setQrisSubmitting(true);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error(sessionError?.message || "Your session could not be found. Please sign in again.");
+      }
+
+      const formData = new FormData();
+      formData.append("plan", selectedPlan);
+      formData.append("paidAt", new Date(paidAt).toISOString());
+      formData.append("transactionReference", transactionReference);
+      if (evidenceFile) formData.append("evidence", evidenceFile);
+
+      const response = await fetch("/api/qris/submissions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: formData,
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) {
+        throw new Error(result.error || "Could not submit the QRIS payment.");
+      }
+
+      setStatusMessage("Payment details submitted. VIP will activate after the admin verifies the transaction.");
+      setPaidAt("");
+      setTransactionReference("");
+      setEvidenceFile(null);
+      formElement.reset();
+
+      const submissionsResponse = await fetch("/api/qris/submissions", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const submissionsResult = await submissionsResponse.json() as {
+        submissions?: QrisPaymentSubmission[];
+        error?: string;
+      };
+      if (!submissionsResponse.ok) {
+        throw new Error(submissionsResult.error || "Payment was submitted, but its status could not be refreshed.");
+      }
+      setQrisSubmissions(submissionsResult.submissions || []);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not submit the QRIS payment.");
+    } finally {
+      setQrisSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="site-shell min-h-screen text-white flex items-center justify-center">
@@ -181,7 +277,7 @@ export default function VipMembershipPage() {
                 role="radio"
                 aria-checked={selectedPlan === plan.id}
                 onClick={() => setSelectedPlan(plan.id)}
-                disabled={actionLoading || isVip}
+                disabled={actionLoading || qrisSubmitting}
                 className={`rounded-2xl border p-5 text-left transition ${
                   selectedPlan === plan.id
                     ? "border-indigo-400 bg-indigo-500/10 ring-1 ring-indigo-400/40"
@@ -215,7 +311,6 @@ export default function VipMembershipPage() {
           {errorMessage && <p role="alert" className="mb-4 text-sm text-rose-300">{errorMessage}</p>}
 
           {!isVip && (
-            <>
               <button
                 type="button"
                 onClick={startPayPalSubscription}
@@ -228,40 +323,144 @@ export default function VipMembershipPage() {
                     ? "Continue with PayPal"
                     : `Subscribe for ${selectedPlan === "monthly" ? "$5/month" : "$50/year"} with PayPal`}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowQris((visible) => !visible)}
-                aria-expanded={showQris}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-500/10"
-              >
-                <QrCode aria-hidden="true" className="h-4 w-4" />
-                {showQris ? "Hide QRIS payment" : `Pay ${selectedPlan === "monthly" ? "Rp50.000/month" : "Rp500.000/year"} with QRIS`}
-              </button>
-              {showQris && (
-                <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-950/60 p-4 text-left">
-                  <p className="text-center text-lg font-bold text-white">
-                    Scan to pay {selectedPlan === "monthly" ? "Rp50.000" : "Rp500.000"}
-                  </p>
-                  <p className="mt-2 text-center text-xs leading-5 text-slate-300">
-                    Enter the exact amount in your QRIS app. This static QR code does not set the payment amount automatically.
-                  </p>
-                  <Image
-                    src="/qris-gopay-merchant.jpeg"
-                    alt="GoPay merchant QRIS for URLYU.COM, DIGITAL & KREA"
-                    width={768}
-                    height={1024}
-                    className="mx-auto mt-4 h-auto w-full max-w-xs rounded-xl"
-                  />
-                  <p className="mt-4 text-center text-sm leading-6 text-slate-300">
-                    After paying,{" "}
-                    <Link href="/contact" className="font-semibold text-indigo-300 underline hover:text-indigo-200">
-                      contact the team
-                    </Link>{" "}
-                    with your account email and payment receipt. VIP access is activated after manual verification.
-                  </p>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowQris((visible) => !visible)}
+            aria-expanded={showQris}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/40 px-5 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-500/10"
+          >
+            <QrCode aria-hidden="true" className="h-4 w-4" />
+            {showQris ? "Hide QRIS payment" : `Pay ${selectedPlan === "monthly" ? "Rp50.000/month" : "Rp500.000/year"} with QRIS`}
+          </button>
+          {showQris && (
+            <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-950/60 p-4 text-left">
+              <p className="text-center text-lg font-bold text-white">
+                Scan to pay {selectedPlan === "monthly" ? "Rp50.000" : "Rp500.000"}
+              </p>
+              <p className="mt-2 text-center text-xs leading-5 text-slate-300">
+                Enter the exact amount in your QRIS app. This static QR code does not set the payment amount automatically.
+              </p>
+              <Image
+                src="/qris-gopay-merchant.jpeg"
+                alt="GoPay merchant QRIS for URLYU.COM, DIGITAL & KREA"
+                width={768}
+                height={1024}
+                className="mx-auto mt-4 h-auto w-full max-w-xs rounded-xl"
+              />
+              <p className="mt-4 text-center text-sm leading-6 text-slate-300">
+                After paying, submit the transaction details below. We verify the reference and amount in GoPay Merchant;
+                the screenshot is optional and is not proof by itself.
+              </p>
+              <form onSubmit={submitQrisPayment} className="mt-5 space-y-4">
+                <div>
+                    <label htmlFor="qris-account-email" className="mb-1.5 block text-xs font-semibold text-slate-300">
+                      Website account
+                    </label>
+                    <input
+                      id="qris-account-email"
+                      type="email"
+                      value={user?.email || ""}
+                      readOnly
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-4 py-3 text-sm text-slate-400"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="qris-paid-at" className="mb-1.5 block text-xs font-semibold text-slate-300">
+                      Payment date and time
+                    </label>
+                    <input
+                      id="qris-paid-at"
+                      type="datetime-local"
+                      required
+                      value={paidAt}
+                      onChange={(event) => setPaidAt(event.target.value)}
+                      disabled={qrisSubmitting}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="qris-transaction-reference" className="mb-1.5 block text-xs font-semibold text-slate-300">
+                      Transaction reference
+                    </label>
+                    <input
+                      id="qris-transaction-reference"
+                      type="text"
+                      required
+                      minLength={3}
+                      maxLength={100}
+                      value={transactionReference}
+                      onChange={(event) => setTransactionReference(event.target.value)}
+                      disabled={qrisSubmitting}
+                      placeholder="Reference shown in your payment app"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white placeholder:text-slate-500"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="qris-evidence" className="mb-1.5 block text-xs font-semibold text-slate-300">
+                      Payment screenshot (optional, max 5 MB)
+                    </label>
+                    <input
+                      id="qris-evidence"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => setEvidenceFile(event.target.files?.[0] || null)}
+                      disabled={qrisSubmitting}
+                      className="block w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
+                    />
+                    {evidenceFile && (
+                      <p className="mt-1 text-xs text-slate-400">{evidenceFile.name}</p>
+                    )}
+                </div>
+                <button
+                    type="submit"
+                    disabled={qrisSubmitting}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:cursor-wait disabled:opacity-60"
+                >
+                    {qrisSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {qrisSubmitting ? "Submitting payment details..." : "Submit payment for verification"}
+                </button>
+              </form>
+
+              {qrisSubmissions.length > 0 && (
+                <div className="mt-6 border-t border-slate-700 pt-4">
+                    <h2 className="text-sm font-bold text-white">Your QRIS payment submissions</h2>
+                    <div className="mt-3 space-y-2">
+                      {qrisSubmissions.map((submission) => (
+                        <div key={submission.id} className="rounded-xl border border-slate-700 bg-slate-900/70 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-semibold text-slate-200">
+                              {submission.plan === "monthly" ? "Monthly" : "Annual"} · Rp{submission.amount_idr.toLocaleString("id-ID")}
+                            </span>
+                            <span className={`text-xs font-bold ${
+                              submission.status === "approved"
+                                ? "text-emerald-300"
+                                : submission.status === "rejected"
+                                  ? "text-rose-300"
+                                  : "text-amber-300"
+                            }`}>
+                              {submission.status}
+                            </span>
+                          </div>
+                          <p className="mt-1 break-all text-xs text-slate-400">
+                            Ref: {submission.transaction_reference} · {new Date(submission.created_at).toLocaleDateString("id-ID")}
+                          </p>
+                          {submission.admin_note && (
+                            <p className="mt-2 text-xs text-rose-200">Admin note: {submission.admin_note}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                 </div>
               )}
-            </>
+              <p className="mt-4 text-center text-xs text-slate-400">
+                Need help?{" "}
+                <Link href="/contact" className="font-semibold text-indigo-300 underline hover:text-indigo-200">
+                    Contact the team
+                </Link>
+                .
+              </p>
+            </div>
           )}
 
           {subscription?.payment_provider === "paypal" && subscription.paypal_subscription_id && isVip && (

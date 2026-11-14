@@ -14,9 +14,11 @@ import {
   Link2,
   LogOut,
   Menu,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
+import { VIP_ADMIN_EMAIL } from "@/lib/vip-admin-config";
 
 export default function DashboardHeader({ user }: { user: User | null }) {
   const pathname = usePathname();
@@ -35,6 +37,9 @@ export default function DashboardHeader({ user }: { user: User | null }) {
     { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/dashboard/domains", label: "Domains", icon: Globe },
     { href: "/dashboard/vip", label: "VIP", icon: Crown },
+    ...(user?.email?.trim().toLowerCase() === VIP_ADMIN_EMAIL
+      ? [{ href: "/dashboard/admin/vip", label: "Admin", icon: ShieldCheck }]
+      : []),
   ];
 
   const isActive = (href: string) =>

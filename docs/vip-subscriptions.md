@@ -9,8 +9,10 @@ QRIS payments are verified manually and do not renew automatically.
 
 ## Setup
 
-1. Apply `supabase/migrations/20261008_add_vip_subscriptions.sql` and
-   `supabase/migrations/20261009_add_paypal_vip.sql` to the Supabase project.
+1. Apply `supabase/migrations/20261008_add_vip_subscriptions.sql`,
+   `supabase/migrations/20261009_add_paypal_vip.sql`,
+   `supabase/migrations/20261114_add_qris_payment_submissions.sql`, and
+   `supabase/migrations/20261114_add_vip_admin_search.sql` to the Supabase project.
 2. In PayPal, create two subscription plans in USD: **$5 monthly** and **$50 yearly**.
    Add their plan IDs as `PAYPAL_VIP_MONTHLY_PLAN_ID` and
    `PAYPAL_VIP_ANNUAL_PLAN_ID`.
@@ -25,14 +27,22 @@ QRIS payments are verified manually and do not renew automatically.
    Keep `PAYPAL_VIP_PLAN_ID` configured only if old subscriptions on the previous
    PayPal plan still need webhook updates.
 5. Deploy the app. Users can select either plan from Dashboard → VIP membership and
-   complete approval on PayPal or scan the displayed QRIS code. For QRIS, customers
-   must enter the exact amount, then contact the team with their account email and
-   payment receipt. Activate VIP only after verifying the payment.
+   complete approval on PayPal or scan the displayed QRIS code. QRIS customers submit
+   the payment time and transaction reference while signed in. An optional JPEG, PNG,
+   or WebP screenshot (up to 5 MB) is stored privately, deleted after review, and is
+   not accepted as proof by itself.
+6. To manage manual VIP payments, sign in with the verified `admin@urlyu.com` account
+   and open Dashboard → Admin. Review pending QRIS submissions against successful
+   transactions in GoPay Merchant, then approve or reject with a reason. Approval
+   activates or extends VIP for the submitted plan. Search by email or bio username
+   to manage other manual VIP memberships. Existing PayPal memberships must be
+   managed through PayPal; the admin page does not cancel recurring billing.
 
 ## Activate a verified manual payment
 
-For an exceptional/manual payment, after confirming the payment and finding the
-customer's account email, run this in the Supabase SQL Editor. Replace
+Use the QRIS payment review queue in Dashboard → Admin for normal activations. As a
+fallback, after confirming the payment and finding the customer's account email, run
+this in the Supabase SQL Editor. Replace
 `customer@example.com` with the email used for their website account. If the customer
 has an existing PayPal subscription, cancel it in PayPal before switching their VIP
 record to manual payment.
