@@ -8,7 +8,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import LinkIcon from "@/components/LinkIcon";
 import SiteFooter from "@/components/SiteFooter";
+import SocialIcon from "@/components/SocialIcon";
 import { BIO_TEMPLATES } from "@/lib/bio-templates";
+import {
+  normalizeSocialLinks,
+  SOCIAL_PLATFORMS,
+} from "@/lib/social-platforms";
 
 // Interface Data
 interface LinkItem {
@@ -25,6 +30,7 @@ interface BioProfile {
   title: string;
   bio_description?: string;
   avatar_url?: string;
+  social_links?: unknown;
   theme_color?: string;
   status_text?: string;
   ads_enabled?: boolean;
@@ -384,6 +390,7 @@ export default function PublicBioPage({
   }
 
   const [themeId, fontId] = (profile.theme_color || "indigo::sans").split("::");
+  const socialLinks = normalizeSocialLinks(profile.social_links);
   const selectedTemplate = BIO_TEMPLATES.find((template) => template.id === themeId);
   const baseTheme = THEME_PRESETS[THEME_ALIASES[themeId] || themeId] || THEME_PRESETS.indigo;
   const theme = {
@@ -481,6 +488,22 @@ export default function PublicBioPage({
           undefined,
       }}
     >
+      {profile.avatar_url && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 overflow-hidden pointer-events-none"
+        >
+          <Image
+            src={profile.avatar_url}
+            alt=""
+            fill
+            sizes="100vw"
+            className="scale-110 object-cover opacity-35 blur-2xl"
+          />
+          <div className="absolute inset-0 bg-slate-950/65" />
+        </div>
+      )}
+
       {/* Background Ambient Blur Dynamic */}
       <div 
         className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full blur-[140px] opacity-20 pointer-events-none transition-all duration-700"
@@ -724,6 +747,37 @@ export default function PublicBioPage({
             </div>
           )}
         </div>
+
+        {socialLinks.length > 0 && (
+          <div className={`mb-7 flex w-full flex-wrap items-center gap-3 ${
+            isBusinessTemplate ? "justify-start" : "justify-center"
+          }`}>
+            {socialLinks.map((socialLink, index) => {
+              const platformLabel =
+                SOCIAL_PLATFORMS.find((platform) => platform.id === socialLink.platform)?.label ||
+                socialLink.platform;
+
+              return (
+                <a
+                  key={`${socialLink.platform}-${index}`}
+                  href={socialLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={platformLabel}
+                  title={platformLabel}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border transition duration-200 hover:-translate-y-0.5"
+                  style={{
+                    color: isLightTemplate ? theme.accentColor : `${theme.accentColor}dd`,
+                    borderColor: `${theme.accentColor}55`,
+                    backgroundColor: `${theme.accentColor}18`,
+                  }}
+                >
+                  <SocialIcon platform={socialLink.platform} />
+                </a>
+              );
+            })}
+          </div>
+        )}
 
         {/* Footer */}
         <SiteFooter

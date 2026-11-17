@@ -49,6 +49,12 @@ import {
   BIO_TEMPLATES,
   type BioTemplate,
 } from "@/lib/bio-templates";
+import {
+  isSocialPlatform,
+  normalizeSocialLinks,
+  SOCIAL_PLATFORMS,
+  type BioSocialLink,
+} from "@/lib/social-platforms";
 
 interface BioProfile {
   id: string;
@@ -56,6 +62,7 @@ interface BioProfile {
   title: string;
   bio_description?: string;
   avatar_url?: string;
+  social_links?: unknown;
   theme_color?: string;
   created_at: string;
   ads_enabled: boolean;
@@ -519,6 +526,7 @@ export default function BioManagementPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [socialLinks, setSocialLinks] = useState<BioSocialLink[]>([]);
   const [themeColor, setThemeColor] = useState("blank");
   const [fontFamily, setFontFamily] = useState("sans");
   const [templateSearch, setTemplateSearch] = useState("");
@@ -603,6 +611,7 @@ export default function BioManagementPage() {
     setTitle("");
     setDescription("");
     setAvatarUrl("");
+    setSocialLinks([]);
     setThemeColor("blank");
     setFontFamily("sans");
     setLinks([]);
@@ -708,6 +717,7 @@ export default function BioManagementPage() {
     setTitle(page.title || "");
     setDescription(page.bio_description || "");
     setAvatarUrl(page.avatar_url || "");
+    setSocialLinks(normalizeSocialLinks(page.social_links));
     const [savedTheme, savedFont] = (page.theme_color || "indigo").split("::");
     setThemeColor(savedTheme || "indigo");
     setFontFamily(savedFont || "sans");
@@ -1026,6 +1036,33 @@ export default function BioManagementPage() {
     if (!user) return;
     setLoading(true);
 
+    const savedSocialLinks: BioSocialLink[] = [];
+    for (const socialLink of socialLinks) {
+      if (!socialLink.url.trim()) continue;
+
+      const normalizedUrl = sanitizeUrl(socialLink.url);
+      try {
+        const parsedUrl = new URL(normalizedUrl);
+        if (
+          (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") ||
+          !parsedUrl.hostname
+        ) {
+          throw new Error("Invalid URL");
+        }
+        savedSocialLinks.push({
+          platform: socialLink.platform,
+          url: parsedUrl.toString(),
+        });
+      } catch {
+        const platformLabel =
+          SOCIAL_PLATFORMS.find((platform) => platform.id === socialLink.platform)?.label ||
+          "Social media";
+        toast.error(`Enter a valid URL for ${platformLabel}.`);
+        setLoading(false);
+        return;
+      }
+    }
+
     const cleanUsername = username.toLowerCase().trim().replace(/[^a-z0-9_-]/g, "");
     if (!cleanUsername) {
       toast.error("Username/slug cannot be empty.");
@@ -1039,6 +1076,7 @@ export default function BioManagementPage() {
       title: title.trim(),
       bio_description: description.trim(),
       avatar_url: avatarUrl,
+      social_links: savedSocialLinks,
       theme_color: `${themeColor}::${fontFamily}`,
     };
 
@@ -2067,6 +2105,111 @@ export default function BioManagementPage() {
                 />
               </div>
             </div>
+
+            <section
+              aria-labelledby="social-links-heading"
+              className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4 sm:p-5"
+            >
+              <div className="mb-4">
+                <h3 id="social-links-heading" className="text-sm font-semibold text-white">
+                  Social media
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  Add your social profiles. Their icons appear below your bio links.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {socialLinks.map((socialLink, index) => (
+                  <div
+                    key={`${socialLink.platform}-${index}`}
+                    className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)_auto]"
+                  >
+                    <div>
+                      <label
+                        htmlFor={`social-platform-${index}`}
+                        className="mb-1 block text-xs text-slate-400"
+                      >
+                        Platform
+                      </label>
+                      <select
+                        id={`social-platform-${index}`}
+                        value={socialLink.platform}
+                        onChange={(event) => {
+                          const platform = event.target.value;
+                          if (!isSocialPlatform(platform)) return;
+                          setSocialLinks((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, platform } : item
+                            )
+                          );
+                        }}
+                        className="w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-3 text-sm text-white focus:border-indigo-500/80 focus:outline-none"
+                      >
+                        {SOCIAL_PLATFORMS.map((platform) => (
+                          <option key={platform.id} value={platform.id}>
+                            {platform.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`social-url-${index}`}
+                        className="mb-1 block text-xs text-slate-400"
+                      >
+                        Profile URL
+                      </label>
+                      <input
+                        id={`social-url-${index}`}
+                        type="text"
+                        value={socialLink.url}
+                        onChange={(event) =>
+                          setSocialLinks((current) =>
+                            current.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? { ...item, url: event.target.value }
+                                : item
+                            )
+                          )
+                        }
+                        placeholder="e.g. instagram.com/username"
+                        className="w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm focus:border-indigo-500/80 focus:outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSocialLinks((current) =>
+                          current.filter((_, itemIndex) => itemIndex !== index)
+                        )
+                      }
+                      aria-label={`Remove ${socialLink.platform} profile`}
+                      className="flex h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/20 px-3 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/10"
+                    >
+                      <Trash2 aria-hidden="true" className="h-4 w-4" />
+                      <span className="sm:hidden">Remove</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSocialLinks((current) => [
+                    ...current,
+                    { platform: "instagram", url: "" },
+                  ])
+                }
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-indigo-400/25 bg-indigo-500/10 px-4 py-2.5 text-xs font-semibold text-indigo-200 transition hover:bg-indigo-500/20"
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" />
+                Add social profile
+              </button>
+            </section>
 
             <button
               type="submit"
