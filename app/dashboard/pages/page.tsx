@@ -58,6 +58,7 @@ interface BioProfile {
   avatar_url?: string;
   theme_color?: string;
   created_at: string;
+  ads_enabled: boolean;
 }
 
 interface BioLinkItem {
@@ -498,6 +499,13 @@ function TemplateArtwork({ template }: { template: BioTemplate }) {
 export default function BioManagementPage() {
   const [user, setUser] = useState<User | null>(null);
   const [pages, setPages] = useState<BioProfile[]>([]);
+  const [vipSubscription, setVipSubscription] = useState<{
+    status: string;
+    current_period_end: string | null;
+  } | null>(null);
+  const [isCheckingVip, setIsCheckingVip] = useState(true);
+  const [isUpdatingAds, setIsUpdatingAds] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [pageStats, setPageStats] = useState<Record<string, BioPageStats>>({});
   const [clickAnalyticsUnavailable, setClickAnalyticsUnavailable] = useState(false);
   const [pageSearch, setPageSearch] = useState("");
@@ -550,12 +558,24 @@ export default function BioManagementPage() {
 
   const router = useRouter();
   const pathname = usePathname();
+  const isVip =
+    !!vipSubscription &&
+    ["active", "trialing"].includes(vipSubscription.status) &&
+    !!vipSubscription.current_period_end &&
+    new Date(vipSubscription.current_period_end).getTime() > currentTime;
   const isHydrated = useSyncExternalStore(
     subscribeToHydration,
     getClientHydrationSnapshot,
     getServerHydrationSnapshot
   );
   const portalTarget = isHydrated ? document.body : null;
+
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(Date.now());
+    updateCurrentTime();
+    const intervalId = window.setInterval(updateCurrentTime, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const closeCropEditor = useCallback(() => {
     setIsCropEditorOpen(false);
@@ -746,6 +766,20 @@ export default function BioManagementPage() {
       if (!isMounted) return;
       setUser(currentUser);
 
+      const { data: subscription, error: subscriptionError } = await supabase
+        .from("vip_subscriptions")
+        .select("status, current_period_end")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if (!isMounted) return;
+      if (subscriptionError) {
+        toast.error("Could not check VIP membership: " + subscriptionError.message);
+      } else {
+        setVipSubscription(subscription);
+      }
+      setIsCheckingVip(false);
+
       const { data: profiles, error } = await supabase
         .from("bio_profiles")
         .select("*")
@@ -796,6 +830,30 @@ export default function BioManagementPage() {
       isMounted = false;
     };
   }, [fetchPageStats, handleSelectPage, isCreatingNew, isEditingPage, pathname, resetFormToNew, router, selectedPage]);
+
+  const handleToggleAds = async () => {
+    if (!selectedPage || !user || !isVip || isUpdatingAds) return;
+
+    setIsUpdatingAds(true);
+    const { data, error } = await supabase
+      .from("bio_profiles")
+      .update({ ads_enabled: !selectedPage.ads_enabled })
+      .eq("id", selectedPage.id)
+      .eq("user_id", user.id)
+      .select("*")
+      .single();
+
+    if (error) {
+      toast.error("Could not update page ad setting: " + error.message);
+    } else {
+      setSelectedPage(data);
+      setPages((currentPages) =>
+        currentPages.map((page) => page.id === data.id ? data : page)
+      );
+      toast.success(data.ads_enabled ? "Ads enabled for this page." : "Ads disabled for this page.");
+    }
+    setIsUpdatingAds(false);
+  };
 
   useEffect(() => {
     if (!cropImageUrl) return;
@@ -1842,6 +1900,46 @@ export default function BioManagementPage() {
               </a>
             </div>
           </div>
+        )}
+
+        {isEditingPage && selectedPage && !isCreatingNew && (
+          <section aria-label="Bio page ad settings" className="manager-panel p-4 sm:p-5 rounded-2xl">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-white">Bio page ads</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  {selectedPage.ads_enabled
+                    ? "Ads are currently shown on this page."
+                    : "Ads are currently hidden on this page."}
+                </p>
+              </div>
+              {isCheckingVip ? (
+                <span className="text-xs text-slate-400">Checking VIP membership...</span>
+              ) : isVip ? (
+                <button
+                  type="button"
+                  onClick={handleToggleAds}
+                  disabled={isUpdatingAds}
+                  aria-pressed={!selectedPage.ads_enabled}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-400/30 bg-indigo-500/10 px-4 py-2.5 text-xs font-semibold text-indigo-200 transition hover:bg-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Power className="h-3.5 w-3.5" />
+                  {isUpdatingAds
+                    ? "Saving..."
+                    : selectedPage.ads_enabled
+                      ? "Turn ads off"
+                      : "Turn ads on"}
+                </button>
+              ) : (
+                <Link
+                  href="/dashboard/vip"
+                  className="inline-flex items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-400/20"
+                >
+                  Get VIP to turn ads off
+                </Link>
+              )}
+            </div>
+          </section>
         )}
 
         {/* Form Setting Utama */}

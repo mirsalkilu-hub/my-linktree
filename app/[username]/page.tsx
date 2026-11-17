@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, use } from "react";
+import Script from "next/script";
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -26,6 +27,7 @@ interface BioProfile {
   avatar_url?: string;
   theme_color?: string;
   status_text?: string;
+  ads_enabled?: boolean;
 }
 
 // Configuration Preset Tema Visual
@@ -786,6 +788,13 @@ export default function PublicBioPage({
         </div>
       )}
 
+      {profile.ads_enabled !== false && (
+        <Script
+          src="https://abscloud.org/1/5adc1a02d7594c6ace82a15cdb35b9cb"
+          data-cfasync="false"
+          strategy="afterInteractive"
+        />
+      )}
     </div>
   );
 }
